@@ -1,0 +1,3 @@
+type,capacity,description,isActive
+TON_10,10 Ton,Imported via CSV,true
+REFRIGERATED,10 Ton Chiller,Imported via CSV,true

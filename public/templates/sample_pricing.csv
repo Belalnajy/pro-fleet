@@ -1,0 +1,5 @@
+from_city,to_city,vehicle_type,quantity,price,currency
+Riyadh,Jeddah,TON_10,1,1250,SAR
+Dammam,Riyadh,TON_5,1,900,SAR
+Jeddah,Mecca,REFRIGERATED,1,500,SAR
+Tabuk,Neom,TON_20,2,2100,SAR

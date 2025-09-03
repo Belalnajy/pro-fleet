@@ -1,0 +1,387 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User Roles Enum
+enum UserRole {
+  ADMIN
+  DRIVER
+  CUSTOMER
+  ACCOUNTANT
+  CUSTOMS_BROKER
+}
+
+// Trip Status Enum
+enum TripStatus {
+  PENDING
+  IN_PROGRESS
+  DELIVERED
+  CANCELLED
+}
+
+// Vehicle Type Enum
+enum VehicleType {
+  TON_5
+  TON_10
+  TON_15
+  TON_20
+  TON_40
+  REFRIGERATED
+  TANKER
+}
+
+// Temperature Options
+enum TemperatureOption {
+  PLUS_2
+  PLUS_10
+  MINUS_18
+  AMBIENT
+  CUSTOM
+}
+
+// Subscription Type
+enum SubscriptionType {
+  INDIVIDUAL
+  COMPANY
+}
+
+// Payment Status
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// User Model with role-based access
+model User {
+  id              String      @id @default(cuid())
+  email           String      @unique
+  name            String
+  phone           String?
+  password        String
+  role            UserRole
+  isActive        Boolean     @default(true)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relations
+  driverProfile   Driver?
+  customerProfile Customer?
+  accountantProfile Accountant?
+  customsBrokerProfile CustomsBroker?
+  customerTrips   Trip[]      @relation("CustomerTrips")
+  subscriptions   Subscription[]
+
+  @@map("users")
+}
+
+// Driver Profile
+model Driver {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  nationality         String
+  carPlateNumber      String
+  carRegistration     String   // Istimara
+  licenseExpiry       DateTime
+  isAvailable         Boolean  @default(true)
+  currentLocation     String?  // JSON string for lat/lng
+  trackingEnabled     Boolean  @default(false)
+  
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trips               Trip[]
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@map("drivers")
+}
+
+// Customer Profile
+model Customer {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  companyName   String?
+  address       String?
+  preferredLang String   @default("en") // en, ar, ur
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptions Subscription[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("customers")
+}
+
+// Accountant Profile
+model Accountant {
+  id     String @id @default(cuid())
+  userId String @unique
+  
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("accountants")
+}
+
+// Customs Broker Profile
+model CustomsBroker {
+  id           String @id @default(cuid())
+  userId       String @unique
+  licenseNumber String?
+  
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices     Invoice[]
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("customs_brokers")
+}
+
+// Vehicle Management
+model Vehicle {
+  id            String      @id @default(cuid())
+  type          VehicleType
+  capacity      String      // e.g., "10 Ton", "40 ft"
+  description   String?
+  isActive      Boolean     @default(true)
+  
+  trips         Trip[]
+  pricing       Pricing[]
+  
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([type, capacity], name: "type_capacity")
+  @@map("vehicles")
+}
+
+// City Management
+model City {
+  id          String   @id @default(cuid())
+  name        String
+  nameAr      String?  // Arabic name
+  country     String
+  isActive    Boolean  @default(true)
+  
+  pricingFrom Pricing[] @relation("PricingFrom")
+  pricingTo   Pricing[] @relation("PricingTo")
+  tripsFrom   Trip[]   @relation("TripsFrom")
+  tripsTo     Trip[]   @relation("TripsTo")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([name, country])
+  @@map("cities")
+}
+
+// Pricing Management
+model Pricing {
+  id          String   @id @default(cuid())
+  fromCityId  String
+  toCityId    String
+  vehicleId   String
+  quantity    Int      @default(1) // Number of trips
+  price       Float    // Price per quantity
+  currency    String   @default("SAR")
+  
+  fromCity    City     @relation("PricingFrom", fields: [fromCityId], references: [id])
+  toCity      City     @relation("PricingTo", fields: [toCityId], references: [id])
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([fromCityId, toCityId, vehicleId])
+  @@map("pricing")
+}
+
+// Temperature Settings
+model TemperatureSetting {
+  id        String            @id @default(cuid())
+  option    TemperatureOption
+  value     Float             // Temperature value
+  unit      String            @default("°C")
+  isActive  Boolean           @default(true)
+  
+  trips     Trip[]
+  
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@map("temperature_settings")
+}
+
+// Trip Management
+model Trip {
+  id                String        @id @default(cuid())
+  tripNumber        String        @unique // TWB number like TWB:4593
+  customerId        String
+  driverId          String?
+  vehicleId         String
+  fromCityId        String
+  toCityId          String
+  temperatureId     String
+  scheduledDate     DateTime
+  actualStartDate   DateTime?
+  deliveredDate     DateTime?
+  status            TripStatus    @default(PENDING)
+  price             Float
+  currency          String        @default("SAR")
+  notes             String?
+  
+  customer          User          @relation("CustomerTrips", fields: [customerId], references: [id])
+  driver            Driver?       @relation(fields: [driverId], references: [id])
+  vehicle           Vehicle       @relation(fields: [vehicleId], references: [id])
+  fromCity          City          @relation("TripsFrom", fields: [fromCityId], references: [id])
+  toCity            City          @relation("TripsTo", fields: [toCityId], references: [id])
+  temperature       TemperatureSetting @relation(fields: [temperatureId], references: [id])
+  
+  invoice           Invoice?
+  trackingLogs      TrackingLog[]
+  
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@map("trips")
+}
+
+// Invoice Management
+model Invoice {
+  id                  String         @id @default(cuid())
+  invoiceNumber       String         @unique
+  tripId              String         @unique
+  customsBrokerId     String?
+  customsFee          Float          @default(0)
+  taxRate             Float          @default(0.15) // 15% VAT
+  taxAmount           Float
+  subtotal            Float
+  total               Float
+  currency            String         @default("SAR")
+  paymentStatus       PaymentStatus  @default(PENDING)
+  dueDate             DateTime
+  paidDate            DateTime?
+  notes               String?
+  
+  trip                Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  customsBroker       CustomsBroker? @relation(fields: [customsBrokerId], references: [id])
+  
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  @@map("invoices")
+}
+
+// Subscription Plans
+model SubscriptionPlan {
+  id                  String           @id @default(cuid())
+  name                String
+  description         String
+  type                SubscriptionType
+  price               Float
+  currency            String           @default("SAR")
+  duration            Int              // Duration in months
+  tripsIncluded       Int?
+  discountRule        String?          // e.g., "5 trips per week = 10% discount"
+  isActive            Boolean          @default(true)
+  specialOffer        String?          // Special offer description
+  
+  subscriptions       Subscription[]
+  
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@map("subscription_plans")
+}
+
+// User Subscriptions
+model Subscription {
+  id              String             @id @default(cuid())
+  userId          String
+  planId          String
+  customerId      String
+  startDate       DateTime
+  endDate         DateTime
+  isActive        Boolean            @default(true)
+  autoRenew       Boolean            @default(false)
+  
+  user            User               @relation(fields: [userId], references: [id])
+  plan            SubscriptionPlan   @relation(fields: [planId], references: [id])
+  customer        Customer           @relation(fields: [customerId], references: [id])
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  @@map("subscriptions")
+}
+
+// System Settings
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   // JSON string for complex values
+  isActive  Boolean  @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+// Cancellation Policy
+model CancellationPolicy {
+  id                          String   @id @default(cuid())
+  freeCancellationHours       Int      @default(24) // Free cancellation window in hours
+  cancellationFeePercentage   Float    @default(0.10) // 10% cancellation fee
+  isActive                    Boolean  @default(true)
+  
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+
+  @@map("cancellation_policies")
+}
+
+// GPS Tracking Logs
+model TrackingLog {
+  id          String   @id @default(cuid())
+  tripId      String
+  driverId    String
+  latitude    Float
+  longitude   Float
+  timestamp   DateTime @default(now())
+  speed       Float?   // km/h
+  heading     Float?   // degrees
+  
+  trip        Trip     @relation(fields: [tripId], references: [id])
+  
+  createdAt   DateTime @default(now())
+
+  @@map("tracking_logs")
+}
+
+// Reports and Analytics
+model Report {
+  id          String   @id @default(cuid())
+  type        String   // e.g., "monthly_revenue", "trips_by_city"
+  title       String
+  data        String   // JSON string for report data
+  generatedBy String
+  generatedAt DateTime @default(now())
+  
+  createdAt   DateTime @default(now())
+
+  @@map("reports")
+}

@@ -4,8 +4,17 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { TrackingMap } from "@/components/maps/tracking-map";
-import LiveTrackingMap from "@/components/maps/live-tracking-map";
+import dynamic from 'next/dynamic';
+
+const TrackingMap = dynamic(() => import('@/components/maps/tracking-map').then(mod => mod.TrackingMap), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center w-full h-full bg-muted rounded-lg"><p>جارٍ تحميل الخريطة...</p></div>
+});
+
+const LiveTrackingMap = dynamic(() => import('@/components/maps/live-tracking-map'), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center w-full h-full bg-muted rounded-lg"><p>جارٍ تحميل الخريطة الحية...</p></div>
+});
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

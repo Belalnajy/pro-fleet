@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { UserRole } from "@prisma/client"
 
 // POST - Auto-generate invoice when trip is delivered
 export async function POST(req: NextRequest) {
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get trip details
-    const trip = await db.trip.findUnique({
+    const trip: any = await db.trip.findUnique({
       where: { id: tripId },
       include: {
         customer: {
@@ -95,7 +94,7 @@ export async function POST(req: NextRequest) {
         currency: trip.currency,
         paymentStatus: "PENDING",
         dueDate,
-        notes: `Auto-generated invoice for trip ${trip.tripNumber} from ${trip.fromCity.name} to ${trip.toCity.name}`,
+        notes: `Auto-generated invoice for trip ${trip.tripNumber} from ${trip.fromCity?.name ?? ""} to ${trip.toCity?.name ?? ""}`,
       },
       include: {
         trip: {
@@ -130,9 +129,9 @@ export async function POST(req: NextRequest) {
         paymentStatus: invoice.paymentStatus,
         trip: {
           tripNumber: trip.tripNumber,
-          fromCity: trip.fromCity.name,
-          toCity: trip.toCity.name,
-          customer: trip.customer.user.name
+          fromCity: trip.fromCity?.name ?? "",
+          toCity: trip.toCity?.name ?? "",
+          customer: trip.customer?.user?.name ?? ""
         }
       }
     })

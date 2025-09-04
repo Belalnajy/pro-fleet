@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import io, { Socket } from "socket.io-client";
-import L from "leaflet";
 
 // Dynamic imports to avoid SSR issues with react-leaflet
 const MapContainer = dynamic(
@@ -51,27 +50,10 @@ export interface LiveTrackingMapProps {
   showRecenterButton?: boolean;
 }
 
-// Fix default marker icons for Leaflet in Next.js
-const defaultIcon = new L.Icon({
-  iconUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
-
-const driverIcon = new L.DivIcon({
-  className:
-    "bg-red-500 text-white rounded-full border-2 border-white shadow-lg flex items-center justify-center",
-  html: '<div style="width: 16px; height: 16px; border-radius: 9999px; background: #ef4444; border: 2px solid #fff;"></div>',
-  iconSize: [18, 18],
-  iconAnchor: [9, 9],
-});
+// Leaflet is dynamically imported on client to avoid SSR "window is not defined"
+// We initialize icons after Leaflet loads
+let defaultIconRef: any = null;
+let driverIconRef: any = null;
 
 export default function LiveTrackingMap({
   driverId,
@@ -88,8 +70,9 @@ export default function LiveTrackingMap({
 }: LiveTrackingMapProps) {
   const [driverPos, setDriverPos] = useState<LatLng | null>(null);
   const [trail, setTrail] = useState<LatLng[]>([]);
-  const mapRef = useRef<L.Map | null>(null);
+  const mapRef = useRef<any>(null);
   const socketRef = useRef<Socket | null>(null);
+  const [LRef, setLRef] = useState<any>(null);
 
   // Prepare route polyline points
   const routePolyline = useMemo<[number, number][]>(() => {
@@ -108,6 +91,33 @@ export default function LiveTrackingMap({
   // Setup socket connection
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Dynamically load Leaflet on client only
+    if (!LRef) {
+      import("leaflet").then((mod) => {
+        const L = mod.default ?? (mod as any);
+        setLRef(L);
+        if (!defaultIconRef) {
+          defaultIconRef = new L.Icon({
+            iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+            iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+            shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41],
+          });
+        }
+        if (!driverIconRef) {
+          driverIconRef = new L.DivIcon({
+            className:
+              "bg-red-500 text-white rounded-full border-2 border-white shadow-lg flex items-center justify-center",
+            html: '<div style="width: 16px; height: 16px; border-radius: 9999px; background: #ef4444; border: 2px solid #fff;"></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+          });
+        }
+      });
+    }
 
     const url = socketUrl || window.location.origin;
     const socket = io(url, {
@@ -163,16 +173,16 @@ export default function LiveTrackingMap({
   // Whenever start changes, center the map there (initial mount handled by MapContainer props)
   useEffect(() => {
     if (mapRef.current && !driverPos) {
-      mapRef.current.setView([start.lat, start.lng], initialZoom);
+      try { mapRef.current.setView([start.lat, start.lng], initialZoom); } catch {}
     }
   }, [start, driverPos, initialZoom]);
 
   // Fit bounds to the provided route if there are multiple points
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!mapRef.current || !LRef) return;
     if (routePolyline.length > 1) {
       try {
-        const bounds = L.latLngBounds(routePolyline as any);
+        const bounds = LRef.latLngBounds(routePolyline as any);
         mapRef.current.fitBounds(bounds, { padding: [30, 30] });
       } catch {}
     }
@@ -186,8 +196,8 @@ export default function LiveTrackingMap({
         mapRef.current.flyTo([driverPos.lat, driverPos.lng], currentZoom, { duration: 0.5 });
         return;
       }
-      if (routePolyline.length > 1) {
-        const bounds = L.latLngBounds(routePolyline as any);
+      if (routePolyline.length > 1 && LRef) {
+        const bounds = LRef.latLngBounds(routePolyline as any);
         mapRef.current.fitBounds(bounds, { padding: [30, 30] });
         return;
       }
@@ -214,12 +224,16 @@ export default function LiveTrackingMap({
           <Polyline positions={routePolyline as any} color="#3b82f6" weight={4} opacity={0.6} />
 
           {/* Start and destination markers */}
-          <Marker position={[start.lat, start.lng]} icon={defaultIcon}>
+          {LRef && defaultIconRef && (
+          <Marker position={[start.lat, start.lng]} icon={defaultIconRef}>
             <Popup>نقطة البداية</Popup>
           </Marker>
-          <Marker position={[destination.lat, destination.lng]} icon={defaultIcon}>
+          )}
+          {LRef && defaultIconRef && (
+          <Marker position={[destination.lat, destination.lng]} icon={defaultIconRef}>
             <Popup>الوجهة</Popup>
           </Marker>
+          )}
           {showRecenterButton && (
           <button
             type="button"
@@ -232,8 +246,8 @@ export default function LiveTrackingMap({
           </button>
         )}
           {/* Driver live marker */}
-          {driverPos && (
-            <Marker position={[driverPos.lat, driverPos.lng]} icon={driverIcon}>
+          {driverPos && LRef && driverIconRef && (
+            <Marker position={[driverPos.lat, driverPos.lng]} icon={driverIconRef}>
               <Popup>
                 <div className="text-sm">
                   <div className="font-medium">موقع السائق</div>

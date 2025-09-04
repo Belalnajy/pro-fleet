@@ -16,9 +16,12 @@ export async function POST(req: NextRequest) {
     })
   } catch (error) {
     console.error("Seed error:", error)
-    return NextResponse.json(
-      { error: "Failed to seed demo data" },
-      { status: 500 }
-    )
+    const msg = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ error: "Failed to seed demo data", details: msg }, { status: 500 })
   }
+}
+
+export async function GET(req: NextRequest) {
+  // Convenience: allow GET to trigger seeding as well
+  return POST(req)
 }

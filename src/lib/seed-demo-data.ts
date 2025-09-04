@@ -675,8 +675,12 @@ async function seedDemoData() {
   }
 }
 
-// Run if called directly
-if (require.main === module) {
+// Run if called directly (guarded for ESM/serverless environments)
+if (
+  typeof require !== "undefined" &&
+  typeof module !== "undefined" &&
+  (require as any).main === module
+) {
   seedDemoData()
     .catch((e) => {
       console.error(e);

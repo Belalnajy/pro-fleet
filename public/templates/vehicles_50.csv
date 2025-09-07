@@ -1,0 +1,51 @@
+type,capacity,description,isActive
+TON_10,10 Ton,Bulk cargo general purpose,true
+REFRIGERATED,10 Ton Chiller,Cold chain transport,true
+TON_5,5 Ton,Regional distribution,true
+TON_20,20 Ton,Long haul heavy duty,true
+FLATBED,12 Ton,Construction materials,true
+LOWBOY,30 Ton,Heavy equipment transport,true
+TANKER,15 Ton,Liquid transport,true
+BOX_TRUCK,8 Ton,Secure dry cargo,true
+PICKUP,1 Ton,Last-mile delivery,true
+MINIVAN,1 Ton,Small goods transport,true
+TON_15,15 Ton,General logistics,true
+REFRIGERATED_SMALL,5 Ton Chiller,Perishable goods,true
+REFRIGERATED_LARGE,20 Ton Chiller,Large cold cargo,true
+TON_7,7 Ton,Urban freight,true
+TON_12,12 Ton,Regional heavy,true
+TON_25,25 Ton,Industrial loads,true
+DUMP_TRUCK,18 Ton,Aggregates & rubble,true
+CAR_CARRIER,10 Cars,Vehicle transport,true
+MOBILE_CRANE,20 Ton,On-site lifting,true
+TRAILER,30 Ton,Long trailer,true
+FRIDGE_VAN,2 Ton,Small cold chain,true
+CURTAIN_SIDE,12 Ton,Side loading ease,true
+DOUBLE_DECKER,14 Ton,High volume parcel,true
+LIVESTOCK,10 Ton,Animal transport,true
+MOTORBIKE,0.1 Ton,Ultra fast courier,true
+WALKING_FLOOR,20 Ton,Bulk unloading,true
+MEGA_TRAILER,25 Ton,High cube trailer,true
+TIPPERS,16 Ton,Dumping loads,true
+ISOTHERM,10 Ton,Insulated box,true
+TAIL_LIFT,10 Ton,With tailgate lift,true
+SWAP_BODY,20 Ton,Intermodal swap body,true
+CITY_TRUCK,3.5 Ton,City logistics,true
+ARTICULATED,24 Ton,Tractor + trailer,true
+CHASSIS,20 Ton,Container chassis,true
+CONTAINER_20FT,24 Ton,20ft container,true
+CONTAINER_40FT,26 Ton,40ft container,true
+REEFER_CONTAINER,25 Ton,Reefer container,true
+BULK_POWDER,22 Ton,Blower tanker,true
+FUEL_TANKER,30 Ton,Petroleum tanker,true
+WATER_TANKER,20 Ton,Potable water,true
+GARBAGE_TRUCK,12 Ton,Refuse collection,true
+RECOVERY_TRUCK,10 Ton,Vehicle recovery,true
+SECURED_VAN,2 Ton,High security,true
+CEMENT_MIXER,18 Ton,Concrete mixer,true
+PIPE_CARRIER,20 Ton,Pipes and poles,true
+LOG_CARRIER,20 Ton,Timber transport,true
+HAZMAT_TRUCK,18 Ton,Hazardous materials,true
+FRAGILE_CARE,5 Ton,Fragile special care,true
+COOL_BOX,1 Ton,Portable cold box,true
+MICRO_TRUCK,0.8 Ton,Micro urban delivery,true

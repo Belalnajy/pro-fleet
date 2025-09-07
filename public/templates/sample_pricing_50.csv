@@ -1,0 +1,51 @@
+from_city,to_city,vehicle_type,quantity,price,currency
+Riyadh,Jeddah,TON_10,1,1250,SAR
+Dammam,Riyadh,TON_5,1,900,SAR
+Jeddah,Mecca,REFRIGERATED,1,500,SAR
+Tabuk,Neom,TON_20,2,2100,SAR
+Riyadh,Medina,TON_10,1,1350,SAR
+Jeddah,Dammam,TON_5,1,950,SAR
+Mecca,Taif,REFRIGERATED,1,520,SAR
+Neom,Tabuk,TON_20,1,1950,SAR
+Riyadh,Abha,TON_10,1,1600,SAR
+Medina,Jeddah,TON_5,1,980,SAR
+Taif,Mecca,REFRIGERATED,1,540,SAR
+Dammam,Jubail,TON_20,2,800,SAR
+Jubail,Al Khobar,TON_10,1,450,SAR
+Al Khobar,Dammam,TON_5,1,400,SAR
+Abha,Riyadh,REFRIGERATED,1,1650,SAR
+Hail,Tabuk,TON_20,1,1800,SAR
+Riyadh,Hail,TON_10,1,1200,SAR
+Jeddah,Medina,TON_5,1,870,SAR
+Medina,Mecca,REFRIGERATED,1,480,SAR
+Mecca,Jeddah,TON_20,2,700,SAR
+Taif,Riyadh,TON_10,1,1400,SAR
+Dammam,Abha,TON_5,1,1550,SAR
+Jeddah,Taif,REFRIGERATED,1,560,SAR
+Riyadh,Jubail,TON_20,2,1050,SAR
+Jubail,Riyadh,TON_10,1,1050,SAR
+Al Khobar,Jeddah,TON_5,1,1900,SAR
+Abha,Taif,REFRIGERATED,1,650,SAR
+Tabuk,Medina,TON_20,1,1700,SAR
+Neom,Riyadh,TON_10,1,2200,SAR
+Hail,Jeddah,TON_5,1,1850,SAR
+Riyadh,Mecca,REFRIGERATED,1,600,SAR
+Jeddah,Riyadh,TON_20,2,2100,SAR
+Medina,Abha,TON_10,1,1500,SAR
+Mecca,Dammam,TON_5,1,2000,SAR
+Taif,Al Khobar,REFRIGERATED,1,1100,SAR
+Dammam,Neom,TON_20,2,2800,SAR
+Jubail,Mecca,TON_10,1,1750,SAR
+Al Khobar,Medina,TON_5,1,1450,SAR
+Abha,Jeddah,REFRIGERATED,1,1400,SAR
+Tabuk,Riyadh,TON_20,2,2300,SAR
+Neom,Jeddah,TON_10,1,2400,SAR
+Hail,Mecca,TON_5,1,1700,SAR
+Riyadh,Tabuk,REFRIGERATED,1,2100,SAR
+Jeddah,Abha,TON_20,2,2200,SAR
+Medina,Hail,TON_10,1,1300,SAR
+Mecca,Abha,TON_5,1,1500,SAR
+Taif,Jeddah,REFRIGERATED,1,580,SAR
+Dammam,Tabuk,TON_20,2,2600,SAR
+Jubail,Neom,TON_10,1,2450,SAR
+Al Khobar,Riyadh,TON_5,1,850,SAR

@@ -356,7 +356,7 @@ export default function CustomerDashboard() {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="font-semibold">{t("currency")} {invoice.amount.toLocaleString()}</div>
+                      <div className="font-semibold">{t("currency")} {(invoice.amount || 0).toLocaleString()}</div>
                       <Badge className={getStatusColor(invoice.status)}>
                         <div className="flex items-center space-x-1">
                           {getStatusIcon(invoice.status)}

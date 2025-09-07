@@ -42,6 +42,8 @@ export default function BookTrip() {
   
   const [cities, setCities] = useState<City[]>([])
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([])
+  const [vehicles, setVehicles] = useState<any[]>([])
+  const [temperatures, setTemperatures] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState(1)
@@ -70,15 +72,20 @@ export default function BookTrip() {
     } else {
       fetchCities()
       fetchVehicleTypes()
+      fetchVehicles()
+      fetchTemperatures()
     }
   }, [session, status, router])
 
   const fetchCities = async () => {
     try {
-      const response = await fetch("/api/admin/cities")
+      const response = await fetch("/api/customer/cities")
       if (response.ok) {
         const data = await response.json()
         setCities(data)
+        console.log("Cities loaded:", data)
+      } else {
+        console.error("Failed to fetch cities:", response.status)
       }
     } catch (error) {
       console.error("Error fetching cities:", error)
@@ -89,13 +96,49 @@ export default function BookTrip() {
 
   const fetchVehicleTypes = async () => {
     try {
-      const response = await fetch("/api/admin/vehicle-types")
+      const response = await fetch("/api/customer/vehicles")
       if (response.ok) {
         const data = await response.json()
-        setVehicleTypes(data)
+        // Transform data to match expected interface
+        const transformedData = data.map((vehicle: any) => ({
+          id: vehicle.id,
+          name: vehicle.type,
+          capacity: vehicle.capacity,
+          pricePerKm: 0 // Default value
+        }))
+        setVehicleTypes(transformedData)
+        console.log("Vehicles loaded:", transformedData)
+      } else {
+        console.error("Failed to fetch vehicles:", response.status)
       }
     } catch (error) {
       console.error("Error fetching vehicle types:", error)
+    }
+  }
+
+  const fetchVehicles = async () => {
+    try {
+      const response = await fetch("/api/customer/vehicles")
+      if (response.ok) {
+        const data = await response.json()
+        setVehicles(data)
+        console.log("Vehicles loaded:", data)
+      }
+    } catch (error) {
+      console.error("Error fetching vehicles:", error)
+    }
+  }
+
+  const fetchTemperatures = async () => {
+    try {
+      const response = await fetch("/api/customer/temperatures")
+      if (response.ok) {
+        const data = await response.json()
+        setTemperatures(data)
+        console.log("Temperatures loaded:", data)
+      }
+    } catch (error) {
+      console.error("Error fetching temperatures:", error)
     }
   }
 
@@ -116,24 +159,49 @@ export default function BookTrip() {
   const handleSubmit = async () => {
     setSubmitting(true)
     try {
+      // Get the selected temperature ID
+      let temperatureId = null
+      if (tripForm.temperatureRequirement && tripForm.temperatureRequirement !== "ambient") {
+        const selectedTemp = temperatures.find(t => t.option.toLowerCase() === tripForm.temperatureRequirement.toLowerCase())
+        temperatureId = selectedTemp?.id || null
+      }
+
+      // Get the selected vehicle ID (use first available if not specified)
+      let vehicleId = null
+      if (vehicles.length > 0) {
+        vehicleId = vehicles[0].id // Use first available vehicle
+      }
+
+      const tripData = {
+        fromCityId: tripForm.fromCityId,
+        toCityId: tripForm.toCityId,
+        scheduledDate: tripForm.scheduledPickupDate,
+        temperatureId: temperatureId,
+        vehicleId: vehicleId,
+        price: estimatedPrice || 500,
+        notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress}, Delivery: ${tripForm.deliveryAddress}`
+      }
+
+      console.log('Sending trip data:', tripData)
+
       const response = await fetch("/api/customer/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...tripForm,
-          cargoWeight: parseFloat(tripForm.cargoWeight),
-          cargoValue: parseFloat(tripForm.cargoValue),
-        }),
+        body: JSON.stringify(tripData),
       })
       
       if (response.ok) {
+        const result = await response.json()
+        console.log('Trip created successfully:', result)
         setStep(4) // Success step
       } else {
-        alert(t("errorCreatingTrip"))
+        const errorData = await response.json()
+        console.error('Error response:', errorData)
+        alert(t("errorCreatingTrip") + ': ' + (errorData.error || 'Unknown error'))
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating trip:", error)
-      alert(t("errorCreatingTrip"))
+      alert(t("errorCreatingTrip") + ': ' + (error.message || 'Unknown error'))
     } finally {
       setSubmitting(false)
     }
@@ -184,7 +252,7 @@ export default function BookTrip() {
               <h2 className="text-2xl font-bold mb-2">{t("tripRequestSubmitted")}</h2>
               <p className="text-muted-foreground mb-6">{t("tripRequestDescription")}</p>
               <div className="space-y-2">
-                <Button onClick={() => router.push("/customer/trips")} className="w-full">
+                <Button onClick={() => router.push("/customer/my-trips")} className="w-full">
                   {t("viewMyTrips")}
                 </Button>
                 <Button variant="outline" onClick={() => {
@@ -384,7 +452,7 @@ export default function BookTrip() {
                     <div className="flex items-center justify-between">
                       <span className="font-medium">{t("estimatedPrice")}:</span>
                       <span className="text-lg font-bold text-primary">
-                        {estimatedPrice.toFixed(2)} {t("currency")}
+                        {(estimatedPrice || 0).toFixed(2)} {t("currency")}
                       </span>
                     </div>
                   </div>
@@ -439,7 +507,7 @@ export default function BookTrip() {
                     <div>
                       <span className="text-muted-foreground">{t("estimatedPrice")}:</span>
                       <p className="font-medium text-primary">
-                        {estimatedPrice.toFixed(2)} {t("currency")}
+                        {(estimatedPrice || 0).toFixed(2)} {t("currency")}
                       </p>
                     </div>
                   </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { TrackingMap } from "@/components/maps/tracking-map";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,16 +29,29 @@ interface DriverTrip {
   id: string;
   tripNumber: string;
   status: string;
-  fromCity: string;
-  toCity: string;
-  vehicle: string;
+  fromCity: {
+    name: string;
+  };
+  toCity: {
+    name: string;
+  };
+  vehicle: {
+    type: string;
+    capacity: string;
+  };
   scheduledDate: string;
   actualStartDate?: string;
   customer: {
     name: string;
     phone?: string;
   };
-  trackingLogs: Array<{
+  temperature?: {
+    option: string;
+    value: number;
+    unit: string;
+  };
+  price: number;
+  trackingLogs?: Array<{
     id: string;
     latitude: number;
     longitude: number;
@@ -57,6 +71,7 @@ interface LocationData {
 export default function DriverTrackingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { toast } = useToast();
   const [currentTrip, setCurrentTrip] = useState<DriverTrip | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
@@ -88,7 +103,7 @@ export default function DriverTrackingPage() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch("/api/tracking");
+      const response = await fetch("/api/driver/trips");
       
       if (!response.ok) {
         throw new Error("Failed to fetch current trip");
@@ -98,7 +113,7 @@ export default function DriverTrackingPage() {
       
       // Find the active trip for this driver
       const activeTrip = Array.isArray(data) 
-        ? data.find((trip: DriverTrip) => trip.status === "IN_PROGRESS" || trip.status === "PENDING")
+        ? data.find((trip: DriverTrip) => trip.status === "IN_PROGRESS")
         : data;
       
       setCurrentTrip(activeTrip || null);
@@ -199,20 +214,32 @@ export default function DriverTrackingPage() {
     if (!currentTrip) return;
 
     try {
-      const response = await fetch(`/api/trips/${currentTrip.id}/status`, {
-        method: "PUT",
+      const response = await fetch("/api/driver/trips/status", {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ tripId: currentTrip.id, status: newStatus }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update trip status");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update trip status");
       }
 
       // Refresh trip data
       await fetchCurrentTrip();
+      
+      // Show success toast
+      toast({
+        title: "✅ تم تحديث حالة الرحلة",
+        description: `تم تغيير حالة الرحلة إلى ${getStatusText(newStatus)}`
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update status");
+      toast({
+        variant: "destructive",
+        title: "❌ خطأ في تحديث الحالة",
+        description: err instanceof Error ? err.message : "Failed to update status"
+      });
     }
   };
 
@@ -332,14 +359,16 @@ export default function DriverTrackingPage() {
                     <div className="mt-1 flex items-center gap-2">
                       <Route className="h-4 w-4" />
                       <span className="font-medium">
-                        {currentTrip.fromCity} → {currentTrip.toCity}
+                        {currentTrip.fromCity?.name} → {currentTrip.toCity?.name}
                       </span>
                     </div>
                   </div>
 
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">المركبة</label>
-                    <div className="mt-1">{currentTrip.vehicle}</div>
+                    <div className="mt-1">
+                      {currentTrip.vehicle?.type} - {currentTrip.vehicle?.capacity}
+                    </div>
                   </div>
 
                   <div>
@@ -467,6 +496,40 @@ export default function DriverTrackingPage() {
                   </Button>
                 </CardContent>
               </Card>
+              
+              {/* Route Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>معلومات المسار</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-green-600" />
+                    <div>
+                      <div className="text-sm text-muted-foreground">نقطة البداية</div>
+                      <div className="font-medium">{currentTrip.fromCity?.name}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-red-600" />
+                    <div>
+                      <div className="text-sm text-muted-foreground">نقطة النهاية</div>
+                      <div className="font-medium">{currentTrip.toCity?.name}</div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 border-t">
+                    <div className="text-sm text-muted-foreground mb-1">تفاصيل المسار</div>
+                    <div className="text-xs text-blue-600">
+                      🗺️ يتم عرض المسار على الخريطة
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      📍 نقاط التتبع محاكية للعرض
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Map */}
@@ -484,6 +547,7 @@ export default function DriverTrackingPage() {
                     height="500px"
                     autoRefresh={true}
                     refreshInterval={15000}
+                    showRoute={true}
                   />
                 </CardContent>
               </Card>

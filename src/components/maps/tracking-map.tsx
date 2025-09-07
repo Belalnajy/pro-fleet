@@ -53,6 +53,13 @@ interface TripInfo {
   };
 }
 
+interface RoutePoint {
+  latitude: number;
+  longitude: number;
+  name: string;
+  type: 'start' | 'end';
+}
+
 interface TrackingMapProps {
   tripId?: string;
   showAllActiveTrips?: boolean;
@@ -60,6 +67,7 @@ interface TrackingMapProps {
   autoRefresh?: boolean;
   refreshInterval?: number;
   center?: [number, number] | null;
+  showRoute?: boolean;
 }
 
 export function TrackingMap({
@@ -69,11 +77,19 @@ export function TrackingMap({
   autoRefresh = false,
   refreshInterval = 30000,
   center = null,
+  showRoute = false,
 }: TrackingMapProps) {
   const [trackingData, setTrackingData] = useState<{
     trips: Array<TripInfo & { trackingLogs: TrackingPoint[] }>;
     points: TrackingPoint[];
   }>({ trips: [], points: [] });
+  const [routeData, setRouteData] = useState<{
+    startPoint: RoutePoint | null;
+    endPoint: RoutePoint | null;
+    trackingPoints: TrackingPoint[];
+    totalDistance: number;
+    estimatedDuration: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -95,6 +111,29 @@ export function TrackingMap({
     try {
       setError(null);
       
+      // If showRoute is enabled and we have a tripId, fetch route data
+      if (showRoute && tripId) {
+        const routeResponse = await fetch(`/api/driver/trips/${tripId}/route`);
+        
+        if (routeResponse.ok) {
+          const routeData = await routeResponse.json();
+          setRouteData(routeData.route);
+          
+          // Also set trip data for display
+          setTrackingData({
+            trips: [{
+              ...routeData.trip,
+              trackingLogs: routeData.route.trackingPoints || []
+            }],
+            points: routeData.route.trackingPoints || []
+          });
+          
+          setLastUpdate(new Date());
+          return;
+        }
+      }
+      
+      // Fallback to regular tracking API
       let url = "/api/tracking";
       const params = new URLSearchParams();
       
@@ -345,6 +384,62 @@ export function TrackingMap({
               />
             );
           })}
+          
+          {/* Route Start and End Points */}
+          {routeData && (
+            <>
+              {/* Start Point */}
+              {routeData.startPoint && (
+                <Marker
+                  position={[routeData.startPoint.latitude, routeData.startPoint.longitude]}
+                  icon={createCustomIcon("green")}
+                >
+                  <Popup>
+                    <div className="text-center">
+                      <div className="font-bold text-green-600">🚀 نقطة البداية</div>
+                      <div className="font-medium">{routeData.startPoint.name}</div>
+                      <div className="text-sm text-gray-600">
+                        📍 {routeData.startPoint.latitude.toFixed(4)}, {routeData.startPoint.longitude.toFixed(4)}
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+              
+              {/* End Point */}
+              {routeData.endPoint && (
+                <Marker
+                  position={[routeData.endPoint.latitude, routeData.endPoint.longitude]}
+                  icon={createCustomIcon("red")}
+                >
+                  <Popup>
+                    <div className="text-center">
+                      <div className="font-bold text-red-600">🏁 نقطة النهاية</div>
+                      <div className="font-medium">{routeData.endPoint.name}</div>
+                      <div className="text-sm text-gray-600">
+                        📍 {routeData.endPoint.latitude.toFixed(4)}, {routeData.endPoint.longitude.toFixed(4)}
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              )}
+              
+              {/* Route Path */}
+              {routeData.startPoint && routeData.endPoint && (
+                <Polyline
+                  positions={[
+                    [routeData.startPoint.latitude, routeData.startPoint.longitude],
+                    ...routeData.trackingPoints.map(point => [point.latitude, point.longitude] as [number, number]),
+                    [routeData.endPoint.latitude, routeData.endPoint.longitude]
+                  ]}
+                  color="#3b82f6"
+                  weight={4}
+                  opacity={0.8}
+                  dashArray="10, 5"
+                />
+              )}
+            </>
+          )}
         </MapContainer>
       </div>
 

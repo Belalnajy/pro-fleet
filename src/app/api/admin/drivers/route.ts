@@ -23,8 +23,12 @@ export async function GET(request: NextRequest) {
         phone: true,
         driverProfile: {
           select: {
-            licenseNumber: true,
-            licenseExpiry: true
+            id: true,
+            carPlateNumber: true,
+            nationality: true,
+            carRegistration: true,
+            licenseExpiry: true,
+            isAvailable: true
           }
         }
       },
@@ -35,12 +39,16 @@ export async function GET(request: NextRequest) {
 
     // Transform data to match frontend interface
     const transformedDrivers = drivers.map(driver => ({
-      id: driver.id,
+      id: driver.driverProfile?.id || driver.id, // Use Driver ID, fallback to User ID
+      userId: driver.id, // Keep User ID for reference
       name: driver.name,
       email: driver.email,
       phone: driver.phone,
-      licenseNumber: driver.driverProfile?.licenseNumber || "",
+      carPlateNumber: driver.driverProfile?.carPlateNumber || "",
+      nationality: driver.driverProfile?.nationality || "",
+      carRegistration: driver.driverProfile?.carRegistration || "",
       licenseExpiry: driver.driverProfile?.licenseExpiry,
+      isAvailable: driver.driverProfile?.isAvailable ?? true,
     }))
 
     return NextResponse.json(transformedDrivers)

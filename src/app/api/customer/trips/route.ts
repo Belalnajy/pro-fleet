@@ -18,32 +18,35 @@ export async function GET(request: NextRequest) {
       include: {
         driver: {
           select: {
-            name: true,
-            email: true,
-          }
+            carPlateNumber: true,
+            user: {
+              select: {
+                name: true,
+              },
+            },
+          },
         },
         vehicle: {
           select: {
-            plateNumber: true,
-            type: true
+            type: true,
+            capacity: true,
           }
         },
         fromCity: {
           select: {
             name: true,
-            nameAr: true
           }
         },
         toCity: {
           select: {
             name: true,
-            nameAr: true
           }
         },
         temperature: {
           select: {
-            name: true,
-            value: true
+            option: true,
+            value: true,
+            unit: true,
           }
         }
       },
@@ -52,31 +55,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Transform the data to match the frontend interface
-    const transformedTrips = trips.map(trip => ({
-      id: trip.id,
-      tripNumber: trip.tripNumber,
-      fromCityName: trip.fromCity.name,
-      toCityName: trip.toCity.name,
-      pickupAddress: trip.notes?.split('\n')[0]?.replace('Pickup: ', '') || "",
-      deliveryAddress: trip.notes?.split('\n')[1]?.replace('Delivery: ', '') || "",
-      cargoType: trip.notes?.split('\n')[2]?.split(' (')[0]?.replace('Cargo: ', '') || "General Cargo",
-      cargoWeight: parseInt(trip.notes?.split('(')[1]?.split('kg')[0] || "1000"),
-      cargoValue: trip.price,
-      temperatureRequirement: trip.temperature?.name,
-      specialInstructions: trip.notes,
-      status: trip.status,
-      scheduledPickupDate: trip.scheduledDate,
-      actualPickupDate: trip.actualStartDate,
-      estimatedDeliveryDate: trip.scheduledDate, // Using scheduled date as estimate
-      actualDeliveryDate: trip.deliveredDate,
-      totalPrice: trip.price,
-      driverName: trip.driver?.name,
-      vehiclePlateNumber: trip.vehicle?.plateNumber,
-      createdAt: trip.createdAt,
-    }))
-
-    return NextResponse.json(transformedTrips)
+    // Return trips with relations for my-trips page
+    return NextResponse.json(trips)
   } catch (error) {
     console.error("Error fetching customer trips:", error)
     return NextResponse.json(
@@ -98,20 +78,18 @@ export async function POST(request: NextRequest) {
     const {
       fromCityId,
       toCityId,
-      pickupAddress,
-      deliveryAddress,
-      cargoType,
-      cargoWeight,
-      cargoValue,
-      temperatureRequirement,
-      specialInstructions,
-      scheduledPickupDate,
-      estimatedDeliveryDate,
-      vehicleTypeId,
+      temperatureId,
+      scheduledDate,
+      price,
+      notes,
+      vehicleId,
     } = body
 
+    console.log('Received trip data:', body)
+
     // Validate required fields
-    if (!fromCityId || !toCityId || !pickupAddress || !deliveryAddress || !scheduledPickupDate) {
+    if (!fromCityId || !toCityId || !scheduledDate) {
+      console.log('Missing required fields:', { fromCityId, toCityId, scheduledDate })
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -120,34 +98,58 @@ export async function POST(request: NextRequest) {
 
     // Generate trip number
     const tripCount = await db.trip.count()
-    const tripNumber = `TRP${String(tripCount + 1).padStart(6, '0')}`
+    const tripNumber = `TWB:${String(tripCount + 1).padStart(4, "0")}`
 
-    // Get default temperature if not provided
-    let temperatureId = null
-    if (temperatureRequirement) {
-      const temperature = await db.temperature.findFirst({
+    // Use provided data or get defaults
+    let finalTemperatureId = temperatureId
+    if (!finalTemperatureId) {
+      const defaultTemp = await db.temperatureSetting.findFirst({
         where: {
-          name: temperatureRequirement
+          option: "AMBIENT"
         }
       })
-      temperatureId = temperature?.id
+      finalTemperatureId = defaultTemp?.id || null
     }
 
-    if (!temperatureId) {
-      // Get default temperature (ambient)
-      const defaultTemp = await db.temperature.findFirst({
+    let finalVehicleId = vehicleId
+    if (!finalVehicleId) {
+      const defaultVehicle = await db.vehicle.findFirst({
         where: {
-          name: "Ambient"
+          isActive: true
         }
       })
-      temperatureId = defaultTemp?.id
+      finalVehicleId = defaultVehicle?.id || null
     }
 
-    // Calculate estimated price based on distance and vehicle type
-    // This is a simplified calculation - in a real app you'd use proper pricing rules
-    const basePrice = 500 // Base price in SAR
-    const weightMultiplier = cargoWeight ? (cargoWeight / 1000) * 50 : 50
-    const estimatedPrice = basePrice + weightMultiplier
+    const finalPrice = price || 500 // Use provided price or default
+
+    // Validate that we have required IDs
+    if (!finalTemperatureId) {
+      console.error('No temperature ID available')
+      return NextResponse.json(
+        { error: "Temperature setting not found" },
+        { status: 400 }
+      )
+    }
+
+    if (!finalVehicleId) {
+      console.error('No vehicle ID available')
+      return NextResponse.json(
+        { error: "Vehicle not found" },
+        { status: 400 }
+      )
+    }
+
+    console.log('Creating trip with:', {
+      tripNumber,
+      customerId: session.user.id,
+      fromCityId,
+      toCityId,
+      temperatureId: finalTemperatureId,
+      vehicleId: finalVehicleId,
+      scheduledDate,
+      price: finalPrice
+    })
 
     // Create trip
     const trip = await db.trip.create({
@@ -156,11 +158,12 @@ export async function POST(request: NextRequest) {
         customerId: session.user.id,
         fromCityId,
         toCityId,
-        temperatureId: temperatureId!,
-        scheduledDate: new Date(scheduledPickupDate),
-        price: estimatedPrice,
+        temperatureId: finalTemperatureId!,
+        vehicleId: finalVehicleId!,
+        scheduledDate: new Date(scheduledDate),
+        price: finalPrice,
         currency: "SAR",
-        notes: `Pickup: ${pickupAddress}\nDelivery: ${deliveryAddress}\nCargo: ${cargoType} (${cargoWeight}kg)\nSpecial Instructions: ${specialInstructions || 'None'}`,
+        notes: notes || "Customer booking",
         status: "PENDING",
       },
       include: {

@@ -65,8 +65,12 @@ interface Trip {
     }
   }
   vehicle: {
-    type: string
     capacity: string
+    vehicleTypeId: string
+    vehicleType: {
+      name: string
+      nameAr: string
+    }
   }
   fromCity: {
     name: string
@@ -505,7 +509,10 @@ return (
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <Truck className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{trip.vehicle.capacity}</span>
+                      <div>
+                        <div className="text-sm font-medium">{trip.vehicle.vehicleType?.name || 'Unknown Type'}</div>
+                        <div className="text-xs text-muted-foreground">{trip.vehicle.capacity}</div>
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>

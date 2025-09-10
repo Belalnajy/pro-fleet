@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -28,16 +29,23 @@ import {
   Trash2,
   Package,
 } from "lucide-react"
-import { VehicleType } from "@prisma/client"
+// Vehicle types are now dynamic via VehicleTypeModel
+
+interface VehicleTypeModelRef {
+  id: string
+  name: string
+  nameAr?: string | null
+}
 
 interface Vehicle {
   id: string
-  type: VehicleType
+  vehicleTypeId: string
   capacity: string
   description?: string | null
   isActive: boolean
   createdAt: string
   updatedAt: string
+  vehicleType?: VehicleTypeModelRef
 }
 
 export default function VehiclesManagement() {
@@ -45,15 +53,17 @@ export default function VehiclesManagement() {
   const router = useRouter()
   const { t } = useLanguage()
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleTypeModelRef[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
+  const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
-    type: "",
+    vehicleTypeId: "",
     capacity: "",
     description: "",
     isActive: true,
@@ -72,15 +82,22 @@ export default function VehiclesManagement() {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch("/api/admin/vehicles")
-      if (response.ok) {
-        const data = await response.json()
-        setVehicles(data)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || "Failed to fetch vehicles")
-        toast.error("Fetch Failed", { description: errorData.error || "Failed to fetch vehicles" })
+      const [vehiclesRes, typesRes] = await Promise.all([
+        fetch("/api/admin/vehicles"),
+        fetch("/api/admin/vehicle-types"),
+      ])
+      if (!vehiclesRes.ok) {
+        const err = await vehiclesRes.json()
+        throw new Error(err?.error || "Failed to fetch vehicles")
       }
+      if (!typesRes.ok) {
+        const err = await typesRes.json()
+        throw new Error(err?.error || "Failed to fetch vehicle types")
+      }
+      const vehiclesData = await vehiclesRes.json()
+      const typesData = await typesRes.json()
+      setVehicles(vehiclesData)
+      setVehicleTypes(typesData)
     } catch (error) {
       setError("An unexpected network error occurred.")
       toast.error("Network Error", { description: "Failed to connect to the server." })
@@ -128,9 +145,9 @@ export default function VehiclesManagement() {
       toast.info("No Data", { description: "There is no data to export." });
       return;
     }
-    const headers = ["type", "capacity", "description", "isActive"];
+    const headers = ["vehicleType", "capacity", "description", "isActive"];
     const rows = filteredVehicles.map(v => [
-      v.type,
+      v.vehicleType?.name || v.vehicleTypeId,
       v.capacity,
       v.description || "",
       String(v.isActive),
@@ -150,7 +167,7 @@ export default function VehiclesManagement() {
 
   const resetForm = () => {
     setFormData({
-      type: "",
+      vehicleTypeId: "",
       capacity: "",
       description: "",
       isActive: true,
@@ -162,7 +179,7 @@ export default function VehiclesManagement() {
     setEditingVehicle(vehicle)
     if (vehicle) {
       setFormData({
-        type: vehicle.type,
+        vehicleTypeId: vehicle.vehicleTypeId,
         capacity: vehicle.capacity,
         description: vehicle.description || "",
         isActive: vehicle.isActive,
@@ -208,19 +225,22 @@ export default function VehiclesManagement() {
     }
   }
 
-  const handleDelete = async (vehicleId: string) => {
-    if (!confirm("Are you sure you want to delete this vehicle?")) return;
+  const handleDeleteClick = (vehicle: Vehicle) => {
+    setDeleteVehicle(vehicle);
+  };
 
+  const handleDelete = async (vehicle: Vehicle) => {
     try {
       const response = await fetch(`/api/admin/vehicles`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: vehicleId }),
+        body: JSON.stringify({ id: vehicle.id }),
       });
 
       if (response.ok) {
         toast.success("Vehicle deleted successfully");
         await fetchData();
+        setDeleteVehicle(null);
       } else {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to delete vehicle");
@@ -238,11 +258,11 @@ export default function VehiclesManagement() {
     )
   )
 
-  const getVehicleTypeLabel = (type: VehicleType) => {
-    return type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const getVehicleTypeLabel = (v: Vehicle) => {
+    return v.vehicleType?.nameAr || v.vehicleType?.name || "Unknown"
   }
 
-  const getVehicleTypeIcon = (type: VehicleType) => {
+  const getVehicleTypeIcon = () => {
     return <Truck className="h-5 w-5 text-muted-foreground" />
   }
 
@@ -305,7 +325,7 @@ export default function VehiclesManagement() {
             <Settings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{[...new Set(vehicles.map(v => v.type))].length}</div>
+            <div className="text-2xl font-bold">{[...new Set(vehicles.map(v => v.vehicleTypeId))].length}</div>
           </CardContent>
         </Card>
       </div>
@@ -349,8 +369,8 @@ export default function VehiclesManagement() {
                     <TableRow key={vehicle.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          {getVehicleTypeIcon(vehicle.type)}
-                          <span className="font-medium">{getVehicleTypeLabel(vehicle.type)}</span>
+                          {getVehicleTypeIcon()}
+                          <span className="font-medium">{getVehicleTypeLabel(vehicle)}</span>
                         </div>
                       </TableCell>
                       <TableCell>{vehicle.capacity}</TableCell>
@@ -364,7 +384,7 @@ export default function VehiclesManagement() {
                         <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(vehicle)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(vehicle.id)}>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(vehicle)}>
                           <Trash2 className="h-4 w-4 text-destructive" />
                         </Button>
                       </TableCell>
@@ -391,14 +411,14 @@ export default function VehiclesManagement() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="type" className="text-right">Type</Label>
-              <Select value={formData.type} onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}>
+              <Label htmlFor="vehicleTypeId" className="text-right">Type</Label>
+              <Select value={formData.vehicleTypeId} onValueChange={(value) => setFormData(prev => ({ ...prev, vehicleTypeId: value }))}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue placeholder="Select vehicle type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.values(VehicleType).map(type => (
-                    <SelectItem key={type} value={type}>{getVehicleTypeLabel(type)}</SelectItem>
+                  {vehicleTypes.filter(vt => vt).map(vt => (
+                    <SelectItem key={vt.id} value={vt.id}>{vt.nameAr || vt.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -435,6 +455,32 @@ export default function VehiclesManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteVehicle} onOpenChange={(open) => {
+        if (!open) setDeleteVehicle(null)
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Vehicle</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deleteVehicle?.vehicleType?.name || 'Unknown Type'} - {deleteVehicle?.capacity}</strong>?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteVehicle(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deleteVehicle && handleDelete(deleteVehicle)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }

@@ -12,17 +12,14 @@ export async function GET(req: NextRequest) {
     }
 
     const vehicles = await db.vehicle.findMany({
-      where: {
-        isActive: true
-      },
+      where: { isActive: true },
       select: {
         id: true,
-        type: true,
+        vehicleTypeId: true,
         capacity: true,
+        vehicleType: { select: { name: true, nameAr: true } },
       },
-      orderBy: {
-        type: "asc"
-      }
+      orderBy: { vehicleTypeId: "asc" }
     })
 
     return NextResponse.json(vehicles)

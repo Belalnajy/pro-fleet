@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -72,6 +73,7 @@ export default function PricingManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingPricing, setEditingPricing] = useState<Pricing | null>(null)
+  const [deletePricing, setDeletePricing] = useState<Pricing | null>(null)
   const importInputRef = useRef<HTMLInputElement | null>(null)
 
   // Form state
@@ -164,7 +166,7 @@ export default function PricingManagement() {
     const rows = pricing.map(p => [
       p.fromCity.name,
       p.toCity.name,
-      p.vehicle.type,
+      p.vehicle.vehicleType?.name || p.vehicle.vehicleTypeId,
       String(p.quantity),
       String(p.price),
       p.currency,
@@ -180,6 +182,33 @@ export default function PricingManagement() {
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
+
+  const handleDeleteClick = (pricing: Pricing) => {
+    setDeletePricing(pricing);
+  };
+
+  const handleDelete = async (pricing: Pricing) => {
+    try {
+      const response = await fetch(`/api/admin/pricing`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: pricing.id }),
+      });
+
+      if (response.ok) {
+        toast.success("Pricing deleted successfully");
+        await fetchData();
+        setDeletePricing(null);
+      } else {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete pricing");
+      }
+    } catch (err: any) {
+      toast.error("Deletion Failed", {
+        description: err.message,
+      });
+    }
+  };
 
   const handleSubmit = async () => {
     try {
@@ -242,7 +271,7 @@ export default function PricingManagement() {
   const filteredPricing = pricing.filter(item =>
     item.fromCity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.toCity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.vehicle.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.vehicle.vehicleType?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.vehicle.capacity.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
@@ -350,7 +379,7 @@ export default function PricingManagement() {
                     <SelectContent>
                       {vehicles.map((vehicle) => (
                         <SelectItem key={vehicle.id} value={vehicle.id}>
-                          {vehicle.capacity} - {vehicle.type}
+                          {vehicle.capacity} - {(vehicle.vehicleType?.name || vehicle.vehicleTypeId)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -556,7 +585,7 @@ export default function PricingManagement() {
                         <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(item)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -568,6 +597,32 @@ export default function PricingManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletePricing} onOpenChange={(open) => {
+        if (!open) setDeletePricing(null)
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Pricing</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete pricing from <strong>{deletePricing?.fromCity?.name}</strong> to <strong>{deletePricing?.toCity?.name}</strong> for vehicle <strong>{deletePricing?.vehicle?.capacity}</strong>?
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeletePricing(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => deletePricing && handleDelete(deletePricing)}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }

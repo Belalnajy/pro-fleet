@@ -1,7 +1,6 @@
 import { db } from "@/lib/db";
 import {
   UserRole,
-  VehicleType,
   TemperatureOption,
   SubscriptionType,
   TripStatus,
@@ -188,30 +187,91 @@ async function seedDemoData() {
       })
     ]);
 
-    // Create Vehicles
+    // Create Vehicle Types first (upsert to avoid duplicates)
+    console.log("Creating vehicle types...");
+    const vehicleTypes = await Promise.all([
+      db.vehicleTypeModel.upsert({
+        where: { name: "5 Ton Truck" },
+        update: {},
+        create: {
+          name: "5 Ton Truck",
+          nameAr: "شاحنة 5 طن",
+          capacity: "5 Ton",
+          description: "5 Ton Dry Truck",
+          isRefrigerated: false,
+          isActive: true
+        }
+      }),
+      db.vehicleTypeModel.upsert({
+        where: { name: "10 Ton Truck" },
+        update: {},
+        create: {
+          name: "10 Ton Truck",
+          nameAr: "شاحنة 10 طن",
+          capacity: "10 Ton",
+          description: "10 Ton Dry Truck",
+          isRefrigerated: false,
+          isActive: true
+        }
+      }),
+      db.vehicleTypeModel.upsert({
+        where: { name: "40 ft Container" },
+        update: {},
+        create: {
+          name: "40 ft Container",
+          nameAr: "حاوية 40 قدم",
+          capacity: "40 ft",
+          description: "40 ft Dry Container",
+          isRefrigerated: false,
+          isActive: true
+        }
+      }),
+      db.vehicleTypeModel.upsert({
+        where: { name: "Refrigerated Truck" },
+        update: {},
+        create: {
+          name: "Refrigerated Truck",
+          nameAr: "شاحنة مبردة",
+          capacity: "20 Ton",
+          description: "Refrigerated Transport",
+          isRefrigerated: true,
+          isActive: true
+        }
+      })
+    ]);
+
+    // Create Vehicles using vehicle types
     console.log("Creating vehicles...");
     const vehicles = await Promise.all([
       db.vehicle.create({
         data: {
-          type: VehicleType.TON_5,
+          vehicleTypeId: vehicleTypes[0].id,
           capacity: "5 Ton",
-          description: "5 Ton Dry Truck",
+          description: "5 Ton Dry Truck - Unit 1",
           isActive: true
         }
       }),
       db.vehicle.create({
         data: {
-          type: VehicleType.TON_10,
+          vehicleTypeId: vehicleTypes[1].id,
           capacity: "10 Ton",
-          description: "10 Ton Dry Truck",
+          description: "10 Ton Dry Truck - Unit 1",
           isActive: true
         }
       }),
       db.vehicle.create({
         data: {
-          type: VehicleType.TON_40,
+          vehicleTypeId: vehicleTypes[2].id,
           capacity: "40 ft",
-          description: "40 ft Dry Truck",
+          description: "40 ft Container - Unit 1",
+          isActive: true
+        }
+      }),
+      db.vehicle.create({
+        data: {
+          vehicleTypeId: vehicleTypes[3].id,
+          capacity: "20 Ton",
+          description: "Refrigerated Truck - Unit 1",
           isActive: true
         }
       })

@@ -1,0 +1,17 @@
+vehicleType,capacity,description,isActive
+Truck,5 Ton,Standard 5-ton truck for medium cargo,true
+Truck,10 Ton,Heavy-duty 10-ton truck for large cargo,true
+Truck,15 Ton,Extra heavy 15-ton truck for bulk cargo,true
+Truck,20 Ton,Industrial 20-ton truck for heavy freight,true
+Refrigerated Truck,5 Ton,Refrigerated truck for cold storage transport,true
+Refrigerated Truck,10 Ton,Large refrigerated truck for frozen goods,true
+Tanker,15 Ton,Liquid transport tanker truck,true
+Tanker,20 Ton,Heavy liquid transport tanker,true
+Van,3 Ton,Small delivery van for local transport,true
+Van,5 Ton,Medium delivery van for city logistics,true
+Pickup,1 Ton,Light pickup truck for small deliveries,true
+Pickup,2 Ton,Medium pickup truck for construction materials,true
+Container Truck,40 Ton,Container transport truck for ports,true
+Container Truck,30 Ton,Medium container truck for logistics,true
+Flatbed,10 Ton,Open flatbed truck for construction,true
+Flatbed,15 Ton,Heavy flatbed truck for machinery transport,true

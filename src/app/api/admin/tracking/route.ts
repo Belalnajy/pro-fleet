@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
         },
         fromCity: true,
         toCity: true,
-        vehicle: true,
+        vehicle: { include: { vehicleType: true } },
         trackingLogs: {
           orderBy: { timestamp: "desc" },
           take: 1
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
         status: trip.status,
         fromCity: trip.fromCity.name,
         toCity: trip.toCity.name,
-        vehicle: `${trip.vehicle.type} - ${trip.vehicle.capacity}`,
+        vehicle: `${trip.vehicle.vehicleType?.name || trip.vehicle.vehicleTypeId} - ${trip.vehicle.capacity}`,
         scheduledDate: trip.scheduledDate,
         actualStartDate: trip.actualStartDate
       },

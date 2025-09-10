@@ -246,10 +246,11 @@ export default function SettingsPage() {
         </div>
 
         <Tabs defaultValue="business" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2">
             <TabsTrigger value="business">{t("business")}</TabsTrigger>
             <TabsTrigger value="financial">{t("financial")}</TabsTrigger>
             <TabsTrigger value="operations">{t("operations")}</TabsTrigger>
+            <TabsTrigger value="locations">المواقع</TabsTrigger>
             <TabsTrigger value="notifications">{t("notifications")}</TabsTrigger>
             <TabsTrigger value="system">{t("system")}</TabsTrigger>
             <TabsTrigger value="localization">{t("localization")}</TabsTrigger>
@@ -298,6 +299,13 @@ export default function SettingsPage() {
                       value={settings.companyAddress}
                       onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
                     />
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="text-sm font-medium mb-2">أنواع المركبات (ديناميكي)</h4>
+                    <p className="text-sm text-muted-foreground mb-3">أنشئ وعدّل أنواع المركبات لاستخدامها عبر النظام.</p>
+                    <Button onClick={() => router.push("/admin/vehicle-types")}>
+                      الذهاب إلى أنواع المركبات
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -501,6 +509,36 @@ export default function SettingsPage() {
                     />
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="locations" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MapPin className="h-5 w-5 mr-2" />
+                  إدارة المواقع
+                </CardTitle>
+                <CardDescription>أدوات لإدارة المدن والمركبات المستخدمة في النظام</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="border rounded-lg p-4">
+                    <h4 className="text-sm font-medium mb-2">إدارة المدن</h4>
+                    <p className="text-sm text-muted-foreground mb-3">أضف وعدّل واحذف المدن المستخدمة في التسعير والرحلات.</p>
+                    <Button onClick={() => router.push("/admin/cities")}>
+                      الذهاب إلى إدارة المدن
+                    </Button>
+                  </div>
+                  <div className="border rounded-lg p-4">
+                    <h4 className="text-sm font-medium mb-2">إدارة السيارات</h4>
+                    <p className="text-sm text-muted-foreground mb-3">أضف وعدّل واحذف المركبات في الأسطول.</p>
+                    <Button onClick={() => router.push("/admin/vehicles")}>
+                      الذهاب إلى إدارة السيارات
+                    </Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -51,8 +53,9 @@ export default function UsersManagement() {
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [statusToggleUser, setStatusToggleUser] = useState<User | null>(null)
 
   // Form state
   const [userForm, setUserForm] = useState({
@@ -64,8 +67,6 @@ export default function UsersManagement() {
     isActive: true,
   })
   const [error, setError] = useState("")
-    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<UserRole | "">("")
 
   useEffect(() => {
     if (status === "loading") return
@@ -94,20 +95,39 @@ export default function UsersManagement() {
   }
 
   const handleAddUser = async () => {
+    // Validation
+    if (!userForm.name || !userForm.email || !userForm.password || !userForm.role) {
+      setError("Please fill in all required fields")
+      return
+    }
+
     try {
+      setError("")
       const response = await fetch("/api/admin/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userForm),
+        body: JSON.stringify({
+          name: userForm.name,
+          email: userForm.email,
+          phone: userForm.phone,
+          password: userForm.password,
+          role: userForm.role,
+        }),
       })
 
       if (response.ok) {
-        fetchUsers()
-        setIsAddUserOpen(false)
+        await fetchUsers()
+        setIsAddDialogOpen(false)
         resetForm()
+        setError("")
+        toast.success("User created successfully")
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to create user")
       }
     } catch (error) {
       console.error("Error adding user:", error)
+      setError("Network error")
     }
   }
 
@@ -115,36 +135,53 @@ export default function UsersManagement() {
     if (!editingUser) return
 
     try {
+      setError("")
       const response = await fetch(`/api/admin/users/${editingUser.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userForm),
+        body: JSON.stringify({
+          name: userForm.name,
+          email: userForm.email,
+          phone: userForm.phone,
+          role: userForm.role,
+          isActive: userForm.isActive,
+        }),
+      })
+
+      if (response.ok) {
+        await fetchUsers()
+        setEditingUser(null)
+        resetForm()
+        setError("")
+        toast.success("User updated successfully")
+      } else {
+        const errorData = await response.json()
+        setError(errorData.error || "Failed to update user")
+      }
+    } catch (error) {
+      console.error("Error updating user:", error)
+      setError("Network error")
+    }
+  }
+
+  const handleToggleUserStatus = async (user: User) => {
+    try {
+      const response = await fetch(`/api/admin/users/${user.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !user.isActive }),
       })
 
       if (response.ok) {
         fetchUsers()
-        setEditingUser(null)
-        resetForm()
-        setIsAddUserOpen(false)
+        toast.success(`User ${user.isActive ? 'deactivated' : 'activated'} successfully`)
+        setStatusToggleUser(null)
+      } else {
+        setError("Failed to update user status")
       }
     } catch (error) {
-      console.error("Error updating user:", error)
-    }
-  }
-
-  const handleDeleteUser = async (id: string) => {
-    if (confirm(t("confirmDelete"))) {
-      try {
-        const response = await fetch(`/api/admin/users/${id}`, {
-          method: "DELETE",
-        })
-
-        if (response.ok) {
-          fetchUsers()
-        }
-      } catch (error) {
-        console.error("Error deleting user:", error)
-      }
+      console.error("Error updating user status:", error)
+      setError("Network error")
     }
   }
 
@@ -158,7 +195,6 @@ export default function UsersManagement() {
       role: user.role,
       isActive: user.isActive,
     })
-    setIsAddUserOpen(true)
   }
 
   const resetForm = () => {
@@ -242,7 +278,7 @@ export default function UsersManagement() {
               Add User
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add New User</DialogTitle>
               <DialogDescription>
@@ -251,10 +287,60 @@ export default function UsersManagement() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="role" className="text-right">
+                <Label htmlFor="add-name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="add-name"
+                  value={userForm.name}
+                  onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="col-span-3"
+                  placeholder="Full name"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add-email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="add-email"
+                  type="email"
+                  value={userForm.email}
+                  onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="col-span-3"
+                  placeholder="email@example.com"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add-phone" className="text-right">
+                  Phone
+                </Label>
+                <Input
+                  id="add-phone"
+                  value={userForm.phone}
+                  onChange={(e) => setUserForm(prev => ({ ...prev, phone: e.target.value }))}
+                  className="col-span-3"
+                  placeholder="Phone number"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add-password" className="text-right">
+                  Password
+                </Label>
+                <Input
+                  id="add-password"
+                  type="password"
+                  value={userForm.password}
+                  onChange={(e) => setUserForm(prev => ({ ...prev, password: e.target.value }))}
+                  className="col-span-3"
+                  placeholder="Password"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="add-role" className="text-right">
                   Role
                 </Label>
-                <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as UserRole)}>
+                <Select value={userForm.role} onValueChange={(value) => setUserForm(prev => ({ ...prev, role: value as UserRole }))}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
@@ -268,17 +354,21 @@ export default function UsersManagement() {
                 </Select>
               </div>
             </div>
+            {error && (
+              <Alert className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              <Button variant="outline" onClick={() => {
+                setIsAddDialogOpen(false)
+                resetForm()
+                setError("")
+              }}>
                 Cancel
               </Button>
-              <Button onClick={() => {
-                if (selectedRole) {
-                  router.push(`/admin/users/add?role=${selectedRole}`)
-                  setIsAddDialogOpen(false)
-                }
-              }}>
-                Continue
+              <Button onClick={handleAddUser}>
+                Add User
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -434,11 +524,20 @@ export default function UsersManagement() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end space-x-2">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit(user)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Trash2 className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setStatusToggleUser(user)}
+                          className={user.isActive ? "text-red-600 hover:text-red-700" : "text-green-600 hover:text-green-700"}
+                        >
+                          {user.isActive ? <Trash2 className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
                         </Button>
                       </div>
                     </TableCell>
@@ -449,6 +548,138 @@ export default function UsersManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => {
+        if (!open) {
+          setEditingUser(null)
+          resetForm()
+        }
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user information and settings.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="edit-name"
+                value={userForm.name}
+                onChange={(e) => setUserForm(prev => ({ ...prev, name: e.target.value }))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-email" className="text-right">
+                Email
+              </Label>
+              <Input
+                id="edit-email"
+                type="email"
+                value={userForm.email}
+                onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-phone" className="text-right">
+                Phone
+              </Label>
+              <Input
+                id="edit-phone"
+                value={userForm.phone}
+                onChange={(e) => setUserForm(prev => ({ ...prev, phone: e.target.value }))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-role" className="text-right">
+                Role
+              </Label>
+              <Select value={userForm.role} onValueChange={(value) => setUserForm(prev => ({ ...prev, role: value as UserRole }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={UserRole.ADMIN}>Admin</SelectItem>
+                  <SelectItem value={UserRole.DRIVER}>Driver</SelectItem>
+                  <SelectItem value={UserRole.CUSTOMER}>Customer</SelectItem>
+                  <SelectItem value={UserRole.ACCOUNTANT}>Accountant</SelectItem>
+                  <SelectItem value={UserRole.CUSTOMS_BROKER}>Customs Broker</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-status" className="text-right">
+                Status
+              </Label>
+              <Select value={userForm.isActive ? "active" : "inactive"} onValueChange={(value) => setUserForm(prev => ({ ...prev, isActive: value === "active" }))}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {error && (
+            <Alert className="mb-4">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setEditingUser(null)
+              resetForm()
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateUser}>
+              Update User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Toggle Confirmation Dialog */}
+      <AlertDialog open={!!statusToggleUser} onOpenChange={(open) => {
+        if (!open) setStatusToggleUser(null)
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {statusToggleUser?.isActive ? 'Deactivate User' : 'Activate User'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to {statusToggleUser?.isActive ? 'deactivate' : 'activate'} <strong>{statusToggleUser?.name}</strong>?
+              {statusToggleUser?.isActive 
+                ? ' This user will no longer be able to access the system.' 
+                : ' This user will regain access to the system.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setStatusToggleUser(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => statusToggleUser && handleToggleUserStatus(statusToggleUser)}
+              className={statusToggleUser?.isActive 
+                ? "bg-red-600 hover:bg-red-700" 
+                : "bg-green-600 hover:bg-green-700"}
+            >
+              {statusToggleUser?.isActive ? 'Deactivate' : 'Activate'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </DashboardLayout>
   )
 }

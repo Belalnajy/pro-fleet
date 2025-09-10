@@ -1,0 +1,31 @@
+fromCity,toCity,vehicleType,capacity,quantity,price,currency
+Riyadh,Jeddah,Truck,5 Ton,1,1200,SAR
+Riyadh,Jeddah,Truck,10 Ton,1,2000,SAR
+Riyadh,Jeddah,Refrigerated Truck,5 Ton,1,1500,SAR
+Riyadh,Jeddah,Refrigerated Truck,10 Ton,1,2500,SAR
+Jeddah,Dammam,Truck,5 Ton,1,1800,SAR
+Jeddah,Dammam,Truck,10 Ton,1,3000,SAR
+Jeddah,Dammam,Tanker,15 Ton,1,4000,SAR
+Dammam,Riyadh,Truck,5 Ton,1,1500,SAR
+Dammam,Riyadh,Truck,10 Ton,1,2500,SAR
+Dammam,Riyadh,Container Truck,40 Ton,1,8000,SAR
+Riyadh,Mecca,Van,3 Ton,1,800,SAR
+Riyadh,Mecca,Van,5 Ton,1,1000,SAR
+Riyadh,Mecca,Pickup,1 Ton,1,500,SAR
+Mecca,Medina,Truck,5 Ton,1,900,SAR
+Mecca,Medina,Truck,10 Ton,1,1500,SAR
+Mecca,Medina,Refrigerated Truck,5 Ton,1,1200,SAR
+Medina,Jeddah,Van,3 Ton,1,600,SAR
+Medina,Jeddah,Van,5 Ton,1,800,SAR
+Medina,Jeddah,Pickup,2 Ton,1,700,SAR
+Jeddah,Mecca,Flatbed,10 Ton,1,1800,SAR
+Jeddah,Mecca,Flatbed,15 Ton,1,2500,SAR
+Dammam,Jeddah,Container Truck,30 Ton,1,6000,SAR
+Dammam,Jeddah,Container Truck,40 Ton,1,7500,SAR
+Riyadh,Tabuk,Truck,10 Ton,1,3500,SAR
+Riyadh,Tabuk,Refrigerated Truck,10 Ton,1,4000,SAR
+Tabuk,Riyadh,Tanker,20 Ton,1,5000,SAR
+Abha,Riyadh,Truck,5 Ton,1,2000,SAR
+Abha,Riyadh,Truck,10 Ton,1,3200,SAR
+Khobar,Riyadh,Van,5 Ton,1,1400,SAR
+Khobar,Jeddah,Pickup,2 Ton,1,1600,SAR

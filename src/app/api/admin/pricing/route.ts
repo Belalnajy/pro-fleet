@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
       include: {
         fromCity: true,
         toCity: true,
-        vehicle: true,
+        vehicle: { include: { vehicleType: true } },
       },
       orderBy: {
         createdAt: "desc",
@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       include: {
         fromCity: true,
         toCity: true,
-        vehicle: true,
+        vehicle: { include: { vehicleType: true } },
       },
     })
 
@@ -113,7 +113,7 @@ export async function PUT(req: NextRequest) {
       include: {
         fromCity: true,
         toCity: true,
-        vehicle: true,
+        vehicle: { include: { vehicleType: true } },
       },
     })
 
@@ -138,8 +138,8 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { searchParams } = new URL(req.url)
-    const id = searchParams.get("id")
+    const body = await req.json()
+    const { id } = body
 
     if (!id) {
       return NextResponse.json({ error: "Pricing ID required" }, { status: 400 })

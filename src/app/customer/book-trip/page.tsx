@@ -102,7 +102,7 @@ export default function BookTrip() {
         // Transform data to match expected interface
         const transformedData = data.map((vehicle: any) => ({
           id: vehicle.id,
-          name: vehicle.type,
+          name: vehicle.vehicleType?.name || vehicle.vehicleTypeId,
           capacity: vehicle.capacity,
           pricePerKm: 0 // Default value
         }))

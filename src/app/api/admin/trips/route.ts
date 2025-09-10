@@ -31,9 +31,8 @@ export async function GET(req: NextRequest) {
           }
         },
         vehicle: {
-          select: {
-            type: true,
-            capacity: true
+          include: {
+            vehicleType: true
           }
         },
         fromCity: {

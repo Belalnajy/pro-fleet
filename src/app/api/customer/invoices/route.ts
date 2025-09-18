@@ -5,66 +5,113 @@ import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('🔍 Customer invoices API called')
     const session = await getServerSession(authOptions)
+    console.log('Session:', session ? { userId: session.user.id, role: session.user.role } : 'No session')
     
     if (!session || session.user.role !== "CUSTOMER") {
+      console.log('❌ Unauthorized access to customer invoices API')
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // For now, we'll generate mock invoices based on completed trips
-    // In a real application, you'd have a proper invoices table
-    const completedTrips = await db.trip.findMany({
+    // Fetch real invoices from the database
+    const invoices = await db.invoice.findMany({
       where: {
-        customerId: session.user.id,
-        status: "DELIVERED"
+        trip: {
+          customerId: session.user.id
+        }
       },
       include: {
-        fromCity: {
+        trip: {
           select: {
-            name: true
+            id: true,
+            tripNumber: true,
+            fromCity: {
+              select: {
+                name: true,
+                nameAr: true
+              }
+            },
+            toCity: {
+              select: {
+                name: true,
+                nameAr: true
+              }
+            },
+            deliveredDate: true,
+            scheduledDate: true
           }
         },
-        toCity: {
+        customsBroker: {
           select: {
-            name: true
+            id: true,
+            licenseNumber: true,
+            user: {
+              select: {
+                name: true
+              }
+            }
           }
         }
       },
       orderBy: {
-        deliveredDate: "desc"
+        createdAt: "desc"
       }
     })
 
-    // Transform trips into invoice format
-    const invoices = completedTrips.map((trip, index) => {
-      const subtotal = trip.price
-      const taxRate = 0.15 // 15% VAT
-      const taxAmount = subtotal * taxRate
-      const customsFees = subtotal * 0.02 // 2% customs fees
-      const totalAmount = subtotal + taxAmount + customsFees
-
-      // Simulate different invoice statuses
-      const statuses = ['SENT', 'PAID', 'OVERDUE']
-      const randomStatus = statuses[index % statuses.length]
+    // Transform database invoices to match frontend interface
+    const formattedInvoices = invoices.map((invoice) => {
+      // Type assertion to access included relations
+      const invoiceWithRelations = invoice as typeof invoice & {
+        trip: {
+          id: string;
+          tripNumber: string;
+          fromCity: { name: string; nameAr: string | null };
+          toCity: { name: string; nameAr: string | null };
+          deliveredDate: Date | null;
+          scheduledDate: Date;
+        };
+        customsBroker: {
+          id: string;
+          licenseNumber: string | null;
+          user: {
+            name: string;
+          };
+        } | null;
+      };
 
       return {
-        id: `inv-${trip.id}`,
-        invoiceNumber: `INV${String(index + 1).padStart(6, '0')}`,
-        tripId: trip.id,
-        tripNumber: trip.tripNumber,
-        subtotal: subtotal,
-        taxAmount: taxAmount,
-        customsFees: customsFees,
-        totalAmount: totalAmount,
-        status: randomStatus,
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-        paidDate: randomStatus === 'PAID' ? new Date().toISOString() : null,
-        createdAt: trip.deliveredDate || trip.createdAt,
-        updatedAt: trip.updatedAt,
-      }
+        id: invoiceWithRelations.id,
+        invoiceNumber: invoiceWithRelations.invoiceNumber,
+        tripId: invoiceWithRelations.tripId,
+        tripNumber: invoiceWithRelations.trip.tripNumber,
+        subtotal: invoiceWithRelations.subtotal,
+        taxAmount: invoiceWithRelations.taxAmount,
+        customsFees: invoiceWithRelations.customsFee,
+        totalAmount: invoiceWithRelations.total,
+        status: invoiceWithRelations.paymentStatus,
+        dueDate: invoiceWithRelations.dueDate.toISOString(),
+        paidDate: invoiceWithRelations.paidDate?.toISOString() || null,
+        createdAt: invoiceWithRelations.createdAt.toISOString(),
+        updatedAt: invoiceWithRelations.updatedAt.toISOString(),
+        currency: invoiceWithRelations.currency,
+        taxRate: invoiceWithRelations.taxRate,
+        notes: invoiceWithRelations.notes,
+        // Trip details for display
+        trip: {
+          fromCity: invoiceWithRelations.trip.fromCity.nameAr || invoiceWithRelations.trip.fromCity.name,
+          toCity: invoiceWithRelations.trip.toCity.nameAr || invoiceWithRelations.trip.toCity.name,
+          deliveredDate: invoiceWithRelations.trip.deliveredDate?.toISOString(),
+          scheduledDate: invoiceWithRelations.trip.scheduledDate.toISOString()
+        },
+        customsBroker: invoiceWithRelations.customsBroker ? {
+          name: invoiceWithRelations.customsBroker.user.name,
+          licenseNumber: invoiceWithRelations.customsBroker.licenseNumber
+        } : null
+      };
     })
 
-    return NextResponse.json(invoices)
+    return NextResponse.json(formattedInvoices)
   } catch (error) {
     console.error("Error fetching customer invoices:", error)
     return NextResponse.json(

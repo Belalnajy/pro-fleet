@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,9 +20,16 @@ import {
   AlertTriangle,
 } from "lucide-react"
 
-export default function CustomerDashboard() {
+interface CustomerDashboardProps {
+  params: Promise<{
+    locale: string
+  }>
+}
+
+export default function CustomerDashboard({ params }: CustomerDashboardProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { locale } = use(params)
   const { t } = useLanguage()
   const [trips, setTrips] = useState<any[]>([])
   const [invoices, setInvoices] = useState<any[]>([])
@@ -31,7 +38,7 @@ export default function CustomerDashboard() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "CUSTOMER") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchDashboardData()
     }
@@ -40,42 +47,41 @@ export default function CustomerDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true)
+      console.log('🔄 Fetching customer dashboard data...')
+      console.log('Session user:', session?.user)
       
       // Fetch trips
       const tripsResponse = await fetch("/api/customer/trips")
+      console.log('Trips API response status:', tripsResponse.status)
+      
       if (tripsResponse.ok) {
         const tripsData = await tripsResponse.json()
         setTrips(tripsData)
-        console.log("Customer trips loaded:", tripsData)
+        console.log("✅ Customer trips loaded:", tripsData)
+        console.log(`📊 Found ${tripsData.length} trips`)
+      } else {
+        const errorData = await tripsResponse.json()
+        console.error('❌ Failed to fetch trips:', errorData)
       }
       
-      // Fetch invoices (if API exists)
+      // Fetch real invoices from API
       try {
         const invoicesResponse = await fetch("/api/customer/invoices")
+        console.log('Invoices API response status:', invoicesResponse.status)
+        
         if (invoicesResponse.ok) {
           const invoicesData = await invoicesResponse.json()
           setInvoices(invoicesData)
+          console.log("✅ Customer invoices loaded:", invoicesData)
+          console.log(`📄 Found ${invoicesData.length} invoices`)
+        } else {
+          const errorData = await invoicesResponse.json()
+          console.error('❌ Failed to fetch invoices:', errorData)
+          setInvoices([])
         }
       } catch (error) {
-        console.log("Invoices API not available yet")
-        // Use mock data for invoices for now
-        setInvoices([
-          {
-            id: "INV-2025-001",
-            tripId: "TWB:0001",
-            amount: 3047.5,
-            status: "paid",
-            dueDate: "2025-08-21",
-            paidDate: "2025-08-14",
-          },
-          {
-            id: "INV-2025-002",
-            tripId: "TWB:0002",
-            amount: 460,
-            status: "pending",
-            dueDate: "2025-08-20",
-          },
-        ])
+        console.error("Error fetching invoices:", error)
+        setInvoices([])
       }
       
     } catch (error) {
@@ -154,7 +160,11 @@ export default function CustomerDashboard() {
     pendingTrips: trips.filter(t => t.status === "PENDING").length,
     inProgressTrips: trips.filter(t => t.status === "IN_PROGRESS").length,
     totalSpent: trips.reduce((sum, trip) => sum + (trip.price || 0), 0),
-    pendingPayments: invoices.filter(inv => inv.status === "pending").reduce((sum, inv) => sum + inv.amount, 0),
+    // Updated to work with real invoice data structure
+    pendingPayments: invoices.filter(inv => inv.status === "PENDING" || inv.status === "SENT").reduce((sum, inv) => sum + (inv.totalAmount || 0), 0),
+    totalInvoices: invoices.length,
+    paidInvoices: invoices.filter(inv => inv.status === "PAID").length,
+    overdueInvoices: invoices.filter(inv => inv.status === "OVERDUE").length,
   }
 
   return (
@@ -162,7 +172,7 @@ export default function CustomerDashboard() {
       title="Customer Dashboard"
       subtitle={`Welcome back, ${customerInfo.name}!`}
       actions={
-        <Button onClick={() => router.push("/customer/book-trip")}>
+        <Button onClick={() => router.push(`/${locale}/customer/book-trip`)}>
           <Plus className="h-4 w-4 mr-2" />
           Book New Trip
         </Button>
@@ -263,7 +273,7 @@ export default function CustomerDashboard() {
                 <CardTitle>Recent Trips</CardTitle>
                 <CardDescription>Your latest shipment activities</CardDescription>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => router.push(`/${locale}/customer/my-trips`)}>
                 View All
               </Button>
             </div>
@@ -277,7 +287,7 @@ export default function CustomerDashboard() {
               <div className="text-center py-8">
                 <Truck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">No trips found</p>
-                <Button onClick={() => router.push("/customer/book-trip")} className="mt-4">
+                <Button onClick={() => router.push(`/${locale}/customer/book-trip`)} className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />
                   Book Your First Trip
                 </Button>
@@ -314,7 +324,7 @@ export default function CustomerDashboard() {
                           </div>
                         </Badge>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => router.push("/customer/my-trips")}>
+                      <Button variant="outline" size="sm" onClick={() => router.push(`/${locale}/customer/my-trips`)}>
                         View
                       </Button>
                     </div>
@@ -333,7 +343,7 @@ export default function CustomerDashboard() {
                 <CardTitle>Recent Invoices</CardTitle>
                 <CardDescription>Your billing and payment history</CardDescription>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => router.push(`/${locale}/customer/invoices`)}>
                 View All
               </Button>
             </div>

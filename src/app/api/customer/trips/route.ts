@@ -28,8 +28,13 @@ export async function GET(request: NextRequest) {
         },
         vehicle: {
           select: {
-            type: true,
             capacity: true,
+            vehicleType: {
+              select: {
+                name: true,
+                nameAr: true
+              }
+            }
           }
         },
         fromCity: {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PageLoading } from "@/components/ui/loading"
-import { useLanguage } from "@/components/providers/language-provider"
 import {
   Search,
   Filter,
@@ -29,23 +28,41 @@ import {
 interface Invoice {
   id: string
   invoiceNumber: string
-  tripId?: string
-  tripNumber?: string
+  tripId: string
+  tripNumber: string
   subtotal: number
   taxAmount: number
   customsFees: number
   totalAmount: number
-  status: 'DRAFT' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED'
+  status: 'PENDING' | 'SENT' | 'PAID' | 'OVERDUE' | 'CANCELLED'
   dueDate: string
-  paidDate?: string
+  paidDate?: string | null
   createdAt: string
   updatedAt: string
+  currency: string
+  taxRate: number
+  notes?: string | null
+  trip: {
+    fromCity: string
+    toCity: string
+    deliveredDate?: string | null
+    scheduledDate: string
+  }
+  customsBroker?: {
+    name: string
+  } | null
 }
 
-export default function CustomerInvoices() {
+interface CustomerInvoicesProps {
+  params: Promise<{
+    locale: string
+  }>
+}
+
+export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { t, language } = useLanguage()
+  const { locale } = use(params)
   
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -55,11 +72,11 @@ export default function CustomerInvoices() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "CUSTOMER") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchInvoices()
     }
-  }, [session, status, router])
+  }, [session, status, router, locale])
 
   const fetchInvoices = async () => {
     try {
@@ -67,6 +84,9 @@ export default function CustomerInvoices() {
       if (response.ok) {
         const data = await response.json()
         setInvoices(data)
+        console.log("✅ Customer invoices loaded:", data)
+      } else {
+        console.error("❌ Failed to fetch invoices")
       }
     } catch (error) {
       console.error("Error fetching invoices:", error)
@@ -95,173 +115,194 @@ export default function CustomerInvoices() {
   }
 
   const handlePayInvoice = async (invoiceId: string) => {
-    // This would integrate with a payment gateway
     try {
       const response = await fetch(`/api/customer/invoices/${invoiceId}/pay`, {
         method: "POST",
       })
       
       if (response.ok) {
-        alert(t("paymentProcessed"))
+        alert("تم معالجة الدفع بنجاح")
         fetchInvoices()
       } else {
-        alert(t("paymentFailed"))
+        alert("فشل في معالجة الدفع")
       }
     } catch (error) {
       console.error("Error processing payment:", error)
-      alert(t("paymentFailed"))
+      alert("فشل في معالجة الدفع")
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'DRAFT':
-        return <FileText className="h-4 w-4" />
-      case 'SENT':
+      case 'PENDING':
         return <Clock className="h-4 w-4" />
+      case 'SENT':
+        return <FileText className="h-4 w-4" />
       case 'PAID':
         return <CheckCircle className="h-4 w-4" />
       case 'OVERDUE':
         return <AlertCircle className="h-4 w-4" />
       case 'CANCELLED':
-        return <FileText className="h-4 w-4" />
+        return <AlertCircle className="h-4 w-4" />
       default:
-        return <FileText className="h-4 w-4" />
+        return <Clock className="h-4 w-4" />
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      DRAFT: { color: "bg-gray-500", text: t("draft") },
-      SENT: { color: "bg-blue-500", text: t("sent") },
-      PAID: { color: "bg-green-500", text: t("paid") },
-      OVERDUE: { color: "bg-red-500", text: t("overdue") },
-      CANCELLED: { color: "bg-gray-400", text: t("cancelled") },
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return "bg-yellow-100 text-yellow-800"
+      case 'SENT':
+        return "bg-blue-100 text-blue-800"
+      case 'PAID':
+        return "bg-green-100 text-green-800"
+      case 'OVERDUE':
+        return "bg-red-100 text-red-800"
+      case 'CANCELLED':
+        return "bg-gray-100 text-gray-800"
+      default:
+        return "bg-gray-100 text-gray-800"
     }
-    
-    const config = statusConfig[status as keyof typeof statusConfig]
-    return (
-      <Badge className={`${config.color} text-white`}>
-        {config.text}
-      </Badge>
-    )
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return "في الانتظار"
+      case 'SENT':
+        return "تم الإرسال"
+      case 'PAID':
+        return "مدفوعة"
+      case 'OVERDUE':
+        return "متأخرة"
+      case 'CANCELLED':
+        return "ملغاة"
+      default:
+        return status
+    }
   }
 
   const filteredInvoices = invoices.filter(invoice => {
     const matchesSearch = invoice.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (invoice.tripNumber && invoice.tripNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+                         invoice.tripNumber.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "all" || invoice.status === statusFilter
-    
     return matchesSearch && matchesStatus
   })
 
+  const stats = {
+    totalInvoices: invoices.length,
+    paidInvoices: invoices.filter(inv => inv.status === "PAID").length,
+    pendingPayment: invoices.filter(inv => inv.status === "PENDING" || inv.status === "SENT").reduce((sum, inv) => sum + inv.totalAmount, 0),
+    overdueAmount: invoices.filter(inv => inv.status === "OVERDUE").reduce((sum, inv) => sum + inv.totalAmount, 0),
+  }
+
   if (loading) {
-    return (
-      <DashboardLayout>
-        <PageLoading text={t("loading")} />
-      </DashboardLayout>
-    )
+    return <PageLoading />
+  }
+
+  if (!session || session.user.role !== "CUSTOMER") {
+    return null
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">{t("myInvoices")}</h1>
-            <p className="text-muted-foreground">{t("viewAndPayInvoices")}</p>
-          </div>
-        </div>
-
-        {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("totalInvoices")}</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{invoices.length}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("paidInvoices")}</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {invoices.filter(inv => inv.status === 'PAID').length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("pendingPayment")}</CardTitle>
-              <Clock className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {invoices.filter(inv => inv.status === 'SENT').length}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{t("overdueAmount")}</CardTitle>
-              <AlertCircle className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">
-                {invoices.filter(inv => inv.status === 'OVERDUE')
-                  .reduce((sum, inv) => sum + inv.totalAmount, 0).toFixed(2)} {t("currency")}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Search */}
+    <DashboardLayout
+      title="فواتيري"
+      subtitle="عرض ودفع الفواتير الخاصة بك"
+      actions={
+        <Button onClick={() => router.push(`/${locale}/customer/book-trip`)}>
+          <FileText className="h-4 w-4 mr-2" />
+          حجز رحلة جديدة
+        </Button>
+      }
+    >
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card>
-          <CardHeader>
-            <CardTitle>{t("invoices")}</CardTitle>
-            <CardDescription>{t("manageYourInvoices")}</CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">إجمالي الفواتير</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t("searchInvoices")}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={t("filterByStatus")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{t("allStatuses")}</SelectItem>
-                  <SelectItem value="SENT">{t("sent")}</SelectItem>
-                  <SelectItem value="PAID">{t("paid")}</SelectItem>
-                  <SelectItem value="OVERDUE">{t("overdue")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="text-2xl font-bold">{stats.totalInvoices}</div>
+          </CardContent>
+        </Card>
 
-            {/* Invoices Table */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">الفواتير المدفوعة</CardTitle>
+            <CheckCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.paidInvoices}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">المدفوعات المعلقة</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pendingPayment.toFixed(2)} ر.س</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">المبالغ المتأخرة</CardTitle>
+            <AlertCircle className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.overdueAmount.toFixed(2)} ر.س</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Invoices Management */}
+      <Card>
+        <CardHeader>
+          <CardTitle>إدارة الفواتير</CardTitle>
+          <CardDescription>عرض ودفع فواتيرك</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {/* Search and Filter */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="البحث في الفواتير..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <SelectValue placeholder="فلترة حسب الحالة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الحالات</SelectItem>
+                <SelectItem value="PENDING">في الانتظار</SelectItem>
+                <SelectItem value="SENT">تم الإرسال</SelectItem>
+                <SelectItem value="PAID">مدفوعة</SelectItem>
+                <SelectItem value="OVERDUE">متأخرة</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Invoices Table */}
+          <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t("invoiceNumber")}</TableHead>
-                  <TableHead>{t("trip")}</TableHead>
-                  <TableHead>{t("amount")}</TableHead>
-                  <TableHead>{t("status")}</TableHead>
-                  <TableHead>{t("dueDate")}</TableHead>
-                  <TableHead>{t("createdAt")}</TableHead>
-                  <TableHead className="text-right">{t("actions")}</TableHead>
+                  <TableHead>رقم الفاتورة</TableHead>
+                  <TableHead>رقم الرحلة</TableHead>
+                  <TableHead>المسار</TableHead>
+                  <TableHead>المبلغ</TableHead>
+                  <TableHead>الحالة</TableHead>
+                  <TableHead>تاريخ الاستحقاق</TableHead>
+                  <TableHead>الإجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -270,56 +311,50 @@ export default function CustomerInvoices() {
                     <TableCell className="font-medium">
                       {invoice.invoiceNumber}
                     </TableCell>
+                    <TableCell>{invoice.tripNumber}</TableCell>
                     <TableCell>
-                      {invoice.tripNumber ? (
-                        <Badge variant="outline">{invoice.tripNumber}</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
+                      {invoice.trip.fromCity} → {invoice.trip.toCity}
+                      {invoice.customsBroker && (
+                        <div className="text-sm text-muted-foreground">
+                          وسيط جمركي: {invoice.customsBroker.name}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        {invoice.totalAmount.toFixed(2)} {t("currency")}
+                        {invoice.totalAmount.toFixed(2)} {invoice.currency}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        {t("tax")}: {invoice.taxAmount.toFixed(2)} | {t("customs")}: {invoice.customsFees.toFixed(2)}
+                        المبلغ الأساسي: {invoice.subtotal.toFixed(2)}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(invoice.status)}
-                        {getStatusBadge(invoice.status)}
-                      </div>
+                      <Badge className={getStatusColor(invoice.status)}>
+                        <div className="flex items-center gap-1">
+                          {getStatusIcon(invoice.status)}
+                          {getStatusText(invoice.status)}
+                        </div>
+                      </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm">
-                          {new Date(invoice.dueDate).toLocaleDateString()}
-                        </span>
-                      </div>
+                      {new Date(invoice.dueDate).toLocaleDateString('ar-SA')}
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm text-muted-foreground">
-                        {new Date(invoice.createdAt).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleDownloadPDF(invoice.id)}>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDownloadPDF(invoice.id)}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
                         {(invoice.status === 'SENT' || invoice.status === 'OVERDUE') && (
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             onClick={() => handlePayInvoice(invoice.id)}
-                            className="bg-green-600 hover:bg-green-700"
                           >
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            {t("pay")}
+                            <CreditCard className="h-4 w-4 mr-1" />
+                            دفع
                           </Button>
                         )}
                       </div>
@@ -328,17 +363,19 @@ export default function CustomerInvoices() {
                 ))}
               </TableBody>
             </Table>
+          </div>
 
-            {filteredInvoices.length === 0 && (
-              <div className="text-center py-8">
-                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">{t("noInvoicesFound")}</h3>
-                <p className="text-muted-foreground">{t("noInvoicesDescription")}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+          {filteredInvoices.length === 0 && (
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">لا توجد فواتير</h3>
+              <p className="text-muted-foreground mb-4">
+                لم يتم العثور على فواتير تطابق معايير البحث
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </DashboardLayout>
   )
 }

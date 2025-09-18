@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageLoading } from "@/components/ui/loading"
 import { useLanguage } from "@/components/providers/language-provider"
 import { LocationSelector } from "@/components/ui/location-selector"
+import { useToast } from "@/hooks/use-toast"
 import {
   MapPin,
   Package,
@@ -47,6 +48,7 @@ export default function BookTrip() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()
+  const { toast } = useToast()
   
   const [cities, setCities] = useState<City[]>([])
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([])
@@ -182,14 +184,44 @@ export default function BookTrip() {
         vehicleId = vehicles[0].id // Use first available vehicle
       }
 
+      // Validate required fields before submission
+      const hasOrigin = tripForm.fromCityId || tripForm.originLocation
+      const hasDestination = tripForm.toCityId || tripForm.destinationLocation
+      
+      if (!hasOrigin || !hasDestination || !tripForm.scheduledPickupDate) {
+        let missingFields: string[] = []
+        if (!hasOrigin) missingFields.push('نقطة الاستلام')
+        if (!hasDestination) missingFields.push('نقطة التسليم')
+        if (!tripForm.scheduledPickupDate) missingFields.push('تاريخ الاستلام')
+        
+        toast({
+          variant: "destructive",
+          title: "يرجى ملء الحقول المطلوبة",
+          description: missingFields.join(', ')
+        })
+        return
+      }
+
+      // Handle city IDs - use selected cities or default to first available city for location-based trips
+      let finalFromCityId = tripForm.fromCityId
+      let finalToCityId = tripForm.toCityId
+      
+      // If using location coordinates instead of cities, use default city (first available)
+      if (!finalFromCityId && tripForm.originLocation && cities.length > 0) {
+        finalFromCityId = cities[0].id
+      }
+      if (!finalToCityId && tripForm.destinationLocation && cities.length > 0) {
+        finalToCityId = cities[0].id
+      }
+
       const tripData = {
-        fromCityId: tripForm.fromCityId,
-        toCityId: tripForm.toCityId,
+        fromCityId: finalFromCityId,
+        toCityId: finalToCityId,
         scheduledDate: tripForm.scheduledPickupDate,
         temperatureId: temperatureId,
         vehicleId: vehicleId,
         price: estimatedPrice || 500,
-        notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress}, Delivery: ${tripForm.deliveryAddress}`
+        notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress || (tripForm.originLocation?.address || 'Custom Location')}, Delivery: ${tripForm.deliveryAddress || (tripForm.destinationLocation?.address || 'Custom Location')}. Special Instructions: ${tripForm.specialInstructions}${tripForm.originLocation ? ` Origin: ${tripForm.originLocation.lat}, ${tripForm.originLocation.lng}` : ''}${tripForm.destinationLocation ? ` Destination: ${tripForm.destinationLocation.lat}, ${tripForm.destinationLocation.lng}` : ''}`
       }
 
       console.log('Sending trip data:', tripData)
@@ -203,21 +235,54 @@ export default function BookTrip() {
       if (response.ok) {
         const result = await response.json()
         console.log('Trip created successfully:', result)
+        toast({
+          title: "✅ تم إرسال طلب الرحلة بنجاح",
+          description: "سيتم مراجعة طلبك وتخصيص سائق قريباً"
+        })
         setStep(4) // Success step
       } else {
         const errorData = await response.json()
         console.error('Error response:', errorData)
-        alert(t("errorCreatingTrip") + ': ' + (errorData.error || 'Unknown error'))
+        toast({
+          variant: "destructive",
+          title: "خطأ في إنشاء الرحلة",
+          description: errorData.error || 'Unknown error'
+        })
       }
     } catch (error: any) {
       console.error("Error creating trip:", error)
-      alert(t("errorCreatingTrip") + ': ' + (error.message || 'Unknown error'))
+      toast({
+        variant: "destructive",
+        title: "خطأ في إنشاء الرحلة",
+        description: error.message || 'Unknown error'
+      })
     } finally {
       setSubmitting(false)
     }
   }
 
   const nextStep = () => {
+    if (!isStepValid()) {
+      // Show specific validation message based on current step
+      switch (step) {
+        case 1:
+          toast({
+            variant: "destructive",
+            title: "يرجى اختيار نقاط الاستلام والتسليم",
+            description: "من الخريطة أو من المدن المحفوظة"
+          })
+          break
+        case 3:
+          toast({
+            variant: "destructive",
+            title: "يرجى تحديد تاريخ الاستلام",
+            description: "تاريخ الاستلام مطلوب لإكمال الحجز"
+          })
+          break
+      }
+      return
+    }
+    
     if (step < 3) {
       setStep(step + 1)
     } else {
@@ -234,12 +299,16 @@ export default function BookTrip() {
   const isStepValid = () => {
     switch (step) {
       case 1:
-        return (tripForm.originLocation && tripForm.destinationLocation) || 
-               (tripForm.fromCityId && tripForm.toCityId && tripForm.pickupAddress && tripForm.deliveryAddress)
+        // Step 1: Either location coordinates OR city selection is required
+        const hasOrigin = tripForm.fromCityId || tripForm.originLocation
+        const hasDestination = tripForm.toCityId || tripForm.destinationLocation
+        return hasOrigin && hasDestination
       case 2:
-        return tripForm.cargoType && tripForm.cargoWeight && tripForm.cargoValue
+        // Step 2: Cargo details are optional, but if provided should be complete
+        return true // Make cargo details optional
       case 3:
-        return tripForm.scheduledPickupDate && tripForm.estimatedDeliveryDate
+        // Step 3: Only pickup date is required
+        return !!tripForm.scheduledPickupDate
       default:
         return true
     }
@@ -330,9 +399,17 @@ export default function BookTrip() {
               {step === 3 && t("scheduleAndConfirm")}
             </CardTitle>
             <CardDescription>
-              {step === 1 && t("selectPickupAndDelivery")}
+              {step === 1 && (
+                <span>
+                  {t("selectPickupAndDelivery")} <span className="text-red-500">*</span>
+                </span>
+              )}
               {step === 2 && t("provideCargoInformation")}
-              {step === 3 && t("setDatesAndConfirm")}
+              {step === 3 && (
+                <span>
+                  {t("setDatesAndConfirm")} <span className="text-red-500">* تاريخ الاستلام مطلوب</span>
+                </span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">

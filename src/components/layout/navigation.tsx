@@ -89,6 +89,7 @@ export function Navigation({ className }: NavigationProps) {
           { href: `/${language}/accountant/invoices`, label: t("invoices"), icon: FileText },
           { href: `/${language}/accountant/reports`, label: t("reports"), icon: FileText },
           { href: `/${language}/accountant/payments`, label: t("payments"), icon: Calculator },
+          { href: `/${language}/accountant/settings`, label: t("settings"), icon: Settings },
         ]
       case "CUSTOMS_BROKER":
         return [

@@ -77,13 +77,14 @@ export default async function RootLayout({ children }: RootLayoutProps) {
 
   return (
     <html lang={locale} dir={direction} suppressHydrationWarning>
-      <body className={`${allFontClasses} antialiased`}>
+      <body className={`${allFontClasses} antialiased`} suppressHydrationWarning>
         <SessionProviderWrapper>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
+            storageKey="profleet-theme"
           >
             <LanguageProvider initialLocale={locale as Locale}>
               {children}

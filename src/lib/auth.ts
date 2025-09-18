@@ -12,8 +12,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
-    signIn: "/auth/signin",
-    signUp: "/auth/signup",
+    signIn: "/en/auth/signin",
   },
   secret: process.env.NEXTAUTH_SECRET || "fallback-secret-key",
   debug: process.env.NODE_ENV === "development",
@@ -88,6 +87,22 @@ export const authOptions: NextAuthOptions = {
         session.user.customsBrokerProfile = token.customsBrokerProfile
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      // If user is signing in, redirect to our custom auth-redirect page with default locale
+      if (url === baseUrl) {
+        return `${baseUrl}/en/auth-redirect`
+      }
+      // If it's a relative URL, make it absolute
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`
+      }
+      // If it's the same origin, allow it
+      if (new URL(url).origin === baseUrl) {
+        return url
+      }
+      // Otherwise redirect to auth-redirect page with default locale
+      return `${baseUrl}/en/auth-redirect`
     },
   },
 }

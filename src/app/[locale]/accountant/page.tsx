@@ -2,12 +2,13 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/components/providers/language-provider"
+import { useToast } from "@/hooks/use-toast"
 import {
   FileText,
   DollarSign,
@@ -18,24 +19,96 @@ import {
   Eye,
   Calendar,
   Users,
+  Loader2,
+  CreditCard,
+  Receipt
 } from "lucide-react"
+
+interface DashboardStats {
+  totalRevenue: number
+  monthlyRevenue: number
+  totalExpenses: number
+  netProfit: number
+  totalInvoices: number
+  pendingInvoices: number
+  paidInvoices: number
+  overdueInvoices: number
+  cancelledInvoices: number
+  totalTransactions: number
+}
+
+interface Invoice {
+  id: string
+  customer: string
+  amount: number
+  status: string
+  dueDate: string
+  paidDate: string | null
+  tripId: string
+  createdAt: Date
+}
+
+interface Transaction {
+  id: string
+  type: string
+  description: string
+  amount: number
+  date: string
+  status: string
+  invoiceId?: string
+  customer?: string
+}
 
 export default function AccountantDashboard() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
+  const { toast } = useToast()
+  
+  const [dashboardData, setDashboardData] = useState<{
+    stats: DashboardStats
+    recentInvoices: Invoice[]
+    recentTransactions: Transaction[]
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ACCOUNTANT") {
       router.push("/auth/signin")
+    } else {
+      fetchDashboardData()
     }
   }, [session, status, router])
 
-  if (status === "loading") {
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/accountant/dashboard')
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard data')
+      }
+      const data = await response.json()
+      setDashboardData(data)
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error)
+      toast({
+        title: "خطأ",
+        description: "فشل في تحميل بيانات لوحة التحكم",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (status === "loading" || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">جاري تحميل لوحة التحكم...</p>
+        </div>
       </div>
     )
   }
@@ -44,89 +117,22 @@ export default function AccountantDashboard() {
     return null
   }
 
-  // Mock financial data
-  const financialStats = {
-    totalRevenue: 45230,
-    totalExpenses: 28950,
-    netProfit: 16280,
-    pendingInvoices: 8,
-    overdueInvoices: 3,
-    paidInvoices: 142,
-    totalTransactions: 153,
+  if (!dashboardData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600">فشل في تحميل البيانات</p>
+          <Button onClick={fetchDashboardData} className="mt-4">
+            إعادة المحاولة
+          </Button>
+        </div>
+      </div>
+    )
   }
 
-  // Mock invoices data
-  const invoices = [
-    {
-      id: "INV-2025-001",
-      customer: "Customer Company",
-      amount: 3047.5,
-      status: "paid",
-      dueDate: "2025-08-21",
-      paidDate: "2025-08-14",
-      tripId: "TWB:4593",
-    },
-    {
-      id: "INV-2025-002",
-      customer: "Customer Company",
-      amount: 460,
-      status: "pending",
-      dueDate: "2025-08-20",
-      tripId: "TWB:4594",
-    },
-    {
-      id: "INV-2025-003",
-      customer: "Another Customer",
-      amount: 1800,
-      status: "overdue",
-      dueDate: "2025-08-10",
-      tripId: "TWB:4590",
-    },
-    {
-      id: "INV-2025-004",
-      customer: "New Customer",
-      amount: 3500,
-      status: "pending",
-      dueDate: "2025-08-25",
-      tripId: "TWB:4595",
-    },
-  ]
-
-  // Mock recent transactions
-  const recentTransactions = [
-    {
-      id: "TXN-001",
-      type: "payment",
-      description: "Payment for INV-2025-001",
-      amount: 3047.5,
-      date: "2025-08-14",
-      status: "completed",
-    },
-    {
-      id: "TXN-002",
-      type: "expense",
-      description: "Fuel cost for Trip TWB:4594",
-      amount: -150,
-      date: "2025-08-13",
-      status: "completed",
-    },
-    {
-      id: "TXN-003",
-      type: "payment",
-      description: "Partial payment for INV-2025-002",
-      amount: 230,
-      date: "2025-08-13",
-      status: "completed",
-    },
-    {
-      id: "TXN-004",
-      type: "invoice",
-      description: "New invoice generated",
-      amount: 3500,
-      date: "2025-08-12",
-      status: "pending",
-    },
-  ]
+  // Use real data from API
+  const { stats, recentInvoices, recentTransactions } = dashboardData
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -199,7 +205,7 @@ export default function AccountantDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {t("currency")} {financialStats.totalRevenue.toLocaleString()}
+              {t("currency")} {stats.totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               +12% from last month
@@ -214,7 +220,7 @@ export default function AccountantDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {t("currency")} {financialStats.totalExpenses.toLocaleString()}
+              {t("currency")} {stats.totalExpenses.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               +5% from last month
@@ -229,7 +235,7 @@ export default function AccountantDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {t("currency")} {financialStats.netProfit.toLocaleString()}
+              {t("currency")} {stats.netProfit.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               +18% from last month
@@ -243,9 +249,9 @@ export default function AccountantDashboard() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{financialStats.pendingInvoices}</div>
+            <div className="text-2xl font-bold">{stats.pendingInvoices}</div>
             <p className="text-xs text-muted-foreground">
-              {financialStats.overdueInvoices} overdue
+              {stats.overdueInvoices} overdue
             </p>
           </CardContent>
         </Card>
@@ -267,7 +273,7 @@ export default function AccountantDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {invoices.slice(0, 5).map((invoice) => (
+              {recentInvoices.slice(0, 5).map((invoice) => (
                 <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex items-center space-x-3">
                     <FileText className="h-8 w-8 text-primary" />

@@ -1,0 +1,140 @@
+/* Map container styles */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 0;
+  border: none;
+  font-family: inherit;
+}
+
+/* Ensure map fills container properly */
+.leaflet-container .leaflet-control-container {
+  font-family: inherit;
+}
+
+/* Custom marker styles */
+.custom-marker {
+  background-color: #3b82f6;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.custom-marker.origin {
+  background-color: #10b981;
+}
+
+.custom-marker.destination {
+  background-color: #ef4444;
+}
+
+/* Popup styles */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup-content {
+  margin: 12px 16px;
+  font-family: inherit;
+}
+
+/* Control styles */
+.leaflet-control-zoom {
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-control-zoom a {
+  border-radius: 4px;
+}
+
+/* RTL support for map controls */
+[dir="rtl"] .leaflet-control-zoom {
+  left: 10px;
+  right: auto;
+}
+
+[dir="rtl"] .leaflet-control-attribution {
+  right: auto;
+  left: 0;
+}
+
+/* Location picker dialog styles */
+.location-picker-dialog {
+  max-width: 95vw;
+  max-height: 95vh;
+}
+
+.location-picker-map {
+  height: 100%;
+  min-height: 400px;
+}
+
+/* Dialog content adjustments */
+.location-picker-dialog .leaflet-container {
+  border-radius: 0;
+}
+
+/* Sidebar scrolling */
+.location-picker-sidebar {
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .location-picker-map {
+    min-height: 500px;
+  }
+}
+
+/* Loading overlay for map */
+.map-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: 8px;
+}
+
+/* Search suggestions */
+.location-suggestions {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.location-suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background-color 0.2s;
+}
+
+.location-suggestion-item:hover {
+  background-color: #f8fafc;
+}
+
+.location-suggestion-item:last-child {
+  border-bottom: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .location-picker-dialog {
+    margin: 10px;
+  }
+  
+  .location-picker-map {
+    height: 300px;
+  }
+}

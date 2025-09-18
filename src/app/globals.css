@@ -119,9 +119,71 @@ html[lang="ur"] { --font-sans: var(--font-urdu); }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* RTL Utility Classes */
+@layer utilities {
+  .rtl-container {
+    direction: rtl;
+  }
+  
+  .ltr-container {
+    direction: ltr;
+  }
+  
+  /* RTL-aware spacing utilities */
+  .rtl\:space-x-reverse > :not([hidden]) ~ :not([hidden]) {
+    --tw-space-x-reverse: 1;
+  }
+  
+  .rtl\:flex-row-reverse {
+    flex-direction: row-reverse;
+  }
+  
+  .rtl\:text-right {
+    text-align: right;
+  }
+  
+  .rtl\:text-left {
+    text-align: left;
+  }
+  
+  .rtl\:justify-start {
+    justify-content: flex-start;
+  }
+  
+  .rtl\:justify-end {
+    justify-content: flex-end;
+  }
+  
+  /* RTL-aware margins */
+  .rtl\:ml-auto {
+    margin-left: auto;
+  }
+  
+  .rtl\:mr-auto {
+    margin-right: auto;
+  }
+  
+  /* RTL-aware positioning */
+  .rtl\:left-auto {
+    left: auto;
+  }
+  
+  .rtl\:right-0 {
+    right: 0;
+  }
+  
+  .rtl\:right-auto {
+    right: auto;
+  }
+  
+  .rtl\:left-0 {
+    left: 0;
   }
 }

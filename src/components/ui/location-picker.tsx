@@ -1,0 +1,357 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet"
+import { LatLng } from "leaflet"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { MapPin, Search, Navigation, Check, X } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import "leaflet/dist/leaflet.css"
+
+// Fix for default markers in react-leaflet
+import L from "leaflet"
+delete (L.Icon.Default.prototype as any)._getIconUrl
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+})
+
+interface LocationData {
+  lat: number
+  lng: number
+  address?: string
+  name?: string
+}
+
+interface LocationPickerProps {
+  isOpen: boolean
+  onClose: () => void
+  onLocationSelect: (location: LocationData) => void
+  title: string
+  initialLocation?: LocationData | null
+  type: "origin" | "destination"
+}
+
+// Map click handler component
+function LocationMarker({ 
+  position, 
+  setPosition 
+}: { 
+  position: LatLng | null
+  setPosition: (pos: LatLng) => void 
+}) {
+  useMapEvents({
+    click(e) {
+      setPosition(e.latlng)
+    },
+  })
+
+  return position === null ? null : (
+    <Marker position={position} />
+  )
+}
+
+export function LocationPicker({
+  isOpen,
+  onClose,
+  onLocationSelect,
+  title,
+  initialLocation,
+  type
+}: LocationPickerProps) {
+  const [position, setPosition] = useState<LatLng | null>(
+    initialLocation ? new LatLng(initialLocation.lat, initialLocation.lng) : null
+  )
+  const [address, setAddress] = useState(initialLocation?.address || "")
+  const [locationName, setLocationName] = useState(initialLocation?.name || "")
+  const [isLoading, setIsLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+  const mapRef = useRef<any>(null)
+  const { toast } = useToast()
+
+  // Default center (Riyadh, Saudi Arabia)
+  const defaultCenter: [number, number] = [24.7136, 46.6753]
+
+  // Predefined locations in Saudi Arabia
+  const predefinedLocations = [
+    { name: "الرياض", nameEn: "Riyadh", lat: 24.7136, lng: 46.6753 },
+    { name: "جدة", nameEn: "Jeddah", lat: 21.3891, lng: 39.8579 },
+    { name: "مكة المكرمة", nameEn: "Mecca", lat: 21.4225, lng: 39.8262 },
+    { name: "المدينة المنورة", nameEn: "Medina", lat: 24.5247, lng: 39.5692 },
+    { name: "الدمام", nameEn: "Dammam", lat: 26.4207, lng: 50.0888 },
+    { name: "تبوك", nameEn: "Tabuk", lat: 28.3998, lng: 36.5700 },
+    { name: "أبها", nameEn: "Abha", lat: 18.2164, lng: 42.5053 },
+    { name: "الطائف", nameEn: "Taif", lat: 21.2703, lng: 40.4178 },
+    { name: "بريدة", nameEn: "Buraidah", lat: 26.3260, lng: 43.9750 },
+    { name: "خميس مشيط", nameEn: "Khamis Mushait", lat: 18.3000, lng: 42.7300 }
+  ]
+
+  // Get current location
+  const getCurrentLocation = () => {
+    setIsLoading(true)
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newPos = new LatLng(position.coords.latitude, position.coords.longitude)
+          setPosition(newPos)
+          if (mapRef.current) {
+            mapRef.current.flyTo(newPos, 13)
+          }
+          reverseGeocode(newPos)
+          setIsLoading(false)
+        },
+        (error) => {
+          console.error("Error getting location:", error)
+          toast({
+            title: "خطأ في تحديد الموقع",
+            description: "لا يمكن الوصول إلى موقعك الحالي",
+            variant: "destructive"
+          })
+          setIsLoading(false)
+        }
+      )
+    } else {
+      toast({
+        title: "خطأ",
+        description: "المتصفح لا يدعم تحديد الموقع",
+        variant: "destructive"
+      })
+      setIsLoading(false)
+    }
+  }
+
+  // Reverse geocoding to get address from coordinates
+  const reverseGeocode = async (latlng: LatLng) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&accept-language=ar`
+      )
+      const data = await response.json()
+      if (data.display_name) {
+        setAddress(data.display_name)
+      }
+    } catch (error) {
+      console.error("Reverse geocoding error:", error)
+    }
+  }
+
+  // Search for location
+  const searchLocation = async () => {
+    if (!searchQuery.trim()) return
+
+    setIsLoading(true)
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&countrycodes=sa&limit=1&accept-language=ar`
+      )
+      const data = await response.json()
+      
+      if (data.length > 0) {
+        const result = data[0]
+        const newPos = new LatLng(parseFloat(result.lat), parseFloat(result.lon))
+        setPosition(newPos)
+        setAddress(result.display_name)
+        if (mapRef.current) {
+          mapRef.current.flyTo(newPos, 13)
+        }
+      } else {
+        toast({
+          title: "لم يتم العثور على الموقع",
+          description: "حاول البحث بكلمات مختلفة",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error("Search error:", error)
+      toast({
+        title: "خطأ في البحث",
+        description: "حدث خطأ أثناء البحث عن الموقع",
+        variant: "destructive"
+      })
+    }
+    setIsLoading(false)
+  }
+
+  // Select predefined location
+  const selectPredefinedLocation = (location: typeof predefinedLocations[0]) => {
+    const newPos = new LatLng(location.lat, location.lng)
+    setPosition(newPos)
+    setLocationName(location.name)
+    setAddress(location.name)
+    if (mapRef.current) {
+      mapRef.current.flyTo(newPos, 13)
+    }
+  }
+
+  // Confirm location selection
+  const confirmLocation = () => {
+    if (!position) {
+      toast({
+        title: "لم يتم اختيار موقع",
+        description: "يرجى اختيار موقع على الخريطة",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const locationData: LocationData = {
+      lat: position.lat,
+      lng: position.lng,
+      address: address || `${position.lat.toFixed(6)}, ${position.lng.toFixed(6)}`,
+      name: locationName || address || `موقع مخصص`
+    }
+
+    onLocationSelect(locationData)
+    onClose()
+  }
+
+  // Filter predefined locations based on search
+  const filteredLocations = predefinedLocations.filter(location =>
+    location.name.includes(searchQuery) || location.nameEn.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0">
+        <DialogHeader className="px-6 py-4 border-b">
+          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
+            <MapPin className="w-5 h-5 text-blue-600" />
+            {title}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[75vh]">
+          {/* Map Section */}
+          <div className="lg:col-span-2 relative bg-gray-100">
+            <MapContainer
+              center={position ? [position.lat, position.lng] : defaultCenter}
+              zoom={position ? 13 : 6}
+              style={{ height: "100%", width: "100%", borderRadius: "0" }}
+              ref={mapRef}
+              className="z-10"
+            >
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <LocationMarker position={position} setPosition={setPosition} />
+            </MapContainer>
+
+            {/* Current Location Button */}
+            <Button
+              onClick={getCurrentLocation}
+              disabled={isLoading}
+              className="absolute top-4 right-4 z-[1000] shadow-lg bg-white text-gray-700 hover:bg-gray-50 border"
+              size="sm"
+            >
+              <Navigation className="w-4 h-4 mr-2" />
+              موقعي الحالي
+            </Button>
+          </div>
+
+          {/* Controls Section */}
+          <div className="bg-white border-l border-gray-200 p-4 space-y-4 overflow-y-auto">
+            {/* Search */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-700">البحث عن موقع</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="ابحث عن مدينة أو عنوان..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && searchLocation()}
+                  className="flex-1"
+                />
+                <Button 
+                  onClick={searchLocation} 
+                  disabled={isLoading} 
+                  size="sm"
+                  className="px-3"
+                >
+                  <Search className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Predefined Locations */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-700">المدن الرئيسية</Label>
+              <div className="space-y-1 max-h-48 overflow-y-auto">
+                {filteredLocations.map((location) => (
+                  <Button
+                    key={location.nameEn}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => selectPredefinedLocation(location)}
+                    className="w-full justify-start text-right hover:bg-blue-50 p-2 h-auto"
+                  >
+                    <MapPin className="w-4 h-4 ml-2 text-blue-600" />
+                    <span className="text-sm">{location.name}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Location Details */}
+            {position && (
+              <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${type === 'origin' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <Label className="text-sm font-medium text-gray-700">
+                    {type === 'origin' ? 'نقطة البداية' : 'نقطة النهاية'}
+                  </Label>
+                </div>
+                
+                <div>
+                  <Label htmlFor="locationName" className="text-sm font-medium text-gray-700">اسم الموقع</Label>
+                  <Input
+                    id="locationName"
+                    placeholder="أدخل اسم الموقع..."
+                    value={locationName}
+                    onChange={(e) => setLocationName(e.target.value)}
+                    className="mt-1"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs text-gray-500">الإحداثيات</Label>
+                  <p className="text-xs font-mono text-gray-600 bg-white px-2 py-1 rounded border">
+                    {position.lat.toFixed(6)}, {position.lng.toFixed(6)}
+                  </p>
+                </div>
+
+                {address && (
+                  <div>
+                    <Label className="text-xs text-gray-500">العنوان المكتشف</Label>
+                    <p className="text-xs text-gray-700 bg-white p-2 rounded border break-words">{address}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter className="px-6 py-4 border-t bg-gray-50">
+          <div className="flex gap-3 w-full">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              <X className="w-4 h-4 mr-2" />
+              إلغاء
+            </Button>
+            <Button 
+              onClick={confirmLocation} 
+              disabled={!position}
+              className="flex-1 bg-blue-600 hover:bg-blue-700"
+            >
+              <Check className="w-4 h-4 mr-2" />
+              تأكيد الموقع
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}

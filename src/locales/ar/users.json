@@ -1,0 +1,23 @@
+{
+  "users": "المستخدمون",
+  "userManagement": "إدارة المستخدمين",
+  "addUser": "إضافة مستخدم",
+  "editUser": "تعديل مستخدم",
+  "deleteUser": "حذف مستخدم",
+  "role": "الدور",
+  "isActive": "نشط",
+  "admins": "المديرون",
+  "drivers": "السائقون",
+  "customers": "العملاء",
+  "searchUsers": "البحث عن المستخدمين...",
+  "noUsersFound": "لم يتم العثور على مستخدمين",
+  "addNewUser": "إضافة مستخدم جديد",
+  "updateUserInfo": "تحديث معلومات المستخدم",
+  "addNewUserDesc": "إضافة مستخدم جديد إلى النظام",
+  "updateUser": "تحديث المستخدم",
+  "createUser": "إنشاء مستخدم",
+  "confirmDeleteUser": "هل أنت متأكد من حذف",
+  "userCreatedSuccess": "تم إنشاء المستخدم بنجاح",
+  "userUpdatedSuccess": "تم تحديث المستخدم بنجاح",
+  "userDeletedSuccess": "تم حذف المستخدم بنجاح"
+}

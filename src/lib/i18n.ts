@@ -47,6 +47,7 @@ export const translations = {
     subtotal: "Subtotal",
     tax: "Tax",
     currency: "SAR",
+    selectLanguage: "Select Language",
 
     // Admin Dashboard
     totalTrips: "Total Trips",
@@ -260,7 +261,6 @@ export const translations = {
     contactPerson: "Contact Person",
     website: "Website",
     address: "Address",
-    notes: "Notes",
     profileUpdatedSuccessfully: "Profile updated successfully",
     errorUpdatingProfile: "Error updating profile",
     notificationPreferences: "Notification Preferences",
@@ -307,7 +307,6 @@ export const translations = {
     tripSummary: "Trip Summary",
     pickupDate: "Pickup Date",
     previous: "Previous",
-    next: "Next",
     confirmBooking: "Confirm Booking",
     submitting: "Submitting...",
     tripRequestSubmitted: "Trip Request Submitted!",
@@ -319,7 +318,6 @@ export const translations = {
     paymentManagement: "Payment Management",
     managePaymentsAndTransactions: "Manage payments and transactions",
     totalPayments: "Total Payments",
-    totalAmount: "Total Amount",
     pendingAmount: "Pending Amount",
     monthlyGrowth: "Monthly Growth",
     allPayments: "All Payments",
@@ -345,7 +343,6 @@ export const translations = {
     completed: "Completed",
     failed: "Failed",
     refunded: "Refunded",
-    cancelled: "Cancelled",
     process: "Process",
     retry: "Retry",
     refund: "Refund",
@@ -386,7 +383,6 @@ export const translations = {
     exportPDF: "Export PDF",
     exportExcel: "Export Excel",
     totalRevenue: "Total Revenue",
-    totalTrips: "Total Trips",
     avgOrderValue: "Avg Order Value",
     customerRetention: "Customer Retention",
     profitMargin: "Profit Margin",
@@ -574,13 +570,38 @@ export const translations = {
     invalidCredentials: "Invalid email or password",
     networkError: "Network error. Please try again.",
     
-    // Dashboard
-    totalTrips: "Total Trips",
-    revenue: "Revenue",
-    expenses: "Expenses",
-    activeDrivers: "Active Drivers",
-    pendingInvoices: "Pending Invoices",
-    recentTrips: "Recent Trips",
+    // Validation Messages
+    required: "This field is required",
+    invalidEmail: "Please enter a valid email address",
+    invalidPhone: "Please enter a valid phone number",
+    passwordTooShort: "Password must be at least 8 characters",
+    passwordsDoNotMatch: "Passwords do not match",
+    invalidDate: "Please enter a valid date",
+    invalidNumber: "Please enter a valid number",
+    minLength: "Minimum length is {min} characters",
+    maxLength: "Maximum length is {max} characters",
+    mustBePositive: "Value must be positive",
+    mustBeGreaterThan: "Value must be greater than {min}",
+    mustBeLessThan: "Value must be less than {max}",
+    
+    // Form Placeholders
+    enterEmail: "Enter your email",
+    enterPassword: "Enter your password",
+    enterName: "Enter your name",
+    enterPhone: "Enter your phone number",
+    enterAddress: "Enter your address",
+    selectOption: "Select an option",
+    searchPlaceholder: "Search...",
+    
+    // Buttons
+    signIn: "Sign In",
+    signUp: "Sign Up",
+    signOut: "Sign Out",
+    forgotPassword: "Forgot Password?",
+    resetPassword: "Reset Password",
+    changePassword: "Change Password",
+    updateProfile: "Update Profile",
+    createAccount: "Create Account",
     
     // Brand
     brandName: "PRO FLEET",
@@ -615,6 +636,7 @@ export const translations = {
     subtotal: "المجموع الفرعي",
     tax: "الضريبة",
     currency: "ر.س",
+    selectLanguage: "اختر اللغة",
 
     // Admin Dashboard
     totalTrips: "إجمالي الرحلات",
@@ -1184,6 +1206,7 @@ export const translations = {
     subtotal: "ذیلی کل",
     tax: "ٹیکس",
     currency: "ر.س",
+    selectLanguage: "زبان منتخب کریں",
 
     // Admin Dashboard
     totalTrips: "کل سفر",
@@ -1727,3 +1750,26 @@ export const translations = {
 } as const
 
 export type TranslationKey = keyof typeof translations.en
+
+// Utility functions for i18n
+export function getLanguageDirection(lang: Language): 'ltr' | 'rtl' {
+  return languages[lang]?.dir || 'ltr'
+}
+
+export function isRTL(lang: Language): boolean {
+  return getLanguageDirection(lang) === 'rtl'
+}
+
+export function getLanguageName(lang: Language): string {
+  return languages[lang]?.name || 'English'
+}
+
+export function getLanguageFlag(lang: Language): string {
+  return languages[lang]?.flag || '🇺🇸'
+}
+
+// Default language
+export const defaultLanguage: Language = 'en'
+
+// Available languages list
+export const availableLanguages = Object.keys(languages) as Language[]

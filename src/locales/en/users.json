@@ -1,0 +1,23 @@
+{
+  "users": "Users",
+  "userManagement": "User Management",
+  "addUser": "Add User",
+  "editUser": "Edit User",
+  "deleteUser": "Delete User",
+  "role": "Role",
+  "isActive": "Active",
+  "admins": "Admins",
+  "drivers": "Drivers",
+  "customers": "Customers",
+  "searchUsers": "Search users...",
+  "noUsersFound": "No users found",
+  "addNewUser": "Add New User",
+  "updateUserInfo": "Update User Information",
+  "addNewUserDesc": "Add a new user to the system",
+  "updateUser": "Update User",
+  "createUser": "Create User",
+  "confirmDeleteUser": "Are you sure you want to delete",
+  "userCreatedSuccess": "User created successfully",
+  "userUpdatedSuccess": "User updated successfully",
+  "userDeletedSuccess": "User deleted successfully"
+}

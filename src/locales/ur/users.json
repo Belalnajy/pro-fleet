@@ -1,0 +1,23 @@
+{
+  "users": "صارفین",
+  "userManagement": "صارفین کا انتظام",
+  "addUser": "صارف شامل کریں",
+  "editUser": "صارف میں ترمیم",
+  "deleteUser": "صارف حذف کریں",
+  "role": "کردار",
+  "isActive": "فعال",
+  "admins": "ایڈمنز",
+  "drivers": "ڈرائیورز",
+  "customers": "کسٹمرز",
+  "searchUsers": "صارفین تلاش کریں...",
+  "noUsersFound": "کوئی صارف نہیں ملا",
+  "addNewUser": "نیا صارف شامل کریں",
+  "updateUserInfo": "صارف کی معلومات اپ ڈیٹ کریں",
+  "addNewUserDesc": "سسٹم میں نیا صارف شامل کریں",
+  "updateUser": "صارف اپ ڈیٹ کریں",
+  "createUser": "صارف بنائیں",
+  "confirmDeleteUser": "کیا آپ واقعی حذف کرنا چاہتے ہیں",
+  "userCreatedSuccess": "صارف کامیابی سے بنایا گیا",
+  "userUpdatedSuccess": "صارف کامیابی سے اپ ڈیٹ ہوا",
+  "userDeletedSuccess": "صارف کامیابی سے حذف ہوا"
+}

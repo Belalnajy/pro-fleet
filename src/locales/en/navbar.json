@@ -1,0 +1,19 @@
+{
+  "home": "Home",
+  "about": "About",
+  "contact": "Contact Us",
+  "help": "Help",
+  "dashboard": "Dashboard",
+  "pricing": "Pricing",
+  "tracking": "Tracking",
+  "invoices": "Invoices",
+  "reports": "Reports",
+  "bookTrip": "Book a Trip",
+  "myTrips": "My Trips",
+  "payments": "Payments",
+  "settings": "Settings",
+  "profile": "Profile",
+  "notifications": "Notifications",
+  "language": "Language",
+  "selectLanguage": "Select Language"
+}

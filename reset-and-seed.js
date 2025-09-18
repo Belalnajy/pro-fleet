@@ -98,7 +98,7 @@ async function resetAndSeed() {
         vehicleId: vehicles[3].id,
         fromCityId: cities[3].id,
         toCityId: cities[0].id,
-        temperatureId: tempSettings[3].id,
+        temperatureId: tempSettings[0].id,
         scheduledDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
         status: 'CANCELLED',
         price: 1600,
@@ -109,9 +109,9 @@ async function resetAndSeed() {
         tripNumber: 'TWB:5005',
         customerId: customerUser.id,
         driverId: driverUser.driverProfile.id,
-        vehicleId: vehicles[4].id, // Refrigerated truck
-        fromCityId: cities[4].id,
-        toCityId: cities[5].id,
+        vehicleId: vehicles[0].id, // Refrigerated truck
+        fromCityId: cities[1].id,
+        toCityId: cities[2].id,
         temperatureId: tempSettings[2].id, // -18°C
         scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
         status: 'PENDING',

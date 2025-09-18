@@ -102,6 +102,8 @@ model City {
   name        String
   nameAr      String?
   country     String
+  latitude    Float?
+  longitude   Float?
   isActive    Boolean   @default(true)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -300,6 +302,18 @@ model Report {
   @@map("reports")
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("password_reset_tokens")
+}
+
 enum UserRole {
   ADMIN
   DRIVER
@@ -330,6 +344,7 @@ enum SubscriptionType {
 
 enum PaymentStatus {
   PENDING
+  SENT
   PAID
   OVERDUE
   CANCELLED

@@ -68,6 +68,7 @@ interface TrackingMapProps {
   refreshInterval?: number;
   center?: [number, number] | null;
   showRoute?: boolean;
+  adminMode?: boolean; // New prop to determine if using admin API
 }
 
 export function TrackingMap({
@@ -78,6 +79,7 @@ export function TrackingMap({
   refreshInterval = 30000,
   center = null,
   showRoute = false,
+  adminMode = false,
 }: TrackingMapProps) {
   const [trackingData, setTrackingData] = useState<{
     trips: Array<TripInfo & { trackingLogs: TrackingPoint[] }>;
@@ -113,19 +115,30 @@ export function TrackingMap({
       
       // If showRoute is enabled and we have a tripId, fetch route data
       if (showRoute && tripId) {
-        const routeResponse = await fetch(`/api/driver/trips/${tripId}/route`);
+        const routeApiUrl = adminMode 
+          ? `/api/admin/trips/${tripId}/route`
+          : `/api/driver/trips/${tripId}/route`;
+        
+        const routeResponse = await fetch(routeApiUrl);
         
         if (routeResponse.ok) {
           const routeData = await routeResponse.json();
           setRouteData(routeData.route);
           
           // Also set trip data for display
+          // Always include start and end points for map centering
+          const allPoints = [
+            routeData.route.startPoint,
+            ...(routeData.route.trackingPoints || []),
+            routeData.route.endPoint
+          ].filter(Boolean);
+          
           setTrackingData({
             trips: [{
               ...routeData.trip,
               trackingLogs: routeData.route.trackingPoints || []
             }],
-            points: routeData.route.trackingPoints || []
+            points: allPoints
           });
           
           setLastUpdate(new Date());
@@ -254,6 +267,20 @@ export function TrackingMap({
 
   // Calculate map center
   const getMapCenter = () => {
+    // If we have route data with start/end points, use them
+    if (routeData && routeData.startPoint && trackingData.points.length === 0) {
+      // Center between start and end points
+      const startLat = routeData.startPoint.latitude;
+      const startLng = routeData.startPoint.longitude;
+      const endLat = routeData.endPoint?.latitude || startLat;
+      const endLng = routeData.endPoint?.longitude || startLng;
+      
+      return [
+        (startLat + endLat) / 2,
+        (startLng + endLng) / 2
+      ];
+    }
+    
     if (trackingData.points.length === 0) {
       return [24.7136, 46.6753]; // Riyadh, Saudi Arabia
     }
@@ -319,7 +346,14 @@ export function TrackingMap({
   }
 
   const mapCenter = getMapCenter();
-  const zoom = trackingData.points.length > 0 ? 10 : 6;
+  // Adjust zoom based on available data
+  let zoom = 6; // Default zoom for Saudi Arabia
+  if (routeData && routeData.startPoint) {
+    zoom = 8; // Medium zoom when we have route data
+  }
+  if (trackingData.points.length > 2) {
+    zoom = 10; // Close zoom when we have tracking points
+  }
 
   return (
     <div className="space-y-4">

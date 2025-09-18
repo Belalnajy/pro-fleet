@@ -17,7 +17,6 @@ import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LanguageSelector } from "@/components/ui/language-selector"
 import { useLanguage } from "@/components/providers/language-provider"
 import {
-  Truck,
   Shield,
   Users,
   Calculator,
@@ -30,6 +29,7 @@ import {
   X,
   MapPin,
   Navigation as NavigationIcon,
+  Truck,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -40,7 +40,7 @@ interface NavigationProps {
 export function Navigation({ className }: NavigationProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
-  const { t, dir } = useLanguage()
+  const { t, dir, language } = useLanguage()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const getNavItems = () => {
@@ -48,7 +48,7 @@ export function Navigation({ className }: NavigationProps) {
 
     const baseItems = [
       {
-        href: "/dashboard",
+        href: `/${language}/dashboard`,
         label: t("dashboard"),
         icon: LayoutDashboard,
       },
@@ -58,44 +58,44 @@ export function Navigation({ className }: NavigationProps) {
       case "ADMIN":
         return [
           ...baseItems,
-          { href: "/admin/users", label: t("users"), icon: Users },
-          { href: "/admin/vehicles", label: t("vehicles"), icon: Truck },
-          { href: "/admin/pricing", label: t("pricing"), icon: Calculator },
-          { href: "/admin/trips", label: t("trips"), icon: FileText },
-          { href: "/admin/tracking", label: t("tracking"), icon: MapPin },
-          { href: "/admin/invoices", label: t("invoices"), icon: FileText },
-          { href: "/admin/reports", label: t("reports"), icon: FileText },
-          { href: "/admin/settings", label: t("settings"), icon: Settings },
+          { href: `/${language}/admin/users`, label: t("users"), icon: Users },
+          { href: `/${language}/admin/vehicles`, label: t("vehicles"), icon: Truck },
+          { href: `/${language}/admin/pricing`, label: t("pricing"), icon: Calculator },
+          { href: `/${language}/admin/trips`, label: t("trips"), icon: FileText },
+          { href: `/${language}/admin/tracking`, label: t("tracking"), icon: MapPin },
+          { href: `/${language}/admin/invoices`, label: t("invoices"), icon: FileText },
+          { href: `/${language}/admin/reports`, label: t("reports"), icon: FileText },
+          { href: `/${language}/admin/settings`, label: t("settings"), icon: Settings },
         ]
       case "DRIVER":
         return [
           ...baseItems,
-          { href: "/driver/trips", label: t("trips"), icon: FileText },
-          { href: "/driver/tracking", label: t("tracking"), icon: NavigationIcon },
-          { href: "/driver/profile", label: t("profile"), icon: User },
+          { href: `/${language}/driver/trips`, label: t("trips"), icon: FileText },
+          { href: `/${language}/driver/tracking`, label: t("tracking"), icon: NavigationIcon },
+          { href: `/${language}/driver/profile`, label: t("profile"), icon: User },
         ]
       case "CUSTOMER":
         return [
           ...baseItems,
-          { href: "/customer/book-trip", label: t("bookTrip"), icon: FileText },
-          { href: "/customer/my-trips", label: t("myTrips"), icon: FileText },
-          { href: "/customer/tracking", label: t("tracking"), icon: MapPin },
-          { href: "/customer/invoices", label: t("invoices"), icon: FileText },
-          { href: "/customer/profile", label: t("profile"), icon: User },
+          { href: `/${language}/customer/book-trip`, label: t("bookTrip"), icon: FileText },
+          { href: `/${language}/customer/my-trips`, label: t("myTrips"), icon: FileText },
+          { href: `/${language}/customer/tracking`, label: t("tracking"), icon: MapPin },
+          { href: `/${language}/customer/invoices`, label: t("invoices"), icon: FileText },
+          { href: `/${language}/customer/profile`, label: t("profile"), icon: User },
         ]
       case "ACCOUNTANT":
         return [
           ...baseItems,
-          { href: "/accountant/invoices", label: t("invoices"), icon: FileText },
-          { href: "/accountant/reports", label: t("reports"), icon: FileText },
-          { href: "/accountant/payments", label: t("payments"), icon: Calculator },
+          { href: `/${language}/accountant/invoices`, label: t("invoices"), icon: FileText },
+          { href: `/${language}/accountant/reports`, label: t("reports"), icon: FileText },
+          { href: `/${language}/accountant/payments`, label: t("payments"), icon: Calculator },
         ]
       case "CUSTOMS_BROKER":
         return [
           ...baseItems,
-          { href: "/customs-broker/shipments", label: t("trips"), icon: FileText },
-          { href: "/customs-broker/fees", label: t("pricing"), icon: Calculator },
-          { href: "/customs-broker/profile", label: t("profile"), icon: User },
+          { href: `/${language}/customs-broker/shipments`, label: t("trips"), icon: FileText },
+          { href: `/${language}/customs-broker/fees`, label: t("pricing"), icon: Calculator },
+          { href: `/${language}/customs-broker/profile`, label: t("profile"), icon: User },
         ]
       default:
         return baseItems
@@ -112,18 +112,21 @@ export function Navigation({ className }: NavigationProps) {
     return (
       <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${className}`}>
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-3">
-            <Truck className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-xl font-bold text-primary">{t("brandName")}</h1>
-              <p className="text-xs text-muted-foreground">{t("brandTagline")}</p>
-            </div>
+          <Link href={`/${language}`} className="flex items-center space-x-3">
+            <img 
+              src="/Website-Logo.png" 
+              alt="Logo" 
+              className="h-[100px] w-auto object-contain" 
+            />
           </Link>
           
           <div className="flex items-center space-x-4">
+            <Link href={`/${language}/terms`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              {t("termsAndConditions")}
+            </Link>
             <LanguageSelector />
             <ThemeToggle />
-            <Link href="/auth/signin">
+            <Link href={`/${language}/auth/signin`}>
               <Button>{t("signIn")}</Button>
             </Link>
           </div>
@@ -138,11 +141,11 @@ export function Navigation({ className }: NavigationProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-3">
-            <Truck className="h-8 w-8 text-primary" />
-            <div>
-              <h1 className="text-xl font-bold text-primary">{t("brandName")}</h1>
-              <p className="text-xs text-muted-foreground">{t("brandTagline")}</p>
-            </div>
+            <img 
+              src="/Website-Logo.png" 
+              alt="Logo" 
+              className="h-[100px] w-auto object-contain" 
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -205,6 +208,12 @@ export function Navigation({ className }: NavigationProps) {
                     <span>{t("settings")}</span>
                   </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href={`/${language}/terms`}>
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>{t("termsAndConditions")}</span>
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut className="mr-2 h-4 w-4" />
@@ -248,6 +257,16 @@ export function Navigation({ className }: NavigationProps) {
                   <span>{item.label}</span>
                 </Link>
               ))}
+              
+              {/* Terms and Conditions Link */}
+              <Link
+                href={`/${language}/terms`}
+                className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <FileText className="h-4 w-4" />
+                <span>{t("termsAndConditions")}</span>
+              </Link>
             </div>
           </div>
         )}

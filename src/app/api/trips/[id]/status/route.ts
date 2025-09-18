@@ -36,13 +36,31 @@ export async function PUT(
     const currentTrip = await db.trip.findUnique({
       where: { id: tripId },
       include: {
-        customer: true, // customer is already a User object
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
         driver: {
-          include: { user: true },
+          include: { 
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
+          },
         },
         fromCity: true,
         toCity: true,
-        vehicle: true,
+        vehicle: {
+          include: {
+            vehicleType: true
+          }
+        },
         invoice: true,
       },
     });
@@ -51,12 +69,21 @@ export async function PUT(
       return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
+    // Get driver profile if user is a driver
+    let driverProfile: { id: string } | null = null;
+    if (session.user.role === UserRole.DRIVER) {
+      driverProfile = await db.driver.findFirst({
+        where: { userId: session.user.id },
+        select: { id: true }
+      });
+    }
+
     // Check permissions
     const canUpdate =
       session.user.role === UserRole.ADMIN ||
       (session.user.role === UserRole.DRIVER &&
-        session.user.driverProfile &&
-        currentTrip.driverId === session.user.driverProfile.id) ||
+        driverProfile &&
+        currentTrip.driverId === driverProfile.id) ||
       (session.user.role === UserRole.CUSTOMER &&
         currentTrip.customerId === session.user.id);
 
@@ -81,8 +108,8 @@ export async function PUT(
           updateData.actualStartDate = new Date();
         }
         // Only drivers can set trips to IN_PROGRESS
-        if (session.user.role === UserRole.DRIVER && !currentTrip.driverId) {
-          updateData.driverId = session.user.driverProfile?.id;
+        if (session.user.role === UserRole.DRIVER && !currentTrip.driverId && driverProfile) {
+          updateData.driverId = driverProfile.id;
         }
         break;
 
@@ -123,11 +150,31 @@ export async function PUT(
         where: { id: tripId },
         data: updateData,
         include: {
-          customer: true,
-          driver: true,
+          customer: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          driver: {
+            include: { 
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              }
+            },
+          },
           fromCity: true,
           toCity: true,
-          vehicle: true,
+          vehicle: {
+            include: {
+              vehicleType: true
+            }
+          },
           invoice: true,
         },
       });
@@ -190,7 +237,7 @@ export async function PUT(
         scheduledDate: result.trip.scheduledDate,
         actualStartDate: result.trip.actualStartDate,
         deliveredDate: result.trip.deliveredDate,
-        customer: (result.trip as any).customer?.user?.name || "Unknown",
+        customer: (result.trip as any).customer?.name || "Unknown",
         driver: (result.trip as any).driver?.user?.name || null,
       },
     };

@@ -127,10 +127,11 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           </Button>
           
           <Link href="/" className="flex items-center space-x-2">
-            <Truck className="h-6 w-6 text-primary" />
-            <div>
-              <span className="font-bold text-primary">PRO FLEET</span>
-            </div>
+            <img 
+              src="/Website-Logo.png" 
+              alt="Logo" 
+              className="h-[100px] object-contain" 
+            />
           </Link>
         </div>
 

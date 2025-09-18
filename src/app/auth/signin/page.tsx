@@ -182,11 +182,18 @@ function SignInInner() {
                 )}
               </Button>
               
-              <div className="text-center text-sm text-muted-foreground">
-                Don't have an account?{" "}
-                <Link href="/auth/signup" className="text-primary hover:underline">
-                  Sign up
-                </Link>
+              <div className="text-center text-sm text-muted-foreground space-y-2">
+                <div>
+                  Don't have an account?{" "}
+                  <Link href="/auth/signup" className="text-primary hover:underline">
+                    Sign up
+                  </Link>
+                </div>
+                <div>
+                  <Link href="/auth/forgot-password" className="text-primary hover:underline">
+                    نسيت كلمة المرور؟
+                  </Link>
+                </div>
               </div>
             </CardFooter>
           </form>

@@ -27,20 +27,24 @@ export async function GET(
       return NextResponse.json({ error: "Driver profile not found" }, { status: 404 })
     }
 
-    // Get the trip with cities
+    // Get the trip with cities and notes (which may contain location data)
     const trip = await db.trip.findUnique({
       where: { id: tripId },
       include: {
         fromCity: {
           select: {
             id: true,
-            name: true
+            name: true,
+            latitude: true,
+            longitude: true
           }
         },
         toCity: {
           select: {
             id: true,
-            name: true
+            name: true,
+            latitude: true,
+            longitude: true
           }
         },
         customer: {
@@ -50,9 +54,8 @@ export async function GET(
           }
         },
         vehicle: {
-          select: {
-            type: true,
-            capacity: true
+          include: {
+            vehicleType: true
           }
         },
         temperature: {
@@ -61,6 +64,12 @@ export async function GET(
             value: true,
             unit: true
           }
+        },
+        trackingLogs: {
+          orderBy: {
+            timestamp: 'desc'
+          },
+          take: 50 // Limit to last 50 tracking points
         }
       }
     })
@@ -76,27 +85,96 @@ export async function GET(
       )
     }
 
-    // Generate simulated route points between start and end
-    // Using default coordinates for Saudi cities
-    const cityCoordinates: Record<string, {lat: number, lng: number}> = {
-      'الرياض': { lat: 24.7136, lng: 46.6753 },
-      'جدة': { lat: 21.3891, lng: 39.8579 },
-      'مكة': { lat: 21.3891, lng: 39.8579 },
-      'المدينة': { lat: 24.5247, lng: 39.5692 },
-      'الدمام': { lat: 26.4207, lng: 50.0888 },
-      'تبوك': { lat: 28.3998, lng: 36.5700 }
+    // Extract coordinates from multiple sources:
+    // 1. Location data from trip notes (if trip was created with location picker)
+    // 2. City coordinates from database (if available)
+    // 3. Fallback to hardcoded coordinates
+    
+    let startLat: number, startLng: number, endLat: number, endLng: number
+    let startLocationName = trip.fromCity.name
+    let endLocationName = trip.toCity.name
+    
+    // Try to extract location data from trip notes
+    let locationData: { origin?: { lat: number, lng: number, name?: string }, destination?: { lat: number, lng: number, name?: string } } | null = null
+    
+    if (trip.notes) {
+      try {
+        // Look for "Location Data:" in notes
+        const locationMatch = trip.notes.match(/Location Data: ({.*})/)
+        if (locationMatch) {
+          locationData = JSON.parse(locationMatch[1])
+        }
+      } catch (error) {
+        console.log("Could not parse location data from notes:", error)
+      }
     }
     
-    const startCoords = cityCoordinates[trip.fromCity.name] || { lat: 24.7136, lng: 46.6753 }
-    const endCoords = cityCoordinates[trip.toCity.name] || { lat: 21.3891, lng: 39.8579 }
+    // Set start coordinates
+    if (locationData?.origin) {
+      startLat = locationData.origin.lat
+      startLng = locationData.origin.lng
+      if (locationData.origin.name) {
+        startLocationName = locationData.origin.name
+      }
+    } else if (trip.fromCity.latitude && trip.fromCity.longitude) {
+      // Use coordinates from database
+      startLat = trip.fromCity.latitude
+      startLng = trip.fromCity.longitude
+    } else {
+      // Fallback to hardcoded coordinates
+      const cityCoordinates: Record<string, {lat: number, lng: number}> = {
+        'Riyadh': { lat: 24.7136, lng: 46.6753 },
+        'Jeddah': { lat: 21.3891, lng: 39.8579 },
+        'Mecca': { lat: 21.3891, lng: 39.8579 },
+        'Medina': { lat: 24.5247, lng: 39.5692 },
+        'Dammam': { lat: 26.4207, lng: 50.0888 },
+        'Tabuk': { lat: 28.3998, lng: 36.5700 },
+        'الرياض': { lat: 24.7136, lng: 46.6753 },
+        'جدة': { lat: 21.3891, lng: 39.8579 },
+        'مكة': { lat: 21.3891, lng: 39.8579 },
+        'المدينة': { lat: 24.5247, lng: 39.5692 },
+        'الدمام': { lat: 26.4207, lng: 50.0888 },
+        'تبوك': { lat: 28.3998, lng: 36.5700 }
+      }
+      const startCoords = cityCoordinates[trip.fromCity.name] || { lat: 24.7136, lng: 46.6753 }
+      startLat = startCoords.lat
+      startLng = startCoords.lng
+    }
     
-    const startLat = startCoords.lat
-    const startLng = startCoords.lng
-    const endLat = endCoords.lat
-    const endLng = endCoords.lng
+    // Set end coordinates
+    if (locationData?.destination) {
+      endLat = locationData.destination.lat
+      endLng = locationData.destination.lng
+      if (locationData.destination.name) {
+        endLocationName = locationData.destination.name
+      }
+    } else if (trip.toCity.latitude && trip.toCity.longitude) {
+      // Use coordinates from database
+      endLat = trip.toCity.latitude
+      endLng = trip.toCity.longitude
+    } else {
+      // Fallback to hardcoded coordinates
+      const cityCoordinates: Record<string, {lat: number, lng: number}> = {
+        'Riyadh': { lat: 24.7136, lng: 46.6753 },
+        'Jeddah': { lat: 21.3891, lng: 39.8579 },
+        'Mecca': { lat: 21.3891, lng: 39.8579 },
+        'Medina': { lat: 24.5247, lng: 39.5692 },
+        'Dammam': { lat: 26.4207, lng: 50.0888 },
+        'Tabuk': { lat: 28.3998, lng: 36.5700 },
+        'الرياض': { lat: 24.7136, lng: 46.6753 },
+        'جدة': { lat: 21.3891, lng: 39.8579 },
+        'مكة': { lat: 21.3891, lng: 39.8579 },
+        'المدينة': { lat: 24.5247, lng: 39.5692 },
+        'الدمام': { lat: 26.4207, lng: 50.0888 },
+        'تبوك': { lat: 28.3998, lng: 36.5700 }
+      }
+      const endCoords = cityCoordinates[trip.toCity.name] || { lat: 21.3891, lng: 39.8579 }
+      endLat = endCoords.lat
+      endLng = endCoords.lng
+    }
 
-    // Generate intermediate points for the route (simulated path)
-    const routePoints = generateRoutePoints(startLat, startLng, endLat, endLng, trip.status)
+    // Generate route points with real tracking data
+    const routePoints = generateRoutePoints(startLat, startLng, endLat, endLng, trip.status, trip.trackingLogs)
 
     return NextResponse.json({
       trip: {
@@ -117,14 +195,16 @@ export async function GET(
         startPoint: {
           latitude: startLat,
           longitude: startLng,
-          name: trip.fromCity.name,
-          type: 'start'
+          name: startLocationName,
+          type: 'start',
+          isCustomLocation: !!locationData?.origin
         },
         endPoint: {
           latitude: endLat,
           longitude: endLng,
-          name: trip.toCity.name,
-          type: 'end'
+          name: endLocationName,
+          type: 'end',
+          isCustomLocation: !!locationData?.destination
         },
         trackingPoints: routePoints,
         totalDistance: calculateDistance(startLat, startLng, endLat, endLng),
@@ -141,13 +221,14 @@ export async function GET(
   }
 }
 
-// Generate simulated route points between start and end
+// Generate route points with real tracking data only
 function generateRoutePoints(
   startLat: number, 
   startLng: number, 
   endLat: number, 
   endLng: number,
-  status: string
+  status: string,
+  trackingLogs: any[]
 ): Array<{
   id: string;
   latitude: number;
@@ -155,7 +236,7 @@ function generateRoutePoints(
   timestamp: string;
   speed?: number;
   heading?: number;
-  type: 'tracking' | 'current';
+  type: 'start' | 'end' | 'tracking' | 'current';
 }> {
   const points: Array<{
     id: string;
@@ -164,52 +245,48 @@ function generateRoutePoints(
     timestamp: string;
     speed?: number;
     heading?: number;
-    type: 'tracking' | 'current';
+    type: 'start' | 'end' | 'tracking' | 'current';
   }> = []
-  const numPoints = 10 // Number of intermediate points
-  
-  // Calculate the progress based on trip status
-  let progress = 0
-  if (status === 'IN_PROGRESS') {
-    progress = Math.random() * 0.8 + 0.1 // 10% to 90% progress
-  } else if (status === 'DELIVERED') {
-    progress = 1 // 100% complete
-  }
-  
-  const currentTime = new Date()
-  
-  for (let i = 0; i <= numPoints; i++) {
-    const ratio = i / numPoints
+
+  // Always add start point (origin city)
+  points.push({
+    id: 'start',
+    latitude: startLat,
+    longitude: startLng,
+    timestamp: new Date().toISOString(),
+    type: 'start'
+  })
+
+  // Add real tracking points only (no simulation)
+  if (trackingLogs && trackingLogs.length > 0) {
+    // Sort tracking logs by timestamp (oldest first)
+    const sortedLogs = [...trackingLogs].sort((a, b) => 
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    )
     
-    // Linear interpolation between start and end points
-    const lat = startLat + (endLat - startLat) * ratio
-    const lng = startLng + (endLng - startLng) * ratio
-    
-    // Add some randomness to make it look more realistic
-    const randomLat = lat + (Math.random() - 0.5) * 0.01
-    const randomLng = lng + (Math.random() - 0.5) * 0.01
-    
-    // Only add points up to current progress
-    if (ratio <= progress) {
-      const pointTime = new Date(currentTime.getTime() - (numPoints - i) * 10 * 60 * 1000) // 10 minutes apart
-      
+    sortedLogs.forEach((log, index) => {
       points.push({
-        id: `point-${i}`,
-        latitude: randomLat,
-        longitude: randomLng,
-        timestamp: pointTime.toISOString(),
-        speed: Math.random() * 20 + 40, // 40-60 km/h
-        heading: calculateBearing(
-          i > 0 ? points[i-1].latitude : startLat,
-          i > 0 ? points[i-1].longitude : startLng,
-          randomLat,
-          randomLng
-        ),
-        type: i === Math.floor(progress * numPoints) ? 'current' : 'tracking'
+        id: log.id,
+        latitude: log.latitude,
+        longitude: log.longitude,
+        timestamp: log.timestamp,
+        speed: log.speed,
+        heading: log.heading,
+        // The last tracking point is the current location
+        type: index === sortedLogs.length - 1 ? 'current' : 'tracking'
       })
-    }
+    })
   }
-  
+
+  // Always add end point (destination city)
+  points.push({
+    id: 'end',
+    latitude: endLat,
+    longitude: endLng,
+    timestamp: new Date().toISOString(),
+    type: 'end'
+  })
+
   return points
 }
 

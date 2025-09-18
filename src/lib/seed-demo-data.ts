@@ -166,6 +166,8 @@ async function seedDemoData() {
           name: "Riyadh",
           nameAr: "الرياض",
           country: "Saudi Arabia",
+          latitude: 24.7136,
+          longitude: 46.6753,
           isActive: true
         }
       }),
@@ -174,6 +176,8 @@ async function seedDemoData() {
           name: "Jeddah",
           nameAr: "جدة",
           country: "Saudi Arabia",
+          latitude: 21.3891,
+          longitude: 39.8579,
           isActive: true
         }
       }),
@@ -182,6 +186,8 @@ async function seedDemoData() {
           name: "Dammam",
           nameAr: "الدمام",
           country: "Saudi Arabia",
+          latitude: 26.4207,
+          longitude: 50.0888,
           isActive: true
         }
       })

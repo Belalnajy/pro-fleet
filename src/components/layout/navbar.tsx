@@ -60,7 +60,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
         return [
           { href: `/${locale}/driver`, label: "Dashboard", icon: Home },
           { href: `/${locale}/driver/trips`, label: "My Trips", icon: Truck },
-          { href: `/${locale}/driver/profile`, label: "Profile", icon: Users },
+          { href: `/${locale}/profile`, label: "Profile", icon: Users },
         ]
       
       case UserRole.CUSTOMER:

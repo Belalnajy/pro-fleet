@@ -73,7 +73,7 @@ export function Navigation({ className }: NavigationProps) {
           ...baseItems,
           { href: `/${language}/driver/trips`, label: t("trips"), icon: FileText },
           { href: `/${language}/driver/tracking`, label: t("tracking"), icon: NavigationIcon },
-          { href: `/${language}/driver/profile`, label: t("profile"), icon: User },
+          { href: `/${language}/profile`, label: t("profile"), icon: User },
         ]
       case "CUSTOMER":
         return [

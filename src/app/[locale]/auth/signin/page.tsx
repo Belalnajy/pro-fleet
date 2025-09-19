@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { signIn, getSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense } from "react"
@@ -237,10 +237,11 @@ function SignInInner({ locale }: { locale: string }) {
   )
 }
 
-export default function SignInPage({ params }: { params: { locale: string } }) {
+export default function SignInPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   return (
     <Suspense>
-      <SignInInner locale={params.locale} />
+      <SignInInner locale={locale} />
     </Suspense>
   )
 }

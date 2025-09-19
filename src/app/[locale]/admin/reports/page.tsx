@@ -80,6 +80,16 @@ export default function ReportsPage() {
     vehicleTypeStats: [],
     customerStats: [],
     dailyStats: [],
+    performanceMetrics: {
+      totalRevenue: 0,
+      totalTrips: 0,
+      avgOrderValue: 0,
+      customerRetention: 0,
+      profitMargin: 0,
+      growthRate: 0,
+    },
+    topRoutes: [],
+    driverPerformance: [],
   })
   const [kpiData, setKpiData] = useState<KPIData>({
     totalRevenue: 0,
@@ -167,14 +177,14 @@ export default function ReportsPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap">
           <div>
             <h1 className="text-3xl font-bold">{t("reports")}</h1>
             <p className="text-muted-foreground">{t("businessAnalyticsAndReports")}</p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-wrap justify-end gap-5 md:gap-2">
             <Select value={dateRange} onValueChange={setDateRange}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder={t("selectDateRange")} />
               </SelectTrigger>
               <SelectContent>
@@ -185,11 +195,11 @@ export default function ReportsPage() {
                 <SelectItem value="lastyear">{t("lastYear")}</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" size="sm" onClick={handleExportExcel}>
+            <Button className="w-full md:w-auto" variant="outline" size="sm" onClick={handleExportExcel}>
               <Download className="h-4 w-4 mr-2" />
               {t("exportExcel")}
             </Button>
-            <Button variant="outline" size="sm" onClick={handleExportPDF}>
+            <Button className="w-full md:w-auto " variant="outline" size="sm" onClick={handleExportPDF}>
               <Download className="h-4 w-4 mr-2" />
               {t("exportPDF")}
             </Button>
@@ -265,13 +275,40 @@ export default function ReportsPage() {
 
         {/* Charts */}
         <Tabs defaultValue="revenue" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="revenue">{t("revenueAnalysis")}</TabsTrigger>
-            <TabsTrigger value="trips">{t("tripAnalysis")}</TabsTrigger>
-            <TabsTrigger value="cities">{t("cityAnalysis")}</TabsTrigger>
-            <TabsTrigger value="vehicles">{t("vehicleAnalysis")}</TabsTrigger>
-            <TabsTrigger value="customers">{t("customerAnalysis")}</TabsTrigger>
-          </TabsList>
+          <div className="w-full overflow-x-auto">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 h-auto p-1 bg-muted rounded-lg">
+              <TabsTrigger 
+                value="revenue" 
+                className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground"
+              >
+                {t("revenueAnalysis")}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="trips" 
+                className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground"
+              >
+                {t("tripAnalysis")}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="cities" 
+                className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground"
+              >
+                {t("cityAnalysis")}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="vehicles" 
+                className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground"
+              >
+                {t("vehicleAnalysis")}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="customers" 
+                className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground"
+              >
+                {t("customerAnalysis")}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="revenue" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

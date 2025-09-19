@@ -66,6 +66,7 @@ export function Navigation({ className }: NavigationProps) {
           { href: `/${language}/admin/invoices`, label: t("invoices"), icon: FileText },
           { href: `/${language}/admin/reports`, label: t("reports"), icon: FileText },
           { href: `/${language}/admin/settings`, label: t("settings"), icon: Settings },
+
         ]
       case "DRIVER":
         return [
@@ -81,7 +82,7 @@ export function Navigation({ className }: NavigationProps) {
           { href: `/${language}/customer/my-trips`, label: t("myTrips"), icon: FileText },
           { href: `/${language}/customer/tracking`, label: t("tracking"), icon: MapPin },
           { href: `/${language}/customer/invoices`, label: t("invoices"), icon: FileText },
-          { href: `/${language}/customer/profile`, label: t("profile"), icon: User },
+
         ]
       case "ACCOUNTANT":
         return [
@@ -89,14 +90,14 @@ export function Navigation({ className }: NavigationProps) {
           { href: `/${language}/accountant/invoices`, label: t("invoices"), icon: FileText },
           { href: `/${language}/accountant/reports`, label: t("reports"), icon: FileText },
           { href: `/${language}/accountant/payments`, label: t("payments"), icon: Calculator },
-          { href: `/${language}/accountant/settings`, label: t("settings"), icon: Settings },
+          // { href: `/${language}/accountant/settings`, label: t("settings"), icon: Settings },
         ]
       case "CUSTOMS_BROKER":
         return [
           ...baseItems,
           { href: `/${language}/customs-broker/shipments`, label: t("trips"), icon: FileText },
           { href: `/${language}/customs-broker/fees`, label: t("pricing"), icon: Calculator },
-          { href: `/${language}/customs-broker/profile`, label: t("profile"), icon: User },
+
         ]
       default:
         return baseItems
@@ -197,16 +198,11 @@ export function Navigation({ className }: NavigationProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>{t("profile")}</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">
+                  <Link href={`/${language}/profile`}>
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>{t("settings")}</span>
+                    <span>{t("profile")}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

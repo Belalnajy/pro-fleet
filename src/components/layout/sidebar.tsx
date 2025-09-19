@@ -85,6 +85,7 @@ export function Sidebar({ className }: SidebarProps) {
             href: `/${locale}/admin/settings`,
             icon: Settings,
           },
+
         ]
       
       case UserRole.DRIVER:
@@ -143,11 +144,7 @@ export function Sidebar({ className }: SidebarProps) {
             href: `/${locale}/customer/tracking`,
             icon: FileSearch,
           },
-          {
-            title: "My Profile",
-            href: `/${locale}/customer/profile`,
-            icon: User,
-          },
+
         ]
       
       case UserRole.ACCOUNTANT:

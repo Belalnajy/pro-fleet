@@ -69,7 +69,6 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           { href: `/${locale}/customer/book-trip`, label: "Book Trip", icon: Truck },
           { href: `/${locale}/customer/my-trips`, label: "My Trips", icon: FileText },
           { href: `/${locale}/customer/invoices`, label: "Invoices", icon: Calculator },
-          { href: `/${locale}/customer/profile`, label: "Profile", icon: Users },
         ]
       
       case UserRole.ACCOUNTANT:
@@ -217,16 +216,11 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+
               <DropdownMenuItem asChild>
-                <Link href="/profile">
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/settings">
+                <Link href={`/${locale}/settings`}>
                   <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
+                  <span>الإعدادات</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

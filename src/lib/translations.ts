@@ -13,6 +13,7 @@ import enTerms from '@/locales/en/terms.json'
 import enSettings from '@/locales/en/settings.json'
 import enInvoices from '@/locales/en/invoices.json'
 import enReports from '@/locales/en/reports.json'
+import enProfile from '@/locales/en/profile.json'
 
 // Import Arabic translations
 import arCommon from '@/locales/ar/common.json'
@@ -29,6 +30,7 @@ import arTerms from '@/locales/ar/terms.json'
 import arSettings from '@/locales/ar/settings.json'
 import arInvoices from '@/locales/ar/invoices.json'
 import arReports from '@/locales/ar/reports.json'
+import arProfile from '@/locales/ar/profile.json'
 
 // Import Urdu translations
 import urCommon from '@/locales/ur/common.json'
@@ -45,6 +47,7 @@ import urTerms from '@/locales/ur/terms.json'
 import urSettings from '@/locales/ur/settings.json'
 import urInvoices from '@/locales/ur/invoices.json'
 import urReports from '@/locales/ur/reports.json'
+import urProfile from '@/locales/ur/profile.json'
 
 export const languages = {
   en: {
@@ -83,6 +86,7 @@ export const translations = {
     ...enSettings,
     ...enInvoices,
     ...enReports,
+    ...enProfile,
   },
   ar: {
     ...arCommon,
@@ -99,6 +103,7 @@ export const translations = {
     ...arSettings,
     ...arInvoices,
     ...arReports,
+    ...arProfile,
   },
   ur: {
     ...urCommon,
@@ -115,6 +120,7 @@ export const translations = {
     ...urSettings,
     ...urInvoices,
     ...urReports,
+    ...urProfile,
   },
 } as const
 

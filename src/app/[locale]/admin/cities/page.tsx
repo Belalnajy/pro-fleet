@@ -196,7 +196,7 @@ export default function CitiesManagement() {
           </div>
 
           {loading ? (
-            <div className="py-10 text-center">جاري التحميل...</div>
+            <div className="py-10 text-center">{t('loading')}</div>
           ) : (
             <Table>
               <TableHeader>

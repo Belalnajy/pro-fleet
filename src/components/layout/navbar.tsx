@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -37,6 +37,8 @@ interface NavbarProps {
 export function Navbar({ onMenuClick }: NavbarProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
+  const params = useParams()
+  const locale = params?.locale as string || 'ar'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const getRoleBasedNavItems = () => {
@@ -45,44 +47,44 @@ export function Navbar({ onMenuClick }: NavbarProps) {
     switch (role) {
       case UserRole.ADMIN:
         return [
-          { href: "/admin", label: "Dashboard", icon: Home },
-          { href: "/admin/users", label: "Users", icon: Users },
-          { href: "/admin/vehicles", label: "Vehicles", icon: Truck },
-          { href: "/admin/pricing", label: "Pricing", icon: Calculator },
-          { href: "/admin/subscriptions", label: "Subscriptions", icon: FileText },
-          { href: "/admin/reports", label: "Reports", icon: Calculator },
-          { href: "/admin/settings", label: "Settings", icon: Settings },
+          { href: `/${locale}/admin`, label: "Dashboard", icon: Home },
+          { href: `/${locale}/admin/users`, label: "Users", icon: Users },
+          { href: `/${locale}/admin/vehicles`, label: "Vehicles", icon: Truck },
+          { href: `/${locale}/admin/pricing`, label: "Pricing", icon: Calculator },
+          { href: `/${locale}/admin/subscriptions`, label: "Subscriptions", icon: FileText },
+          { href: `/${locale}/admin/reports`, label: "Reports", icon: Calculator },
+          { href: `/${locale}/admin/settings`, label: "Settings", icon: Settings },
         ]
       
       case UserRole.DRIVER:
         return [
-          { href: "/driver", label: "Dashboard", icon: Home },
-          { href: "/driver/trips", label: "My Trips", icon: Truck },
-          { href: "/driver/profile", label: "Profile", icon: Users },
+          { href: `/${locale}/driver`, label: "Dashboard", icon: Home },
+          { href: `/${locale}/driver/trips`, label: "My Trips", icon: Truck },
+          { href: `/${locale}/driver/profile`, label: "Profile", icon: Users },
         ]
       
       case UserRole.CUSTOMER:
         return [
-          { href: "/customer", label: "Dashboard", icon: Home },
-          { href: "/customer/book-trip", label: "Book Trip", icon: Truck },
-          { href: "/customer/my-trips", label: "My Trips", icon: FileText },
-          { href: "/customer/invoices", label: "Invoices", icon: Calculator },
-          { href: "/customer/profile", label: "Profile", icon: Users },
+          { href: `/${locale}/customer`, label: "Dashboard", icon: Home },
+          { href: `/${locale}/customer/book-trip`, label: "Book Trip", icon: Truck },
+          { href: `/${locale}/customer/my-trips`, label: "My Trips", icon: FileText },
+          { href: `/${locale}/customer/invoices`, label: "Invoices", icon: Calculator },
+          { href: `/${locale}/customer/profile`, label: "Profile", icon: Users },
         ]
       
       case UserRole.ACCOUNTANT:
         return [
-          { href: "/accountant", label: "Dashboard", icon: Home },
-          { href: "/accountant/invoices", label: "Invoices", icon: FileText },
-          { href: "/accountant/payments", label: "Payments", icon: Calculator },
-          { href: "/accountant/reports", label: "Reports", icon: Calculator },
+          { href: `/${locale}/accountant`, label: "Dashboard", icon: Home },
+          { href: `/${locale}/accountant/invoices`, label: "Invoices", icon: FileText },
+          { href: `/${locale}/accountant/payments`, label: "Payments", icon: Calculator },
+          { href: `/${locale}/accountant/reports`, label: "Reports", icon: Calculator },
         ]
       
       case UserRole.CUSTOMS_BROKER:
         return [
-          { href: "/customs-broker", label: "Dashboard", icon: Home },
-          { href: "/customs-broker/shipments", label: "Shipments", icon: Truck },
-          { href: "/customs-broker/fees", label: "Customs Fees", icon: Calculator },
+          { href: `/${locale}/customs-broker`, label: "Dashboard", icon: Home },
+          { href: `/${locale}/customs-broker/shipments`, label: "Shipments", icon: Truck },
+          { href: `/${locale}/customs-broker/fees`, label: "Customs Fees", icon: Calculator },
         ]
       
       default:

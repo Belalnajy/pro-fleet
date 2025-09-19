@@ -101,11 +101,7 @@ export default function SignUpPage() {
       <div className="w-full max-w-2xl">
         {/* Logo and Brand */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Truck className="h-12 w-12 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold text-primary">PRO FLEET</h1>
-          <p className="text-muted-foreground mt-2">Smart Fleet. Smart Future.</p>
+          <img src="/Website-Logo.png" alt="Logo" className="w-44 h-44 mx-auto mb-4" />
         </div>
 
         <Card>

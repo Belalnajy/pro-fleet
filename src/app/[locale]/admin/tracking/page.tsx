@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/hooks/useTranslation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { TrackingMap } from "@/components/maps/tracking-map";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,6 +84,7 @@ export default function AdminTrackingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [activeTrips, setActiveTrips] = useState<AdminTrip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,8 +131,8 @@ export default function AdminTrackingPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
       toast({
-        title: "خطأ",
-        description: "فشل في تحميل بيانات التتبع",
+        title: t("error"),
+        description: t("failedToLoadTrackingData"),
         variant: "destructive"
       });
     } finally {
@@ -166,10 +168,10 @@ export default function AdminTrackingPage() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case "PENDING": return "في الانتظار";
-      case "IN_PROGRESS": return "قيد التنفيذ";
-      case "DELIVERED": return "تم التسليم";
-      case "CANCELLED": return "ملغية";
+      case "PENDING": return t("pending");
+      case "IN_PROGRESS": return t("inProgress");
+      case "DELIVERED": return t("delivered");
+      case "CANCELLED": return t("cancelled");
       default: return status;
     }
   };
@@ -194,16 +196,16 @@ export default function AdminTrackingPage() {
       }
 
       toast({
-        title: "تم التحديث",
-        description: `تم ${!currentStatus ? 'تفعيل' : 'إيقاف'} التتبع للسائق`
+        title: t("refresh"),
+        description: !currentStatus ? t("trackingEnabledForDriver") : t("trackingDisabledForDriver")
       });
 
       // Refresh data
       fetchActiveTrips();
     } catch (err) {
       toast({
-        title: "خطأ",
-        description: "فشل في تحديث حالة التتبع",
+        title: t("error"),
+        description: t("errorUpdatingTrackingSettings"),
         variant: "destructive"
       });
     } finally {
@@ -280,15 +282,15 @@ export default function AdminTrackingPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">تتبع الرحلات</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t("activeTripsTracking")}</h1>
             <p className="text-muted-foreground">
-              مراقبة الرحلات النشطة وتتبع مواقع السائقين في الوقت الفعلي
+              {t("monitorActiveTripsRealTime")}
             </p>
           </div>
           <div className="flex items-center gap-4">
             {lastUpdated && (
               <p className="text-sm text-muted-foreground">
-                آخر تحديث: {lastUpdated.toLocaleTimeString('ar-SA')}
+                {t("lastUpdated")}: {lastUpdated.toLocaleTimeString('ar-SA')}
               </p>
             )}
             <Button 
@@ -298,7 +300,7 @@ export default function AdminTrackingPage() {
               size="sm"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              تحديث
+              {t("refresh")}
             </Button>
           </div>
         </div>
@@ -315,20 +317,20 @@ export default function AdminTrackingPage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الرحلات النشطة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("activeTrips")}</CardTitle>
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{activeTrips.length}</div>
               <p className="text-xs text-muted-foreground">
-                رحلات قيد التنفيذ حالياً
+                {t("noTripsInProgress")}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">السائقون المتصلون</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("connectedDrivers")}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -336,14 +338,14 @@ export default function AdminTrackingPage() {
                 {activeTrips.filter(trip => trip.driver?.trackingEnabled).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                سائق متاح للتتبع
+                {t("driversAvailableForTracking")}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">نقاط التتبع</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("trackingPoints")}</CardTitle>
               <MapPin className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -354,20 +356,20 @@ export default function AdminTrackingPage() {
                 }, 0)}
               </div>
               <p className="text-xs text-muted-foreground">
-                نقطة تتبع حقيقية
+                {t("realTrackingPoints")}
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">معدل التحديث</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("updateRate")}</CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">30</div>
               <p className="text-xs text-muted-foreground">
-                ثانية بين التحديثات
+                {t("secondsBetweenUpdates")}
               </p>
             </CardContent>
           </Card>
@@ -376,18 +378,18 @@ export default function AdminTrackingPage() {
         {/* Active Trips Table */}
         <Card>
           <CardHeader>
-            <CardTitle>الرحلات النشطة</CardTitle>
+            <CardTitle>{t("activeTrips")}</CardTitle>
             <CardDescription>
-              قائمة بجميع الرحلات قيد التنفيذ مع معلومات التتبع
+              {t("activeTripsListDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {activeTrips.length === 0 ? (
               <div className="text-center py-8">
                 <Truck className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-lg font-medium mb-2">لا توجد رحلات نشطة</p>
+                <p className="text-lg font-medium mb-2">{t("noActiveTrips")}</p>
                 <p className="text-muted-foreground">
-                  لا توجد رحلات قيد التنفيذ في الوقت الحالي
+                  {t("noTripsInProgress")}
                 </p>
               </div>
             ) : (
@@ -395,15 +397,15 @@ export default function AdminTrackingPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>رقم الرحلة</TableHead>
-                      <TableHead>المسار</TableHead>
-                      <TableHead>العميل</TableHead>
-                      <TableHead>السائق</TableHead>
-                      <TableHead>المركبة</TableHead>
-                      <TableHead>الحالة</TableHead>
-                      <TableHead>التتبع</TableHead>
-                      <TableHead>آخر موقع</TableHead>
-                      <TableHead>الإجراءات</TableHead>
+                      <TableHead>{t("tripNumber")}</TableHead>
+                      <TableHead>{t("route")}</TableHead>
+                      <TableHead>{t("customer")}</TableHead>
+                      <TableHead>{t("driver")}</TableHead>
+                      <TableHead>{t("vehicle")}</TableHead>
+                      <TableHead>{t("status")}</TableHead>
+                      <TableHead>{t("tracking")}</TableHead>
+                      <TableHead>{t("lastLocation")}</TableHead>
+                      <TableHead>{t("actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -432,11 +434,11 @@ export default function AdminTrackingPage() {
                             <div>
                               <p className="font-medium">{trip.driver.user.name}</p>
                               <p className="text-sm text-muted-foreground">
-                                {trip.driver.carPlateNumber || 'غير محدد'}
+                                {trip.driver.carPlateNumber || t("notSpecified")}
                               </p>
                             </div>
                           ) : (
-                            <span className="text-muted-foreground">غير مُعيّن</span>
+                            <span className="text-muted-foreground">{t("notAssigned")}</span>
                           )}
                         </TableCell>
                         <TableCell>
@@ -467,7 +469,7 @@ export default function AdminTrackingPage() {
                                 disabled={updatingTracking === trip.driver.id}
                               />
                               <span className="text-sm">
-                                {trip.driver.trackingEnabled ? 'مُفعّل' : 'مُعطّل'}
+                                {trip.driver.trackingEnabled ? t("enabled") : t("disabled")}
                               </span>
                             </div>
                           )}
@@ -482,14 +484,14 @@ export default function AdminTrackingPage() {
                                   <p className="text-muted-foreground">
                                     {new Date(realData.currentLocation.timestamp).toLocaleTimeString('ar-SA')}
                                   </p>
-                                  <span className="text-xs text-green-600">موقع حقيقي</span>
+                                  <span className="text-xs text-green-600">{t("realLocation")}</span>
                                 </div>
                               );
                             }
                             return (
                               <div className="text-sm text-muted-foreground">
-                                <p>لا يوجد موقع حالي</p>
-                                <span className="text-xs">لم يبدأ التتبع</span>
+                                <p>{t("noCurrentLocation")}</p>
+                                <span className="text-xs">{t("trackingNotStarted")}</span>
                               </div>
                             );
                           })()
@@ -502,7 +504,7 @@ export default function AdminTrackingPage() {
                               onClick={() => setSelectedTrip(trip)}
                             >
                               <Route className="w-4 h-4 mr-1" />
-                              عرض المسار
+                              {t("viewRoute")}
                             </Button>
                           </div>
                         </TableCell>
@@ -521,7 +523,7 @@ export default function AdminTrackingPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>خريطة التتبع - {selectedTrip.tripNumber}</CardTitle>
+                  <CardTitle>{t("trackingMap")} - {selectedTrip.tripNumber}</CardTitle>
                   <CardDescription>
                     {selectedTrip.fromCity.name} → {selectedTrip.toCity.name}
                   </CardDescription>
@@ -531,7 +533,7 @@ export default function AdminTrackingPage() {
                   size="sm"
                   onClick={() => setSelectedTrip(null)}
                 >
-                  إغلاق الخريطة
+                  {t("closeMap")}
                 </Button>
               </div>
             </CardHeader>
@@ -542,23 +544,23 @@ export default function AdminTrackingPage() {
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-green-600" />
                     <div>
-                      <p className="text-sm font-medium">نقطة البداية</p>
+                      <p className="text-sm font-medium">{t("startPoint")}</p>
                       <p className="text-sm text-muted-foreground">{selectedTrip.fromCity.name}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-red-600" />
                     <div>
-                      <p className="text-sm font-medium">نقطة النهاية</p>
+                      <p className="text-sm font-medium">{t("endPoint")}</p>
                       <p className="text-sm text-muted-foreground">{selectedTrip.toCity.name}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-blue-600" />
                     <div>
-                      <p className="text-sm font-medium">السائق</p>
+                      <p className="text-sm font-medium">{t("driver")}</p>
                       <p className="text-sm text-muted-foreground">
-                        {selectedTrip.driver?.user.name || 'غير محدد'}
+                        {selectedTrip.driver?.user.name || t("notSpecified")}
                       </p>
                     </div>
                   </div>
@@ -566,30 +568,30 @@ export default function AdminTrackingPage() {
 
                 {/* Driver Information */}
                 <div className="space-y-2">
-                  <h4 className="font-medium">معلومات السائق</h4>
+                  <h4 className="font-medium">{t("driverInfo")}</h4>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">الاسم:</span>
-                      <span className="font-medium">{selectedTrip.driver?.user?.name || 'غير محدد'}</span>
+                      <span className="text-muted-foreground">{t("name")}:</span>
+                      <span className="font-medium">{selectedTrip.driver?.user?.name || t("notSpecified")}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">رقم الهاتف:</span>
-                      <span className="font-medium">{selectedTrip.driver?.user?.phone || 'غير متاح'}</span>
+                      <span className="text-muted-foreground">{t("phoneNumber")}:</span>
+                      <span className="font-medium">{selectedTrip.driver?.user?.phone || t("notAvailable")}</span>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">حالة التتبع:</span>
+                      <span className="text-muted-foreground">{t("trackingStatus")}:</span>
                       <Badge variant={selectedTrip.driver?.trackingEnabled ? "default" : "secondary"}>
-                        {selectedTrip.driver?.trackingEnabled ? 'مفعل' : 'غير مفعل'}
+                        {selectedTrip.driver?.trackingEnabled ? t("enabled") : t("disabled")}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">عدد نقاط التتبع:</span>
+                      <span className="text-muted-foreground">{t("trackingPoints")}:</span>
                       <Badge variant={selectedTrip.trackingLogs && selectedTrip.trackingLogs.length > 0 ? "default" : "outline"}>
                         {(() => {
                           const realData = getRealTrackingData(selectedTrip);
                           return realData.hasRealTracking 
-                            ? `${realData.trackingLogs.length} نقطة حقيقية`
-                            : 'لا يوجد تتبع';
+                            ? `${realData.trackingLogs.length} ${t("realTrackingPoints")}`
+                            : t("noTrackingData");
                         })()
                         }
                       </Badge>
@@ -599,7 +601,7 @@ export default function AdminTrackingPage() {
                       if (realData.currentLocation) {
                         return (
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">آخر تحديث:</span>
+                            <span className="text-muted-foreground">{t("lastUpdated")}:</span>
                             <span className="font-medium text-green-600">
                               {new Date(realData.currentLocation.timestamp).toLocaleString('ar-SA')}
                             </span>
@@ -619,14 +621,14 @@ export default function AdminTrackingPage() {
                     <div className="space-y-4">
                       {/* Route Points */}
                       <div className="space-y-2">
-                        <h4 className="font-medium">نقاط المسار</h4>
+                        <h4 className="font-medium">{t("route")}</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           {/* Start Point */}
                           <div className="flex items-center justify-between text-sm p-3 bg-green-50 rounded border border-green-200">
                             <div className="flex items-center gap-2">
                               <MapPin className="w-4 h-4 text-green-600" />
                               <div>
-                                <p className="font-medium text-green-800">نقطة البداية</p>
+                                <p className="font-medium text-green-800">{t("startPoint")}</p>
                                 <p className="text-green-600">{realData.startPoint.name}</p>
                               </div>
                             </div>
@@ -640,7 +642,7 @@ export default function AdminTrackingPage() {
                             <div className="flex items-center gap-2">
                               <MapPin className="w-4 h-4 text-red-600" />
                               <div>
-                                <p className="font-medium text-red-800">نقطة النهاية</p>
+                                <p className="font-medium text-red-800">{t("endPoint")}</p>
                                 <p className="text-red-600">{realData.endPoint.name}</p>
                               </div>
                             </div>
@@ -654,12 +656,12 @@ export default function AdminTrackingPage() {
                       {/* Current Location */}
                       {realData.currentLocation ? (
                         <div className="space-y-2">
-                          <h4 className="font-medium">الموقع الحالي</h4>
+                          <h4 className="font-medium">{t("currentLocation")}</h4>
                           <div className="flex items-center justify-between text-sm p-3 bg-blue-50 rounded border border-blue-200">
                             <div className="flex items-center gap-2">
                               <Truck className="w-4 h-4 text-blue-600" />
                               <div>
-                                <p className="font-medium text-blue-800">موقع السائق</p>
+                                <p className="font-medium text-blue-800">{t("driverLocation")}</p>
                                 <p className="text-blue-600">📍 {realData.currentLocation.latitude.toFixed(6)}, {realData.currentLocation.longitude.toFixed(6)}</p>
                               </div>
                             </div>
@@ -669,7 +671,7 @@ export default function AdminTrackingPage() {
                                 {new Date(realData.currentLocation.timestamp).toLocaleTimeString('ar-SA')}
                               </div>
                               {realData.currentLocation.speed && (
-                                <div className="mt-1">السرعة: {realData.currentLocation.speed} كم/س</div>
+                                <div className="mt-1">{t("speed")}: {realData.currentLocation.speed} {t("kmh")}</div>
                               )}
                             </div>
                           </div>
@@ -678,7 +680,7 @@ export default function AdminTrackingPage() {
                         <Alert>
                           <AlertTriangle className="h-4 w-4" />
                           <AlertDescription>
-                            لا يوجد موقع حالي للسائق. قد يكون التتبع غير مفعل أو لم يبدأ السائق الرحلة بعد.
+                            {t("noCurrentDriverLocation")}
                           </AlertDescription>
                         </Alert>
                       )}
@@ -686,7 +688,7 @@ export default function AdminTrackingPage() {
                       {/* Tracking History */}
                       {realData.trackingLogs.length > 0 && (
                         <div className="space-y-2">
-                          <h4 className="font-medium">تاريخ التتبع ({realData.trackingLogs.length} نقطة)</h4>
+                          <h4 className="font-medium">{t("trackingHistory")} ({realData.trackingLogs.length} {t("points")})</h4>
                           <div className="max-h-32 overflow-y-auto space-y-1">
                             {realData.trackingLogs.slice(0, 5).map((log, index) => (
                               <div key={log.id} className="flex items-center justify-between text-sm p-2 bg-background rounded border">

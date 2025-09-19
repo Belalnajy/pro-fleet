@@ -1,7 +1,7 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { useEffect } from "react"
 import { UserRole } from "@prisma/client"
 
@@ -20,6 +20,8 @@ export function RoleGuard({
 }: RoleGuardProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const params = useParams()
+  const locale = params?.locale as string || 'ar'
 
   useEffect(() => {
     if (status === "loading") return
@@ -33,22 +35,22 @@ export function RoleGuard({
       // Redirect user to their appropriate dashboard
       switch (session.user.role) {
         case UserRole.ADMIN:
-          router.push("/admin")
+          router.push(`/${locale}/admin`)
           break
         case UserRole.DRIVER:
-          router.push("/driver")
+          router.push(`/${locale}/driver`)
           break
         case UserRole.CUSTOMER:
-          router.push("/customer")
+          router.push(`/${locale}/customer`)
           break
         case UserRole.ACCOUNTANT:
-          router.push("/accountant")
+          router.push(`/${locale}/accountant`)
           break
         case UserRole.CUSTOMS_BROKER:
-          router.push("/customs-broker")
+          router.push(`/${locale}/customs-broker`)
           break
         default:
-          router.push("/")
+          router.push(`/${locale}`)
       }
     }
   }, [session, status, router, allowedRoles, redirectTo])

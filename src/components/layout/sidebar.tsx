@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -31,6 +31,8 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const { data: session } = useSession()
   const pathname = usePathname()
+  const params = useParams()
+  const locale = params?.locale as string || 'ar'
 
   const getRoleBasedNavItems = () => {
     const role = session?.user?.role
@@ -40,47 +42,47 @@ export function Sidebar({ className }: SidebarProps) {
         return [
           {
             title: "Dashboard",
-            href: "/admin",
+            href: `/${locale}/admin`,
             icon: Home,
           },
           {
             title: "User Management",
-            href: "/admin/users",
+            href: `/${locale}/admin/users`,
             icon: Users,
           },
           {
             title: "Vehicle Management",
-            href: "/admin/vehicles",
+            href: `/${locale}/admin/vehicles`,
             icon: Truck,
           },
           {
             title: "Pricing Management",
-            href: "/admin/pricing",
+            href: `/${locale}/admin/pricing`,
             icon: Calculator,
           },
           {
             title: "Trip Management",
-            href: "/admin/trips",
+            href: `/${locale}/admin/trips`,
             icon: Package,
           },
           {
             title: "Subscription Plans",
-            href: "/admin/subscriptions",
+            href: `/${locale}/admin/subscriptions`,
             icon: CreditCard,
           },
           {
             title: "Invoice Management",
-            href: "/admin/invoices",
+            href: `/${locale}/admin/invoices`,
             icon: FileText,
           },
           {
             title: "Reports & Analytics",
-            href: "/admin/reports",
+            href: `/${locale}/admin/reports`,
             icon: BarChart3,
           },
           {
             title: "System Settings",
-            href: "/admin/settings",
+            href: `/${locale}/admin/settings`,
             icon: Settings,
           },
         ]
@@ -89,27 +91,27 @@ export function Sidebar({ className }: SidebarProps) {
         return [
           {
             title: "Dashboard",
-            href: "/driver",
+            href: `/${locale}/driver`,
             icon: Home,
           },
           {
             title: "My Trips",
-            href: "/driver/trips",
+            href: `/${locale}/driver/trips`,
             icon: Truck,
           },
           {
             title: "My Profile",
-            href: "/driver/profile",
+            href: `/${locale}/driver/profile`,
             icon: User,
           },
           {
             title: "Documents",
-            href: "/driver/documents",
+            href: `/${locale}/driver/documents`,
             icon: FileText,
           },
           {
             title: "Earnings",
-            href: "/driver/earnings",
+            href: `/${locale}/driver/earnings`,
             icon: DollarSign,
           },
         ]
@@ -118,32 +120,32 @@ export function Sidebar({ className }: SidebarProps) {
         return [
           {
             title: "Dashboard",
-            href: "/customer",
+            href: `/${locale}/customer`,
             icon: Home,
           },
           {
             title: "Book New Trip",
-            href: "/customer/book-trip",
+            href: `/${locale}/customer/book-trip`,
             icon: Truck,
           },
           {
             title: "My Trips",
-            href: "/customer/my-trips",
+            href: `/${locale}/customer/my-trips`,
             icon: Package,
           },
           {
             title: "Invoices & Payments",
-            href: "/customer/invoices",
+            href: `/${locale}/customer/invoices`,
             icon: FileText,
           },
           {
             title: "Tracking",
-            href: "/customer/tracking",
+            href: `/${locale}/customer/tracking`,
             icon: FileSearch,
           },
           {
             title: "My Profile",
-            href: "/customer/profile",
+            href: `/${locale}/customer/profile`,
             icon: User,
           },
         ]
@@ -152,32 +154,32 @@ export function Sidebar({ className }: SidebarProps) {
         return [
           {
             title: "Dashboard",
-            href: "/accountant",
+            href: `/${locale}/accountant`,
             icon: Home,
           },
           {
             title: "Invoice Management",
-            href: "/accountant/invoices",
+            href: `/${locale}/accountant/invoices`,
             icon: FileText,
           },
           {
             title: "Payment Tracking",
-            href: "/accountant/payments",
+            href: `/${locale}/accountant/payments`,
             icon: CreditCard,
           },
           {
             title: "Expense Management",
-            href: "/accountant/expenses",
+            href: `/${locale}/accountant/expenses`,
             icon: Calculator,
           },
           {
             title: "Financial Reports",
-            href: "/accountant/reports",
+            href: `/${locale}/accountant/reports`,
             icon: BarChart3,
           },
           {
             title: "Tax Management",
-            href: "/accountant/tax",
+            href: `/${locale}/accountant/tax`,
             icon: Calculator,
           },
         ]
@@ -186,27 +188,27 @@ export function Sidebar({ className }: SidebarProps) {
         return [
           {
             title: "Dashboard",
-            href: "/customs-broker",
+            href: `/${locale}/customs-broker`,
             icon: Home,
           },
           {
             title: "Shipments",
-            href: "/customs-broker/shipments",
+            href: `/${locale}/customs-broker/shipments`,
             icon: Package,
           },
           {
             title: "Customs Fees",
-            href: "/customs-broker/fees",
+            href: `/${locale}/customs-broker/fees`,
             icon: Calculator,
           },
           {
             title: "Documentation",
-            href: "/customs-broker/documents",
+            href: `/${locale}/customs-broker/documents`,
             icon: FileText,
           },
           {
             title: "Compliance",
-            href: "/customs-broker/compliance",
+            href: `/${locale}/customs-broker/compliance`,
             icon: FileSearch,
           },
         ]

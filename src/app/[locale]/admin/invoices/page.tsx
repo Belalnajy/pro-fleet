@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { useTranslation } from "@/hooks/useTranslation"
 import { Loader2, Clock } from "lucide-react"
 import {
   Plus,
@@ -72,6 +73,7 @@ export default function InvoicesManagement() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
+  const { t } = useTranslation()
   
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [customers, setCustomers] = useState<Customer[]>([])
@@ -134,16 +136,16 @@ export default function InvoicesManagement() {
         setInvoices(data)
       } else {
         toast({
-          title: "خطأ",
-          description: "فشل في تحميل الفواتير",
+          title: t('error'),
+          description: t('loadInvoicesFailed'),
           variant: "destructive"
         })
       }
     } catch (error) {
       console.error("Error fetching invoices:", error)
       toast({
-        title: "خطأ",
-        description: "حدث خطأ أثناء تحميل الفواتير",
+        title: t('error'),
+        description: t('loadInvoicesError'),
         variant: "destructive"
       })
     } finally {
@@ -390,8 +392,8 @@ export default function InvoicesManagement() {
 
   const handleExportExcel = () => {
     toast({
-      title: "قريباً",
-      description: "ميزة تصدير Excel ستكون متاحة قريباً"
+      title: t('comingSoon'),
+      description: t('excelExportSoon')
     })
   }
 
@@ -554,12 +556,12 @@ export default function InvoicesManagement() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      DRAFT: { color: "bg-gray-500", text: "مسودة", icon: FileText },
-      SENT: { color: "bg-blue-500", text: "مرسلة", icon: Mail },
-      PENDING: { color: "bg-yellow-500", text: "في الانتظار", icon: Clock },
-      PAID: { color: "bg-green-500", text: "مدفوعة", icon: CheckCircle },
-      OVERDUE: { color: "bg-red-500", text: "متأخرة", icon: AlertCircle },
-      CANCELLED: { color: "bg-gray-400", text: "ملغية", icon: XCircle },
+      DRAFT: { color: "bg-gray-500", text: t('draft'), icon: FileText },
+      SENT: { color: "bg-blue-500", text: t('sent'), icon: Mail },
+      PENDING: { color: "bg-yellow-500", text: t('pending'), icon: Clock },
+      PAID: { color: "bg-green-500", text: t('paid'), icon: CheckCircle },
+      OVERDUE: { color: "bg-red-500", text: t('overdue'), icon: AlertCircle },
+      CANCELLED: { color: "bg-gray-400", text: t('cancelled'), icon: XCircle },
     }
     
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING
@@ -575,14 +577,14 @@ export default function InvoicesManagement() {
 
   const getStatusText = (status: string) => {
     const statusTexts = {
-      DRAFT: "مسودة",
-      SENT: "مرسلة",
-      PENDING: "في الانتظار",
-      PAID: "مدفوعة",
-      OVERDUE: "متأخرة",
-      CANCELLED: "ملغية",
+      DRAFT: t('draft'),
+      SENT: t('sent'),
+      PENDING: t('pending'),
+      PAID: t('paid'),
+      OVERDUE: t('overdue'),
+      CANCELLED: t('cancelled'),
     }
-    return statusTexts[status as keyof typeof statusTexts] || "غير محدد"
+    return statusTexts[status as keyof typeof statusTexts] || t('unspecified')
   }
 
   const filteredInvoices = invoices.filter(invoice => {
@@ -599,7 +601,7 @@ export default function InvoicesManagement() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">جاري التحميل...</div>
+          <div className="text-lg">{t('loading')}</div>
         </div>
       </DashboardLayout>
     )
@@ -611,13 +613,13 @@ export default function InvoicesManagement() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">إدارة الفواتير</h1>
-            <p className="text-muted-foreground">إدارة ومراقبة جميع الفواتير والمدفوعات</p>
+            <h1 className="text-3xl font-bold">{t('invoiceManagement')}</h1>
+            <p className="text-muted-foreground">{t('manageMonitorInvoices')}</p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 ">
             <Button variant="outline" size="sm" onClick={handleExportExcel}>
               <Download className="h-4 w-4 mr-2" />
-              تصدير Excel
+             <span className="hidden md:block">{t('exportExcel')}</span>
             </Button>
             <Button 
               onClick={() => {
@@ -636,7 +638,7 @@ export default function InvoicesManagement() {
               }}
             >
               <Plus className="h-4 w-4 mr-2" />
-              إنشاء فاتورة
+             <span className="hidden md:block">{t('createInvoice')}</span>
             </Button>
           </div>
         </div>
@@ -645,7 +647,7 @@ export default function InvoicesManagement() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي الفواتير</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('totalInvoices')}</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -654,7 +656,7 @@ export default function InvoicesManagement() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الفواتير المدفوعة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('paidInvoices')}</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -665,7 +667,7 @@ export default function InvoicesManagement() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">الفواتير المتأخرة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('overdueInvoices')}</CardTitle>
               <Calculator className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -676,13 +678,13 @@ export default function InvoicesManagement() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي الإيرادات</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('totalRevenue')}</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
                 {invoices.filter(inv => inv.status === 'PAID')
-                  .reduce((sum, inv) => sum + inv.totalAmount, 0).toFixed(2)} ريال
+                  .reduce((sum, inv) => sum + inv.totalAmount, 0).toFixed(2)} {t('sar')}
               </div>
             </CardContent>
           </Card>
@@ -691,15 +693,15 @@ export default function InvoicesManagement() {
         {/* Filters and Search */}
         <Card>
           <CardHeader>
-            <CardTitle>الفواتير</CardTitle>
-            <CardDescription>إدارة جميع الفواتير والمدفوعات</CardDescription>
+            <CardTitle>{t('invoices')}</CardTitle>
+            <CardDescription>{t('manageMonitorInvoices')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-4 mb-6">
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="بحث في الفواتير..."
+                  placeholder={t('searchInvoices')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -707,24 +709,24 @@ export default function InvoicesManagement() {
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="تصفية بالحالة" />
+                  <SelectValue placeholder={t('filterByStatus')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">جميع الحالات</SelectItem>
-                  <SelectItem value="DRAFT">مسودة</SelectItem>
-                  <SelectItem value="SENT">مرسلة</SelectItem>
-                  <SelectItem value="PENDING">في الانتظار</SelectItem>
-                  <SelectItem value="PAID">مدفوعة</SelectItem>
-                  <SelectItem value="OVERDUE">متأخرة</SelectItem>
-                  <SelectItem value="CANCELLED">ملغية</SelectItem>
+                  <SelectItem value="all">{t('allStatuses')}</SelectItem>
+                  <SelectItem value="DRAFT">{t('draft')}</SelectItem>
+                  <SelectItem value="SENT">{t('sent')}</SelectItem>
+                  <SelectItem value="PENDING">{t('pending')}</SelectItem>
+                  <SelectItem value="PAID">{t('paid')}</SelectItem>
+                  <SelectItem value="OVERDUE">{t('overdue')}</SelectItem>
+                  <SelectItem value="CANCELLED">{t('cancelled')}</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={customerFilter} onValueChange={setCustomerFilter}>
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="تصفية بالعميل" />
+                  <SelectValue placeholder={t('filterByCustomer')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">جميع العملاء</SelectItem>
+                  <SelectItem value="all">{t('allCustomers')}</SelectItem>
                   {customers.map((customer) => (
                     <SelectItem key={customer.id} value={customer.id}>
                       {customer.companyName || customer.name}
@@ -738,14 +740,14 @@ export default function InvoicesManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>رقم الفاتورة</TableHead>
-                  <TableHead>العميل</TableHead>
-                  <TableHead>الرحلة</TableHead>
-                  <TableHead>المبلغ</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>تاريخ الاستحقاق</TableHead>
-                  <TableHead>تاريخ الإنشاء</TableHead>
-                  <TableHead className="text-right">الإجراءات</TableHead>
+                  <TableHead>{t('invoiceNumberHeader')}</TableHead>
+                  <TableHead>{t('customerHeader')}</TableHead>
+                  <TableHead>{t('tripHeader')}</TableHead>
+                  <TableHead>{t('amountHeader')}</TableHead>
+                  <TableHead>{t('statusHeader')}</TableHead>
+                  <TableHead>{t('dueDateHeader')}</TableHead>
+                  <TableHead>{t('createdDateHeader')}</TableHead>
+                  <TableHead className="text-right">{t('actionsHeader')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -768,10 +770,10 @@ export default function InvoicesManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="font-medium">
-                        {invoice.totalAmount.toFixed(2)} ريال
+                        {invoice.totalAmount.toFixed(2)} {t('sar')}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        ضريبة: {invoice.taxAmount.toFixed(2)} | جمارك: {invoice.customsFees.toFixed(2)}
+                        {t('taxCustomsDetails').replace('{tax}', invoice.taxAmount.toFixed(2)).replace('{customs}', invoice.customsFees.toFixed(2))}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -793,7 +795,7 @@ export default function InvoicesManagement() {
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleViewInvoice(invoice)}
-                          title="عرض التفاصيل"
+                          title={t('viewDetails')}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -802,7 +804,7 @@ export default function InvoicesManagement() {
                           size="sm" 
                           onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
                           disabled={actionLoading === `pdf-${invoice.id}`}
-                          title="تحميل PDF"
+                          title={t('downloadPDF')}
                         >
                           {actionLoading === `pdf-${invoice.id}` ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -815,7 +817,7 @@ export default function InvoicesManagement() {
                           size="sm" 
                           onClick={() => handleSendEmail(invoice.id, invoice.invoiceNumber)}
                           disabled={actionLoading === `email-${invoice.id}`}
-                          title="إرسال بالبريد الإلكتروني"
+                          title={t('sendEmail')}
                         >
                           {actionLoading === `email-${invoice.id}` ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -827,7 +829,7 @@ export default function InvoicesManagement() {
                           variant="ghost" 
                           size="sm" 
                           onClick={() => handleEdit(invoice)}
-                          title="تعديل"
+                          title={t('edit')}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
@@ -835,7 +837,7 @@ export default function InvoicesManagement() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteClick(invoice)}
-                          title="حذف"
+                          title={t('delete')}
                           disabled={invoice.status === 'PAID'}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -850,11 +852,11 @@ export default function InvoicesManagement() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="PENDING">في الانتظار</SelectItem>
-                              <SelectItem value="SENT">مرسلة</SelectItem>
-                              <SelectItem value="PAID">مدفوعة</SelectItem>
-                              <SelectItem value="OVERDUE">متأخرة</SelectItem>
-                              <SelectItem value="CANCELLED">ملغية</SelectItem>
+                              <SelectItem value="PENDING">{t('pending')}</SelectItem>
+                              <SelectItem value="SENT">{t('sent')}</SelectItem>
+                              <SelectItem value="PAID">{t('paid')}</SelectItem>
+                              <SelectItem value="OVERDUE">{t('overdue')}</SelectItem>
+                              <SelectItem value="CANCELLED">{t('cancelled')}</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
@@ -868,8 +870,8 @@ export default function InvoicesManagement() {
             {filteredInvoices.length === 0 && (
               <div className="text-center py-8">
                 <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium">لا توجد فواتير</h3>
-                <p className="text-muted-foreground">لم يتم العثور على فواتير تطابق معايير البحث</p>
+                <h3 className="text-lg font-medium">{t('noInvoices')}</h3>
+                <p className="text-muted-foreground">{t('noInvoicesFound')}</p>
               </div>
             )}
           </CardContent>
@@ -881,10 +883,10 @@ export default function InvoicesManagement() {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingInvoice ? 'تعديل الفاتورة' : 'إنشاء فاتورة جديدة'}
+              {editingInvoice ? t('updateInvoice') : t('createInvoiceTitle')}
             </DialogTitle>
             <DialogDescription>
-              {editingInvoice ? 'تعديل بيانات الفاتورة' : 'إنشاء فاتورة جديدة للعميل'}
+              {editingInvoice ? t('updateInvoice') : t('createInvoiceTitle')}
             </DialogDescription>
           </DialogHeader>
           
@@ -892,13 +894,13 @@ export default function InvoicesManagement() {
             {/* Customer Selection */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="customer">العميل *</Label>
+                <Label htmlFor="customer">{t('customerRequired')}</Label>
                 <Select 
                   value={formData.customerId} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, customerId: value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر العميل" />
+                    <SelectValue placeholder={t('customer')} />
                   </SelectTrigger>
                   <SelectContent>
                     {customers.map((customer) => (
@@ -911,16 +913,16 @@ export default function InvoicesManagement() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="trip">الرحلة (اختياري)</Label>
+                <Label htmlFor="trip">{t('trip')}</Label>
                 <Select 
                   value={formData.tripId || 'no-trip'} 
                   onValueChange={(value) => setFormData(prev => ({ ...prev, tripId: value === 'no-trip' ? null : value }))}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="اختر الرحلة" />
+                    <SelectValue placeholder={t('trip')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="no-trip">بدون رحلة</SelectItem>
+                    <SelectItem value="no-trip">{t('trip')}</SelectItem>
                     {/* Add trips here if needed */}
                   </SelectContent>
                 </Select>
@@ -930,7 +932,7 @@ export default function InvoicesManagement() {
             {/* Invoice Details */}
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="subtotal">المبلغ الأساسي *</Label>
+                <Label htmlFor="subtotal">{t('subtotalRequired')}</Label>
                 <Input
                   id="subtotal"
                   type="number"
@@ -955,7 +957,7 @@ export default function InvoicesManagement() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="taxAmount">الضريبة (15%)</Label>
+                <Label htmlFor="taxAmount">{t('tax')}</Label>
                 <Input
                   id="taxAmount"
                   type="number"
@@ -967,7 +969,7 @@ export default function InvoicesManagement() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="customsFees">الجمارك (5%)</Label>
+                <Label htmlFor="customsFees">{t('customs')}</Label>
                 <Input
                   id="customsFees"
                   type="number"
@@ -981,7 +983,7 @@ export default function InvoicesManagement() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="totalAmount">المبلغ الإجمالي</Label>
+                <Label htmlFor="totalAmount">{t('totalAmount')}</Label>
                 <Input
                   id="totalAmount"
                   type="number"
@@ -993,7 +995,7 @@ export default function InvoicesManagement() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="dueDate">تاريخ الاستحقاق *</Label>
+                <Label htmlFor="dueDate">{t('dueDateRequired')}</Label>
                 <Input
                   id="dueDate"
                   type="date"
@@ -1004,20 +1006,20 @@ export default function InvoicesManagement() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="notes">ملاحظات</Label>
+              <Label htmlFor="notes">{t('notes')}</Label>
               <textarea
                 id="notes"
                 className="w-full p-2 border rounded-md min-h-[80px]"
                 value={formData.notes}
                 onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                placeholder="ملاحظات إضافية..."
+                placeholder={t('additionalNotes')}
               />
             </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-              إلغاء
+              {t('cancel')}
             </Button>
             <Button 
               onClick={handleSubmit} 
@@ -1026,10 +1028,10 @@ export default function InvoicesManagement() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  جاري الحفظ...
+                  {t('saving')}
                 </>
               ) : (
-                editingInvoice ? 'تحديث الفاتورة' : 'إنشاء الفاتورة'
+                editingInvoice ? t('updateInvoice') : t('createInvoice')
               )}
             </Button>
           </DialogFooter>
@@ -1040,9 +1042,9 @@ export default function InvoicesManagement() {
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>تفاصيل الفاتورة</DialogTitle>
+            <DialogTitle>{t('invoiceDetails')}</DialogTitle>
             <DialogDescription>
-              عرض تفاصيل الفاتورة رقم {viewingInvoice?.invoiceNumber}
+              {t('viewInvoiceDetails').replace('{invoiceNumber}', viewingInvoice?.invoiceNumber || '')}
             </DialogDescription>
           </DialogHeader>
           
@@ -1051,31 +1053,31 @@ export default function InvoicesManagement() {
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">رقم الفاتورة</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t('invoiceNumber')}</Label>
                     <p className="text-lg font-semibold">{viewingInvoice.invoiceNumber}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">العميل</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t('customer')}</Label>
                     <p className="text-lg">{viewingInvoice.customerName}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">الحالة</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t('status')}</Label>
                     <div className="mt-1">{getStatusBadge(viewingInvoice.status)}</div>
                   </div>
                 </div>
                 
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">تاريخ الإنشاء</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t('createdDate')}</Label>
                     <p className="text-lg">{new Date(viewingInvoice.createdAt).toLocaleDateString('ar-SA')}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">تاريخ الاستحقاق</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t('dueDate')}</Label>
                     <p className="text-lg">{new Date(viewingInvoice.dueDate).toLocaleDateString('ar-SA')}</p>
                   </div>
                   {viewingInvoice.tripNumber && (
                     <div>
-                      <Label className="text-sm font-medium text-muted-foreground">رقم الرحلة</Label>
+                      <Label className="text-sm font-medium text-muted-foreground">{t('tripNumber')}</Label>
                       <Badge variant="outline" className="mt-1">{viewingInvoice.tripNumber}</Badge>
                     </div>
                   )}
@@ -1085,24 +1087,24 @@ export default function InvoicesManagement() {
               <Separator />
               
               <div className="space-y-3">
-                <h4 className="font-semibold">تفاصيل المبلغ</h4>
+                <h4 className="font-semibold">{t('amountDetails')}</h4>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>المبلغ الأساسي:</span>
-                    <span>{viewingInvoice.subtotal.toFixed(2)} ريال</span>
+                    <span>{t('subtotal')}:</span>
+                    <span>{viewingInvoice.subtotal.toFixed(2)} {t('sar')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>الضريبة:</span>
-                    <span>{viewingInvoice.taxAmount.toFixed(2)} ريال</span>
+                    <span>{t('tax')}:</span>
+                    <span>{viewingInvoice.taxAmount.toFixed(2)} {t('sar')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>الجمارك:</span>
-                    <span>{viewingInvoice.customsFees.toFixed(2)} ريال</span>
+                    <span>{t('customs')}:</span>
+                    <span>{viewingInvoice.customsFees.toFixed(2)} {t('sar')}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
-                    <span>المجموع الكلي:</span>
-                    <span>{viewingInvoice.totalAmount.toFixed(2)} ريال</span>
+                    <span>{t('grandTotal')}:</span>
+                    <span>{viewingInvoice.totalAmount.toFixed(2)} {t('sar')}</span>
                   </div>
                 </div>
               </div>
@@ -1111,7 +1113,7 @@ export default function InvoicesManagement() {
                 <>
                   <Separator />
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">ملاحظات</Label>
+                    <Label className="text-sm font-medium text-muted-foreground">{t('notesLabel')}</Label>
                     <p className="mt-1 text-sm">{viewingInvoice.notes}</p>
                   </div>
                 </>
@@ -1121,7 +1123,7 @@ export default function InvoicesManagement() {
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
-              إغلاق
+              {t('close')}
             </Button>
             {viewingInvoice && (
               <div className="flex space-x-2">
@@ -1135,7 +1137,7 @@ export default function InvoicesManagement() {
                   ) : (
                     <Download className="mr-2 h-4 w-4" />
                   )}
-                  تحميل PDF
+                  {t('downloadPDF')}
                 </Button>
                 <Button 
                   onClick={() => handleSendEmail(viewingInvoice.id, viewingInvoice.invoiceNumber)}
@@ -1146,7 +1148,7 @@ export default function InvoicesManagement() {
                   ) : (
                     <Mail className="mr-2 h-4 w-4" />
                   )}
-                  إرسال بالبريد
+                  {t('sendEmail')}
                 </Button>
               </div>
             )}
@@ -1158,17 +1160,17 @@ export default function InvoicesManagement() {
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>تأكيد الحذف</DialogTitle>
+            <DialogTitle>{t('confirmDelete')}</DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من حذف الفاتورة رقم {deletingInvoice?.invoiceNumber}؟
+              {t('confirmDeleteMessage').replace('{invoiceNumber}', deletingInvoice?.invoiceNumber || '')}
               <br />
-              لا يمكن التراجع عن هذا الإجراء.
+              {t('cannotUndo')}
             </DialogDescription>
           </DialogHeader>
           
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-              إلغاء
+              {t('cancel')}
             </Button>
             <Button 
               variant="destructive" 
@@ -1178,10 +1180,10 @@ export default function InvoicesManagement() {
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  جاري الحذف...
+                  {t('deleting')}
                 </>
               ) : (
-                'حذف الفاتورة'
+                t('deleteInvoice')
               )}
             </Button>
           </DialogFooter>

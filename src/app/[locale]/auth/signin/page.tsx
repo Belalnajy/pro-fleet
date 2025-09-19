@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Truck, Shield, Users, Calculator, FileText } from "lucide-react"
 
-function SignInInner() {
+function SignInInner({ locale }: { locale: string }) {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -35,22 +35,22 @@ function SignInInner() {
     if (session?.user?.role) {
       switch (session.user.role) {
         case "ADMIN":
-          router.push("/admin")
+          router.push(`/${locale}/admin`)
           break
         case "DRIVER":
-          router.push("/driver")
+          router.push(`/${locale}/driver`)
           break
         case "CUSTOMER":
-          router.push("/customer")
+          router.push(`/${locale}/customer`)
           break
         case "ACCOUNTANT":
-          router.push("/accountant")
+          router.push(`/${locale}/accountant`)
           break
         case "CUSTOMS_BROKER":
-          router.push("/customs-broker")
+          router.push(`/${locale}/customs-broker`)
           break
         default:
-          router.push("/")
+          router.push(`/${locale}`)
       }
     }
   }
@@ -115,15 +115,12 @@ function SignInInner() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4 ">
       <div className="w-full max-w-md">
         {/* Logo and Brand */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Truck className="h-12 w-12 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold text-primary">PRO FLEET</h1>
-          <p className="text-muted-foreground mt-2">Smart Fleet. Smart Future.</p>
+        <div className="text-center mb-3">
+       
+          <img src="/Website-Logo.png" alt="Logo" className="w-44 h-44 mx-auto mb-4" />
         </div>
 
         <Card>
@@ -166,10 +163,10 @@ function SignInInner() {
               </div>
             </CardContent>
             
-            <CardFooter className="flex flex-col space-y-4">
+            <CardFooter className="flex flex-col space-y-4 my-5">
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full mx-5" 
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -240,10 +237,10 @@ function SignInInner() {
   )
 }
 
-export default function SignInPage() {
+export default function SignInPage({ params }: { params: { locale: string } }) {
   return (
     <Suspense>
-      <SignInInner />
+      <SignInInner locale={params.locale} />
     </Suspense>
   )
 }

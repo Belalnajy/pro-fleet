@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -47,7 +47,8 @@ interface SystemSettings {
   }
 }
 
-export default function AdminSettingsPage({ params }: { params: { locale: string } }) {
+export default function AdminSettingsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const [settings, setSettings] = useState<SystemSettings>({
     business: {
       companyName: "PRO FLEET",
@@ -444,13 +445,13 @@ export default function AdminSettingsPage({ params }: { params: { locale: string
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-4">
-                <Link href={`/${params.locale}/admin/cities`}>
+                <Link href={`/${locale}/admin/cities`}>
                   <Button variant="outline" className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
                     {t('manageCities')}
                   </Button>
                 </Link>
-                <Link href={`/${params.locale}/admin/temperatures`}>
+                <Link href={`/${locale}/admin/temperatures`}>
                   <Button variant="outline" className="flex items-center gap-2">
                     <Thermometer className="h-4 w-4" />
                     {t('manageTemperatureSettings')}

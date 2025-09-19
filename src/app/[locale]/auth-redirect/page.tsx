@@ -1,18 +1,17 @@
 "use client"
 
-import { useEffect } from 'react'
+import { useEffect, use } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 
 interface PageProps {
   params: Promise<{ locale: string }>
 }
 
-export default function AuthRedirectPage() {
+export default function AuthRedirectPage({ params }: PageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const params = useParams()
-  const locale = params.locale as string || 'en'
+  const { locale } = use(params)
 
   useEffect(() => {
     if (status === 'loading') return // Still loading

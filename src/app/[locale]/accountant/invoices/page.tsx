@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -93,11 +93,11 @@ interface Pagination {
   limit: number
 }
 
-export default function AccountantInvoicesPage({ params }: { params: { locale: string } }) {
+export default function AccountantInvoicesPage({ params }: { params: Promise<{ locale: string }> }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
-  const locale = params.locale
+  const { locale } = use(params)
   
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [pagination, setPagination] = useState<Pagination | null>(null)

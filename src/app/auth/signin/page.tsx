@@ -22,7 +22,7 @@ function SignInInner() {
 
   // Demo account credentials
   const demoAccounts = {
-    admin: { email: "admin@profleet.com", password: "demo123" },
+    admin: { email: "admin@profleet.com", password: "demo1234" },
     driver: { email: "driver@profleet.com", password: "demo123" },
     customer: { email: "customer@profleet.com", password: "demo123" },
     accountant: { email: "accountant@profleet.com", password: "demo123" },

@@ -10,6 +10,9 @@ import enHome from '@/locales/en/home.json'
 import enAbout from '@/locales/en/about.json'
 import enPricing from '@/locales/en/pricing.json'
 import enTerms from '@/locales/en/terms.json'
+import enSettings from '@/locales/en/settings.json'
+import enInvoices from '@/locales/en/invoices.json'
+import enReports from '@/locales/en/reports.json'
 
 // Import Arabic translations
 import arCommon from '@/locales/ar/common.json'
@@ -23,6 +26,9 @@ import arHome from '@/locales/ar/home.json'
 import arAbout from '@/locales/ar/about.json'
 import arPricing from '@/locales/ar/pricing.json'
 import arTerms from '@/locales/ar/terms.json'
+import arSettings from '@/locales/ar/settings.json'
+import arInvoices from '@/locales/ar/invoices.json'
+import arReports from '@/locales/ar/reports.json'
 
 // Import Urdu translations
 import urCommon from '@/locales/ur/common.json'
@@ -36,6 +42,9 @@ import urHome from '@/locales/ur/home.json'
 import urAbout from '@/locales/ur/about.json'
 import urPricing from '@/locales/ur/pricing.json'
 import urTerms from '@/locales/ur/terms.json'
+import urSettings from '@/locales/ur/settings.json'
+import urInvoices from '@/locales/ur/invoices.json'
+import urReports from '@/locales/ur/reports.json'
 
 export const languages = {
   en: {
@@ -71,6 +80,9 @@ export const translations = {
     ...enAbout,
     ...enPricing,
     ...enTerms,
+    ...enSettings,
+    ...enInvoices,
+    ...enReports,
   },
   ar: {
     ...arCommon,
@@ -84,6 +96,9 @@ export const translations = {
     ...arAbout,
     ...arPricing,
     ...arTerms,
+    ...arSettings,
+    ...arInvoices,
+    ...arReports,
   },
   ur: {
     ...urCommon,
@@ -97,6 +112,9 @@ export const translations = {
     ...urAbout,
     ...urPricing,
     ...urTerms,
+    ...urSettings,
+    ...urInvoices,
+    ...urReports,
   },
 } as const
 

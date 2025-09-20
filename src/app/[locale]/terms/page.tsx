@@ -1,19 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { FileText, Users, Truck, Shield, ArrowLeft } from 'lucide-react';
-import { useTranslation } from '@/hooks/useTranslation';
+import { FileText, Users, Truck, Shield, ArrowLeft, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 
-export default function TermsPage() {
-  const { t: translate } = useTranslation();
-  const { language, dir } = useLanguage();
+interface TermsPageProps {
+  params: Promise<{
+    locale: string
+  }>
+}
+
+export default function TermsPage({ params }: TermsPageProps) {
+  const { locale } = use(params);
+  const { t, dir } = useLanguage();
   
   return (
     <div className="min-h-screen bg-background">
@@ -23,20 +28,20 @@ export default function TermsPage() {
           <div className="mb-4 sm:mb-0">
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               <FileText className="h-8 w-8 text-primary" />
-              {translate('title')}
+              {t('termsTitle')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {translate('subtitle')}
+              {t('termsSubtitle')}
             </p>
           </div>
           <div className="flex items-center space-x-4">
             <Badge variant="outline">
-              {translate('lastUpdated')}: 7 سبتمبر 2025
+              {t('lastUpdated')}: {t('lastUpdatedDate')}
             </Badge>
-            <Link href={`/${language}`}>
+            <Link href={`/${locale}`}>
               <Button variant="outline" size="sm" className="gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                العودة
+                <Home className="h-4 w-4" />
+                {t('backToHome')}
               </Button>
             </Link>
           </div>
@@ -44,18 +49,18 @@ export default function TermsPage() {
 
         {/* Terms Tabs */}
         <Tabs defaultValue="customer" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="customer" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
-              {translate('customerTerms')}
+              {t('customerTermsTab')}
             </TabsTrigger>
             <TabsTrigger value="driver" className="flex items-center gap-2">
               <Truck className="h-4 w-4" />
-              {translate('driverTerms')}
+              {t('driverTermsTab')}
             </TabsTrigger>
             <TabsTrigger value="privacy" className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              {translate('privacyPolicy')}
+              {t('privacyPolicyTab')}
             </TabsTrigger>
           </TabsList>
 
@@ -65,10 +70,10 @@ export default function TermsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-primary" />
-                  {translate('customerTermsTitle')}
+                  {t('customerTermsTitle')}
                 </CardTitle>
                 <CardDescription>
-                  {translate('customerTermsDescription')}
+                  {t('customerTermsDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -77,7 +82,7 @@ export default function TermsPage() {
                     
                     {/* Introduction */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('introduction')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('introduction')}</h3>
                       <p className="text-muted-foreground leading-relaxed">
                         تمثل هذه الضوابط والشروط اتفاق رسمي "عقد" بين منصة/تطبيق profleet والعملاء المستخدمين لمنصة/تطبيق profleet و يشار إليها (منصة/تطبيق profleet) فيما بعد بإما أحد هذه الألفاظ أو جميعها ("المنصة" أو "profleet" أو "منصة/تطبيق profleet" أو "التطبيق" أو "تطبيق profleet").
                       </p>
@@ -88,7 +93,7 @@ export default function TermsPage() {
 
                     {/* Definitions */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('definitions')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('definitions')}</h3>
                       <div className="space-y-3">
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <h4 className="font-semibold text-gray-800">الخدمة/خدماتنا/الخدمات:</h4>
@@ -107,7 +112,7 @@ export default function TermsPage() {
 
                     {/* Eligibility */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('eligibility')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('eligibility')}</h3>
                       <p className="text-muted-foreground mb-3">أنت تقر وتضمن بما لا يدعو للجهالة بالتالي:</p>
                       <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                         <li>أنه لم يسبق أن تم تعطيل استخدامك لخدمات تطبيق profleet أو منعك من استخدامها في أي وقت من الأوقات.</li>
@@ -118,7 +123,7 @@ export default function TermsPage() {
 
                     {/* Commitments */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('commitments')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('commitments')}</h3>
                       <p className="text-muted-foreground mb-3">أنت تُقر وتتعهد بما لا يدعو للجهالة بأنك سوف:</p>
                       <ul className="list-disc list-inside space-y-2 text-muted-foreground">
                         <li>تمتثل وتخضع لكافة القوانين واللوائح المعمول بها في المملكة العربية السعودية.</li>
@@ -141,10 +146,10 @@ export default function TermsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Truck className="h-5 w-5 text-primary" />
-                  {translate('driverTermsTitle')}
+                  {t('driverTermsTitle')}
                 </CardTitle>
                 <CardDescription>
-                  {translate('driverTermsDescription')}
+                  {t('driverTermsDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -153,7 +158,7 @@ export default function TermsPage() {
                     
                     {/* Introduction */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('introduction')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('introduction')}</h3>
                       <p className="text-muted-foreground leading-relaxed">
                         تُمثل هذه الضوابط والشروط اتفاق رسمي "عقد" بين شركة برو المحدودة القابضة سجل تجاري رقم 4030522610 المالك للعلامة التجارية "profleet" ومقدمي خدمات التوصيل (المناديب).
                       </p>
@@ -161,11 +166,11 @@ export default function TermsPage() {
 
                     {/* Payment Methods */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('paymentMethods')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('paymentMethods')}</h3>
                       
                       <div className="space-y-4">
                         <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                          <h4 className="font-semibold text-green-800 mb-2">1. {translate('commissionMethod')}</h4>
+                          <h4 className="font-semibold text-green-800 mb-2">1. {t('commissionMethod')}</h4>
                           <p className="text-muted-foreground mb-2">
                             وهي عن طريق تحديد منصة/تطبيق profleet نسبة معينة يتم استقطاعها/تحصيلها من مكسب المندوب على كل عملية توصيل مكتملة.
                           </p>
@@ -177,14 +182,14 @@ export default function TermsPage() {
                         </div>
 
                         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                          <h4 className="font-semibold text-blue-800 mb-2">2. {translate('subscriptionMethod')}</h4>
+                          <h4 className="font-semibold text-blue-800 mb-2">2. {t('subscriptionMethod')}</h4>
                           <p className="text-muted-foreground mb-2">
                             وهو السعر الذي تقوم منصة/تطبيق profleet بتحديده للاشتراك الشهري/العضوية لاستخدام منصة/تطبيق profleet.
                           </p>
                         </div>
 
                         <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                          <h4 className="font-semibold text-purple-800 mb-2">3. {translate('fixedAmountMethod')}</h4>
+                          <h4 className="font-semibold text-purple-800 mb-2">3. {t('fixedAmountMethod')}</h4>
                           <p className="text-muted-foreground mb-2">
                             تقوم منصة/تطبيق profleet بتحديد مبلغ مستقطع وثابت لكل عملية توصيل مكتملة.
                           </p>
@@ -194,29 +199,29 @@ export default function TermsPage() {
 
                     {/* Prohibited Items */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('prohibitedItems')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('prohibitedItems')}</h3>
                       <p className="text-muted-foreground mb-3">
                         يحظر على المستخدمين والمناديب شراء أو توصيل أو إرسال أو تلقي أو استلام الفئات التالية من المواد والمُنتجات:
                       </p>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div className="bg-red-50 p-3 rounded border border-red-200">
-                          <h5 className="font-semibold text-red-800">{translate('alcohol')}</h5>
+                          <h5 className="font-semibold text-red-800">{t('alcohol')}</h5>
                           <p className="text-sm text-muted-foreground">المشروبات الروحية والمسكرة، النبيذ، الشمبانيا، البيرة وغيرها من المشروبات المحرمة والممنوعة.</p>
                         </div>
                         
                         <div className="bg-red-50 p-3 rounded border border-red-200">
-                          <h5 className="font-semibold text-red-800">{translate('drugs')}</h5>
+                          <h5 className="font-semibold text-red-800">{t('drugs')}</h5>
                           <p className="text-sm text-muted-foreground">المواد المحظورة والمخدرات والأدوية غير القانونية ومعدات التحضير.</p>
                         </div>
                         
                         <div className="bg-red-50 p-3 rounded border border-red-200">
-                          <h5 className="font-semibold text-red-800">{translate('weapons')}</h5>
+                          <h5 className="font-semibold text-red-800">{t('weapons')}</h5>
                           <p className="text-sm text-muted-foreground">الأسلحة، الذخيرة وأي مواد أخرى تشمل الأسلحة والسكاكين المخفاة.</p>
                         </div>
                         
                         <div className="bg-red-50 p-3 rounded border border-red-200">
-                          <h5 className="font-semibold text-red-800">{translate('heavyItems')}</h5>
+                          <h5 className="font-semibold text-red-800">{t('heavyItems')}</h5>
                           <p className="text-sm text-muted-foreground">الأشياء الكبيرة التي لا تناسب السيارة الصغيرة والأشياء التي يتجاوز وزنها 40 كيلوجرام.</p>
                         </div>
                       </div>
@@ -234,10 +239,10 @@ export default function TermsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" />
-                  {translate('privacyPolicyTitle')}
+                  {t('privacyPolicyTitle')}
                 </CardTitle>
                 <CardDescription>
-                  {translate('privacyPolicyDescription')}
+                  {t('privacyPolicyDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -246,7 +251,7 @@ export default function TermsPage() {
                     
                     {/* Introduction */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('introduction')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('introduction')}</h3>
                       <p className="text-muted-foreground leading-relaxed">
                         تحكم سياسة الخصوصية الأسلوب الذي تقوم به "profleet" بجمع، واستخدام، والحفاظ والتصريح بالمعلومات التي تم جمعها من قبل مستخدمين منصة/تطبيق profleet وتُطبق سياسة الخصوصية هذه في التطبيق وكافة المنتجات والخدمات المقدمة من profleet.
                       </p>
@@ -254,7 +259,7 @@ export default function TermsPage() {
 
                     {/* Personal Information */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('personalInformation')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('personalInformation')}</h3>
                       <p className="text-muted-foreground mb-3">
                         يقوم profleet بجمع معلومات عن الهوية الشخصية من المستخدمين بطرق مختلفة، وتشمل ولا تقتصر فقط على:
                       </p>
@@ -269,18 +274,18 @@ export default function TermsPage() {
 
                     {/* Data Usage */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('dataUsage')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('dataUsage')}</h3>
                       <div className="space-y-3">
                         <div className="bg-purple-50 p-3 rounded-lg">
-                          <h4 className="font-semibold text-purple-800">{translate('improveCustomerService')}</h4>
+                          <h4 className="font-semibold text-purple-800">{t('improveCustomerService')}</h4>
                           <p className="text-muted-foreground">تساعد المعلومات الخاصة بك منصة/تطبيق profleet على سهولة الاستجابة لطلباتك الموجهة لخدمة العملاء.</p>
                         </div>
                         <div className="bg-purple-50 p-3 rounded-lg">
-                          <h4 className="font-semibold text-purple-800">{translate('improvePlatform')}</h4>
+                          <h4 className="font-semibold text-purple-800">{t('improvePlatform')}</h4>
                           <p className="text-muted-foreground">نسعى باستمرار لتحسين العروض المقدمة وفقاً للمعلومات والملاحظات التي يتم تلقيها منك.</p>
                         </div>
                         <div className="bg-purple-50 p-3 rounded-lg">
-                          <h4 className="font-semibold text-purple-800">{translate('sendEmails')}</h4>
+                          <h4 className="font-semibold text-purple-800">{t('sendEmails')}</h4>
                           <p className="text-muted-foreground">عنوان البريد الإلكتروني سوف يُستخدم في إرسال معلومات وتحديثات تتعلق بطلبك.</p>
                         </div>
                       </div>
@@ -288,35 +293,35 @@ export default function TermsPage() {
 
                     {/* Data Protection */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('dataProtection')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('dataProtection')}</h3>
                       <p className="text-muted-foreground mb-3">
                         نحن نتبع الإجراءات السليمة ومعايير الأمان في جمع وحفظ والتعامل مع البيانات، وذلك لحماية تلك البيانات ضد:
                       </p>
                       <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                        <li>{translate('unauthorizedAccess')}</li>
-                        <li>{translate('dataModification')}</li>
-                        <li>{translate('credentialTheft')}</li>
-                        <li>{translate('unauthorizedTransactions')}</li>
+                        <li>{t('unauthorizedAccess')}</li>
+                        <li>{t('dataModification')}</li>
+                        <li>{t('credentialTheft')}</li>
+                        <li>{t('unauthorizedTransactions')}</li>
                       </ul>
                       <div className="bg-green-50 p-3 rounded-lg mt-3 border border-green-200">
                         <p className="text-green-800 font-medium">
-                          🔒 {translate('secureChannels')}
+                          🔒 {t('secureChannels')}
                         </p>
                       </div>
                     </section>
 
                     {/* Contact Information */}
                     <section>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{translate('contactUs')}</h3>
+                      <h3 className="text-xl font-semibold mb-3 text-foreground">{t('contactUs')}</h3>
                       <div className="bg-gray-50 p-4 rounded-lg">
                         <p className="text-muted-foreground mb-3">
                           إذا كان لديك أي أسئلة بشأن هذه الشروط أو الممارسات بهذا التطبيق، يمكنكم التواصل معنا من خلال:
                         </p>
                         <ul className="space-y-2 text-muted-foreground">
-                          <li><strong>{translate('website')}:</strong> <a href="https://www.profleet.app" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.profleet.app</a></li>
-                          <li><strong>{translate('email')}:</strong> <a href="mailto:info@profleet.app" className="text-primary hover:underline">info@profleet.app</a></li>
-                          <li><strong>{translate('twitter')}:</strong> <a href="https://x.com/profleetapp" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@profleetapp</a></li>
-                          <li><strong>{translate('snapchat')}:</strong> <a href="https://snapchat.com/add/profleetapp" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">profleetapp</a></li>
+                          <li><strong>{t('website')}:</strong> <a href="https://www.profleet.app" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.profleet.app</a></li>
+                          <li><strong>{t('email')}:</strong> <a href="mailto:info@profleet.app" className="text-primary hover:underline">info@profleet.app</a></li>
+                          <li><strong>{t('twitter')}:</strong> <a href="https://x.com/profleetapp" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@profleetapp</a></li>
+                          <li><strong>{t('snapchat')}:</strong> <a href="https://snapchat.com/add/profleetapp" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">profleetapp</a></li>
                         </ul>
                       </div>
                     </section>
@@ -332,7 +337,7 @@ export default function TermsPage() {
         <Card className="mt-8">
           <CardContent className="text-center p-6">
             <p className="text-muted-foreground">
-              © 2025 ProFleet. {translate('allRightsReserved')}.
+              © 2025 ProFleet. {t('allRightsReserved')}.
             </p>
             <p className="text-sm text-muted-foreground/70 mt-2">
               تم التعديل بتاريخ: 7 سبتمبر 2025

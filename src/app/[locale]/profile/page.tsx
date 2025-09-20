@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { useLanguage } from '@/components/providers/language-provider'
 import { 
   Lock,
   Loader2,
@@ -32,9 +33,11 @@ interface ProfileData {
   customsBrokerProfile?: any
 }
 
-export default function ProfilePage() {
+export default function ProfilePage({ params }: { params: { locale: string } }) {
   const { data: session } = useSession()
   const { toast } = useToast()
+  const { locale } = params
+  const { t } = useLanguage()
   
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,7 +67,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error fetching profile:', error)
       toast({
-        title: 'خطأ في تحميل الملف الشخصي',
+        title: t('errorLoadingProfile'),
         variant: 'destructive'
       })
     } finally {
@@ -86,7 +89,7 @@ export default function ProfilePage() {
         setProfile(updatedProfile)
         setEditMode(false)
         toast({
-          title: 'تم تحديث الملف الشخصي بنجاح',
+          title: t('profileUpdated'),
           description: '✅'
         })
       } else {
@@ -95,7 +98,7 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Error updating profile:', error)
       toast({
-        title: 'خطأ في تحديث الملف الشخصي',
+        title: t('errorUpdatingProfile'),
         variant: 'destructive'
       })
     } finally {
@@ -106,7 +109,7 @@ export default function ProfilePage() {
   const handleChangePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
-        title: 'كلمات المرور غير متطابقة',
+        title: t('passwordMismatch'),
         variant: 'destructive'
       })
       return
@@ -114,7 +117,7 @@ export default function ProfilePage() {
 
     if (passwordData.newPassword.length < 8) {
       toast({
-        title: 'كلمة المرور ضعيفة - يجب أن تكون 8 أحرف على الأقل',
+        title: t('weakPassword'),
         variant: 'destructive'
       })
       return
@@ -135,20 +138,20 @@ export default function ProfilePage() {
         setShowPasswordDialog(false)
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
         toast({
-          title: 'تم تحديث كلمة المرور بنجاح',
+          title: t('passwordUpdated'),
           description: '✅'
         })
       } else {
         const error = await response.json()
         toast({
-          title: error.error === 'Current password is incorrect' ? 'كلمة المرور الحالية غير صحيحة' : 'خطأ في تحديث كلمة المرور',
+          title: error.error === 'Current password is incorrect' ? t('invalidCurrentPassword') : t('errorUpdatingPassword'),
           variant: 'destructive'
         })
       }
     } catch (error) {
       console.error('Error updating password:', error)
       toast({
-        title: 'خطأ في تحديث كلمة المرور',
+        title: t('errorUpdatingPassword'),
         variant: 'destructive'
       })
     } finally {
@@ -167,7 +170,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <p>Loading...</p>
+        <p>{t('loading')}</p>
       </div>
     )
   }
@@ -176,8 +179,8 @@ export default function ProfilePage() {
     <div className="container mx-auto p-6 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">الملف الشخصي</h1>
-          <p className="text-muted-foreground">إدارة معلوماتك الشخصية</p>
+          <h1 className="text-3xl font-bold">{t('myProfile')}</h1>
+          <p className="text-muted-foreground">{t('managePersonalInfo')}</p>
         </div>
       </div>
 
@@ -197,35 +200,35 @@ export default function ProfilePage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-5 w-5" />
-              إعدادات الأمان
+              {t('securitySettings')}
             </CardTitle>
             <CardDescription>
-              إدارة كلمة المرور وإعدادات الأمان
+              {t('managePasswordSecurity')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-medium">تغيير كلمة المرور</h3>
-                <p className="text-sm text-muted-foreground">تحديث كلمة المرور الخاصة بك</p>
+                <h3 className="font-medium">{t('changePassword')}</h3>
+                <p className="text-sm text-muted-foreground">{t('updateYourPassword')}</p>
               </div>
               <Dialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog}>
                 <DialogTrigger asChild>
                   <Button variant="outline">
                     <Lock className="h-4 w-4 mr-2" />
-                    تغيير كلمة المرور
+                    {t('changePassword')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>تغيير كلمة المرور</DialogTitle>
+                    <DialogTitle>{t('changePassword')}</DialogTitle>
                     <DialogDescription>
-                      أدخل كلمة المرور الحالية والجديدة
+                      {t('enterCurrentAndNewPassword')}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="currentPassword">كلمة المرور الحالية</Label>
+                      <Label htmlFor="currentPassword">{t('currentPassword')}</Label>
                       <div className="relative">
                         <Input
                           id="currentPassword"
@@ -245,7 +248,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="newPassword">كلمة المرور الجديدة</Label>
+                      <Label htmlFor="newPassword">{t('newPassword')}</Label>
                       <div className="relative">
                         <Input
                           id="newPassword"
@@ -265,7 +268,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">تأكيد كلمة المرور</Label>
+                      <Label htmlFor="confirmPassword">{t('confirmPassword')}</Label>
                       <Input
                         id="confirmPassword"
                         type="password"
@@ -276,11 +279,11 @@ export default function ProfilePage() {
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setShowPasswordDialog(false)}>
-                      إلغاء
+                      {t('cancel')}
                     </Button>
                     <Button onClick={handleChangePassword} disabled={saving}>
                       {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
-                      تحديث كلمة المرور
+                      {t('updatePassword')}
                     </Button>
                   </DialogFooter>
                 </DialogContent>

@@ -20,7 +20,8 @@ import {
   CheckCircle,
 } from "lucide-react"
 
-export default function DashboardPage() {
+export default function DashboardPage({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
@@ -28,7 +29,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status === "loading") return
     if (!session) {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
       return
     }
 

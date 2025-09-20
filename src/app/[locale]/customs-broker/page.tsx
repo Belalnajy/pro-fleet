@@ -22,7 +22,8 @@ import {
   Package,
 } from "lucide-react"
 
-export default function CustomsBrokerDashboard() {
+export default function CustomsBrokerDashboard({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
@@ -30,7 +31,7 @@ export default function CustomsBrokerDashboard() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "CUSTOMS_BROKER") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     }
   }, [session, status, router])
 

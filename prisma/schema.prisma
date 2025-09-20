@@ -55,6 +55,7 @@ model Customer {
   updatedAt     DateTime       @updatedAt
   user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptions Subscription[]
+  savedAddresses SavedAddress[]
 
   @@map("customers")
 }
@@ -111,6 +112,7 @@ model City {
   pricingTo   Pricing[] @relation("PricingTo")
   tripsFrom   Trip[]    @relation("TripsFrom")
   tripsTo     Trip[]    @relation("TripsTo")
+  savedAddresses SavedAddress[]
 
   @@unique([name, country])
   @@map("cities")
@@ -312,6 +314,23 @@ model PasswordResetToken {
   updatedAt DateTime @updatedAt
 
   @@map("password_reset_tokens")
+}
+
+model SavedAddress {
+  id          String   @id @default(cuid())
+  customerId  String
+  label       String   // e.g., "Home", "Office", "Warehouse"
+  address     String
+  latitude    Float?
+  longitude   Float?
+  cityId      String?
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  city        City?    @relation(fields: [cityId], references: [id])
+
+  @@map("saved_addresses")
 }
 
 enum UserRole {

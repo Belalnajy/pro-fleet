@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, use } from 'react'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
 import { Button } from '@/components/ui/button'
@@ -9,8 +9,11 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Truck, Mail, ArrowRight, CheckCircle } from 'lucide-react'
+import { useLanguage } from "@/components/providers/language-provider"
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
+  const { t } = useLanguage()
   const { toast } = useToast()
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -61,10 +64,10 @@ export default function ForgotPasswordPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl text-center flex items-center justify-center gap-2">
               <Mail className="h-6 w-6" />
-              نسيت كلمة المرور
+              Forgot Password
             </CardTitle>
             <CardDescription className="text-center">
-              أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة تعيين كلمة المرور
+              Enter your email and we will send you a reset link
             </CardDescription>
           </CardHeader>
 
@@ -75,10 +78,10 @@ export default function ForgotPasswordPage() {
                   <CheckCircle className="h-16 w-16 text-green-500" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold text-green-600">تم إرسال الرابط!</h3>
+                  <h3 className="text-lg font-semibold text-green-600">Link sent!</h3>
                   <p className="text-sm text-muted-foreground">
-                    إذا كان البريد الإلكتروني <strong>{email}</strong> مسجلاً لدينا،<br />
-                    فستصلك رسالة تحتوي على رابط إعادة تعيين كلمة المرور خلال دقائق قليلة.
+                    If the email <strong>{email}</strong> is registered with us, <br />
+                    you will receive a reset link within a few minutes.
                   </p>
                 </div>
               </div>
@@ -93,11 +96,11 @@ export default function ForgotPasswordPage() {
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="email">البريد الإلكتروني</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="أدخل بريدك الإلكتروني"
+                    placeholder="Enter your email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     dir="ltr"
@@ -115,20 +118,20 @@ export default function ForgotPasswordPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      جارٍ الإرسال...
+                      Sending...
                     </>
                   ) : (
                     <>
-                      إرسال رابط إعادة التعيين
+                      Send Reset Link
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
                 
                 <div className="text-center text-sm text-muted-foreground">
-                  تذكرت كلمة المرور؟{" "}
-                  <Link href="/auth/signin" className="text-primary hover:underline">
-                    تسجيل الدخول
+                  Remember your password?{" "}
+                  <Link href={`/${locale}/auth/signin`} className="text-primary hover:underline">
+                  Login
                   </Link>
                 </div>
               </CardFooter>
@@ -145,12 +148,12 @@ export default function ForgotPasswordPage() {
                   setEmail('')
                 }}
               >
-                إرسال لبريد آخر
+                  Send to another email
               </Button>
               
               <div className="text-center text-sm text-muted-foreground">
-                <Link href="/auth/signin" className="text-primary hover:underline">
-                  العودة لتسجيل الدخول
+                <Link href={`/${locale}/auth/signin`} className="text-primary hover:underline">
+                  Login
                 </Link>
               </div>
             </CardFooter>

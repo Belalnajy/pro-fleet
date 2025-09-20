@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Noto_Sans_Arabic, Noto_Nastaliq_Urdu } from "next/fo
 import "./globals.css";
 import "@/styles/rtl.css";
 import "@/styles/map.css";
+import "leaflet/dist/leaflet.css";
 import { Toaster as SonnarToaster } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { SessionProviderWrapper } from "@/components/providers/session-provider";

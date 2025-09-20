@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, use } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -12,8 +12,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Loader2, Truck, Shield, Users, Calculator, FileText } from "lucide-react"
 import { UserRole } from "@prisma/client"
+import { useLanguage } from "@/components/providers/language-provider"
 
-export default function SignUpPage() {
+export default function SignUpPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
+  const { t } = useLanguage()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -54,7 +57,7 @@ export default function SignUpPage() {
     setSuccess("")
 
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      setError(t("passwordsDoNotMatch"))
       setIsLoading(false)
       return
     }
@@ -78,15 +81,15 @@ export default function SignUpPage() {
       const data = await response.json()
 
       if (response.ok) {
-        setSuccess("Account created successfully! Redirecting to sign in...")
+        setSuccess(t("accountCreatedSuccess"))
         setTimeout(() => {
-          router.push("/auth/signin")
+          router.push(`/${locale}/auth/signin`)
         }, 2000)
       } else {
-        setError(data.error || "Registration failed")
+        setError(data.error || t("registrationFailed"))
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError(t("errorOccurred"))
     } finally {
       setIsLoading(false)
     }
@@ -133,7 +136,7 @@ export default function SignUpPage() {
                   <Label htmlFor="name">Full Name</Label>
                   <Input
                     id="name"
-                    placeholder="Enter your full name"
+                    placeholder={t("enterFullName")}
                     value={formData.name}
                     onChange={(e) => updateFormData("name", e.target.value)}
                     required
@@ -145,7 +148,7 @@ export default function SignUpPage() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="Enter your email"
+                    placeholder={t("enterEmail")}
                     value={formData.email}
                     onChange={(e) => updateFormData("email", e.target.value)}
                     required
@@ -156,7 +159,7 @@ export default function SignUpPage() {
                   <Label htmlFor="phone">Phone</Label>
                   <Input
                     id="phone"
-                    placeholder="Enter your phone number"
+                    placeholder={t("enterPhoneNumber")}
                     value={formData.phone}
                     onChange={(e) => updateFormData("phone", e.target.value)}
                   />
@@ -166,7 +169,7 @@ export default function SignUpPage() {
                   <Label htmlFor="role">Role</Label>
                   <Select value={formData.role} onValueChange={(value) => updateFormData("role", value as UserRole)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
+                      <SelectValue placeholder={t("selectRole")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={UserRole.CUSTOMER}>Customer</SelectItem>
@@ -182,7 +185,7 @@ export default function SignUpPage() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Create a password"
+                    placeholder={t("createPassword")}
                     value={formData.password}
                     onChange={(e) => updateFormData("password", e.target.value)}
                     required
@@ -194,7 +197,7 @@ export default function SignUpPage() {
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="Confirm your password"
+                    placeholder={t("confirmPassword")}
                     value={formData.confirmPassword}
                     onChange={(e) => updateFormData("confirmPassword", e.target.value)}
                     required
@@ -211,7 +214,7 @@ export default function SignUpPage() {
                       <Label htmlFor="nationality">Nationality</Label>
                       <Input
                         id="nationality"
-                        placeholder="Enter your nationality"
+                        placeholder={t("enterNationality")}
                         value={driverData.nationality}
                         onChange={(e) => setDriverData(prev => ({ ...prev, nationality: e.target.value }))}
                         required
@@ -221,7 +224,7 @@ export default function SignUpPage() {
                       <Label htmlFor="carPlateNumber">Car Plate Number</Label>
                       <Input
                         id="carPlateNumber"
-                        placeholder="Enter car plate number"
+                        placeholder={t("enterCarPlateNumber")}
                         value={driverData.carPlateNumber}
                         onChange={(e) => setDriverData(prev => ({ ...prev, carPlateNumber: e.target.value }))}
                         required
@@ -231,7 +234,7 @@ export default function SignUpPage() {
                       <Label htmlFor="carRegistration">Car Registration (Istimara)</Label>
                       <Input
                         id="carRegistration"
-                        placeholder="Enter car registration"
+                        placeholder={t("enterCarRegistration")}
                         value={driverData.carRegistration}
                         onChange={(e) => setDriverData(prev => ({ ...prev, carRegistration: e.target.value }))}
                         required
@@ -259,7 +262,7 @@ export default function SignUpPage() {
                       <Label htmlFor="companyName">Company Name</Label>
                       <Input
                         id="companyName"
-                        placeholder="Enter company name"
+                        placeholder={t("enterCompanyName")}
                         value={customerData.companyName}
                         onChange={(e) => setCustomerData(prev => ({ ...prev, companyName: e.target.value }))}
                       />
@@ -281,7 +284,7 @@ export default function SignUpPage() {
                       <Label htmlFor="address">Address</Label>
                       <Input
                         id="address"
-                        placeholder="Enter your address"
+                        placeholder={t("enterAddress")}
                         value={customerData.address}
                         onChange={(e) => setCustomerData(prev => ({ ...prev, address: e.target.value }))}
                       />
@@ -297,7 +300,7 @@ export default function SignUpPage() {
                     <Label htmlFor="licenseNumber">License Number</Label>
                     <Input
                       id="licenseNumber"
-                      placeholder="Enter your license number"
+                      placeholder={t("enterLicenseNumber")}
                       value={customsBrokerData.licenseNumber}
                       onChange={(e) => setCustomsBrokerData(prev => ({ ...prev, licenseNumber: e.target.value }))}
                     />
@@ -315,17 +318,17 @@ export default function SignUpPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating Account...
+                    {t("creatingAccount")}
                   </>
                 ) : (
-                  "Create Account"
+                  t("createAccount")
                 )}
               </Button>
               
               <div className="text-center text-sm text-muted-foreground">
-                Already have an account?{" "}
-                <Link href="/auth/signin" className="text-primary hover:underline">
-                  Sign in
+                {t("alreadyHaveAccount")}{" "}
+                <Link href={`/${locale}/auth/signin`} className="text-primary hover:underline">
+                  {t("signIn")}
                 </Link>
               </div>
             </CardFooter>

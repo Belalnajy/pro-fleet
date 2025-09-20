@@ -3,6 +3,7 @@
 import { useEffect, use } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface PageProps {
   params: Promise<{ locale: string }>
@@ -12,6 +13,7 @@ export default function AuthRedirectPage({ params }: PageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { locale } = use(params)
+  const { t } = useLanguage()
 
   useEffect(() => {
     if (status === 'loading') return // Still loading
@@ -54,7 +56,7 @@ export default function AuthRedirectPage({ params }: PageProps) {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Redirecting...</p>
+        <p className="text-muted-foreground">{t("redirecting")}</p>
       </div>
     </div>
   )

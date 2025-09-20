@@ -11,8 +11,10 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Truck, Shield, Users, Calculator, FileText } from "lucide-react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 function SignInInner({ locale }: { locale: string }) {
+  const { t } = useLanguage()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -79,12 +81,12 @@ function SignInInner({ locale }: { locale: string }) {
       })
 
       if (result?.error) {
-        setError("Demo login failed. Please try again.")
+        setError(t("demoLoginFailed"))
       } else {
         await redirectUserByRole()
       }
     } catch (error) {
-      setError("An error occurred during demo login.")
+      setError(t("demoLoginError"))
     } finally {
       setIsLoading(false)
     }
@@ -103,12 +105,12 @@ function SignInInner({ locale }: { locale: string }) {
       })
 
       if (result?.error) {
-        setError("Invalid email or password")
+        setError(t("invalidCredentials"))
       } else {
         await redirectUserByRole()
       }
     } catch (error) {
-      setError("An error occurred. Please try again.")
+      setError(t("errorOccurred"))
     } finally {
       setIsLoading(false)
     }
@@ -125,9 +127,9 @@ function SignInInner({ locale }: { locale: string }) {
 
         <Card>
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl text-center">Sign In</CardTitle>
+            <CardTitle className="text-2xl text-center">{t("signIn")}</CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access your account
+              {t("enterCredentials")}
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -139,11 +141,11 @@ function SignInInner({ locale }: { locale: string }) {
               )}
               
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("email")}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t("enterEmail")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -151,11 +153,11 @@ function SignInInner({ locale }: { locale: string }) {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("password")}</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder={t("enterPassword")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -172,23 +174,23 @@ function SignInInner({ locale }: { locale: string }) {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {t("signingIn")}
                   </>
                 ) : (
-                  "Sign In"
+                  t("signIn")
                 )}
               </Button>
               
               <div className="text-center text-sm text-muted-foreground space-y-2">
                 <div>
-                  Don't have an account?{" "}
-                  <Link href="/auth/signup" className="text-primary hover:underline">
-                    Sign up
+                  {t("dontHaveAccount")}{" "}
+                  <Link href={`/${locale}/auth/signup`} className="text-primary hover:underline">
+                    {t("signUp")}
                   </Link>
                 </div>
                 <div>
-                  <Link href="/auth/forgot-password" className="text-primary hover:underline">
-                    نسيت كلمة المرور؟
+                  <Link href={`/${locale}/auth/forgot-password`} className="text-primary hover:underline">
+                    {t("forgotPassword")}
                   </Link>
                 </div>
               </div>
@@ -199,35 +201,35 @@ function SignInInner({ locale }: { locale: string }) {
         {/* Demo Account Quick Access */}
         <div className="mt-8">
           <h3 className="text-center text-sm font-medium text-muted-foreground mb-4">
-            Try Demo Accounts
+            {t("tryDemoAccounts")}
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <Link href="/auth/signin?demo=admin">
+            <Link href={`/${locale}/auth/signin?demo=admin`}>
               <div className="text-center p-4 bg-card rounded-lg border hover:bg-accent hover:border-primary transition-colors cursor-pointer">
                 <Shield className="h-6 w-6 text-primary mx-auto mb-2" />
-                <h3 className="font-semibold text-sm">Admin</h3>
-                <p className="text-xs text-muted-foreground">Full system access</p>
+                <h3 className="font-semibold text-sm">{t("admin")}</h3>
+                <p className="text-xs text-muted-foreground">{t("fullSystemAccess")}</p>
               </div>
             </Link>
-            <Link href="/auth/signin?demo=driver">
+            <Link href={`/${locale}/auth/signin?demo=driver`}>
               <div className="text-center p-4 bg-card rounded-lg border hover:bg-accent hover:border-primary transition-colors cursor-pointer">
                 <Truck className="h-6 w-6 text-primary mx-auto mb-2" />
-                <h3 className="font-semibold text-sm">Driver</h3>
-                <p className="text-xs text-muted-foreground">Trip management</p>
+                <h3 className="font-semibold text-sm">{t("driver")}</h3>
+                <p className="text-xs text-muted-foreground">{t("tripManagement")}</p>
               </div>
             </Link>
-            <Link href="/auth/signin?demo=customer">
+            <Link href={`/${locale}/auth/signin?demo=customer`}>
               <div className="text-center p-4 bg-card rounded-lg border hover:bg-accent hover:border-primary transition-colors cursor-pointer">
                 <Users className="h-6 w-6 text-primary mx-auto mb-2" />
-                <h3 className="font-semibold text-sm">Customer</h3>
-                <p className="text-xs text-muted-foreground">Book trips</p>
+                <h3 className="font-semibold text-sm">{t("customer")}</h3>
+                <p className="text-xs text-muted-foreground">{t("bookTrips")}</p>
               </div>
             </Link>
-            <Link href="/auth/signin?demo=accountant">
+            <Link href={`/${locale}/auth/signin?demo=accountant`}>
               <div className="text-center p-4 bg-card rounded-lg border hover:bg-accent hover:border-primary transition-colors cursor-pointer">
                 <Calculator className="h-6 w-6 text-primary mx-auto mb-2" />
-                <h3 className="font-semibold text-sm">Accountant</h3>
-                <p className="text-xs text-muted-foreground">Financial management</p>
+                <h3 className="font-semibold text-sm">{t("accountant")}</h3>
+                <p className="text-xs text-muted-foreground">{t("financialManagement")}</p>
               </div>
             </Link>
           </div>

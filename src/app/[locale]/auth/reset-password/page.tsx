@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, use } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
@@ -10,8 +10,11 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, Truck, Lock, Eye, EyeOff, CheckCircle, AlertTriangle } from 'lucide-react'
+import { useLanguage } from "@/components/providers/language-provider"
 
-export default function ResetPasswordPage() {
+export default function ResetPasswordPage({ params: pageParams }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(pageParams)
+  const { t } = useLanguage()
   const { toast } = useToast()
   const router = useRouter()
   const params = useSearchParams()
@@ -80,7 +83,7 @@ export default function ResetPasswordPage() {
       
       // Redirect after 2 seconds
       setTimeout(() => {
-        router.push('/auth/signin')
+        router.push(`/${locale}/auth/signin`)
       }, 2000)
     } catch (err: any) {
       setError(err.message || 'حدث خطأ أثناء تغيير كلمة المرور')
@@ -146,7 +149,7 @@ export default function ResetPasswordPage() {
                   </p>
                 </div>
                 <Button asChild className="w-full">
-                  <Link href="/auth/signin">
+                  <Link href={`/${locale}/auth/signin`}>
                     الذهاب لتسجيل الدخول
                   </Link>
                 </Button>
@@ -237,7 +240,7 @@ export default function ResetPasswordPage() {
                 </Button>
                 
                 <div className="text-center text-sm text-muted-foreground">
-                  <Link href="/auth/signin" className="text-primary hover:underline">
+                  <Link href={`/${locale}/auth/signin`} className="text-primary hover:underline">
                     العودة لتسجيل الدخول
                   </Link>
                 </div>

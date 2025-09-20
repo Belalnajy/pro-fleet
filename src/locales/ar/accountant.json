@@ -1,0 +1,77 @@
+{
+  "accountantDashboard": "لوحة تحكم المحاسب",
+  "welcomeBack": "مرحباً بك مرة أخرى",
+  "financialOverview": "نظرة عامة مالية",
+  "viewReports": "عرض التقارير",
+  
+  "totalRevenue": "إجمالي الإيرادات",
+  "monthlyRevenue": "الإيرادات الشهرية",
+  "totalExpenses": "إجمالي المصروفات",
+  "netProfit": "صافي الربح",
+  "totalInvoices": "إجمالي الفواتير",
+  "pendingInvoices": "الفواتير المعلقة",
+  "paidInvoices": "الفواتير المدفوعة",
+  "overdueInvoices": "الفواتير المتأخرة",
+  "cancelledInvoices": "الفواتير الملغية",
+  "totalTransactions": "إجمالي المعاملات",
+  
+  "recentInvoices": "الفواتير الحديثة",
+  "latestBillingActivities": "أحدث أنشطة الفواتير",
+  "viewAll": "عرض الكل",
+  "recentTransactions": "المعاملات الحديثة",
+  "latestFinancialActivities": "أحدث الأنشطة المالية",
+  
+  "customer": "العميل",
+  "amount": "المبلغ",
+  "status": "الحالة",
+  "dueDate": "تاريخ الاستحقاق",
+  "actions": "الإجراءات",
+  "trip": "رحلة",
+  
+  "transactionId": "رقم المعاملة",
+  "description": "الوصف",
+  "date": "التاريخ",
+  "type": "النوع",
+  
+  "pending": "معلق",
+  "sent": "مرسل",
+  "paid": "مدفوع",
+  "overdue": "متأخر",
+  "cancelled": "ملغي",
+  "completed": "مكتمل",
+  
+  "income": "دخل",
+  "expense": "مصروف",
+  "refund": "استرداد",
+  "adjustment": "تعديل",
+  
+  "currency": "ر.س",
+  "sar": "ريال سعودي",
+  
+  "loading": "جاري التحميل...",
+  "error": "خطأ",
+  "failedToLoadData": "فشل في تحميل البيانات",
+  "failedToLoadDashboard": "فشل في تحميل بيانات لوحة التحكم",
+  "retry": "إعادة المحاولة",
+  
+  "quickActions": "الإجراءات السريعة",
+  "commonAccountingTasks": "المهام المحاسبية الشائعة",
+  "generateInvoice": "إنشاء فاتورة",
+  "recordPayment": "تسجيل دفعة",
+  "addExpense": "إضافة مصروف",
+  "exportReports": "تصدير التقارير",
+  
+  "view": "عرض",
+  "download": "تحميل",
+  "edit": "تعديل",
+  "delete": "حذف",
+  
+  "noDataAvailable": "لا توجد بيانات متاحة",
+  "noInvoicesFound": "لم يتم العثور على فواتير",
+  "noTransactionsFound": "لم يتم العثور على معاملات",
+  
+  "fromLastMonth": "من الشهر الماضي",
+  "revenueGrowth": "+12%",
+  "expenseGrowth": "+5%",
+  "profitGrowth": "+18%"
+}

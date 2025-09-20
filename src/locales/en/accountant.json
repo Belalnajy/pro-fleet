@@ -1,0 +1,77 @@
+{
+  "accountantDashboard": "Accountant Dashboard",
+  "welcomeBack": "Welcome Back",
+  "financialOverview": "Financial Overview",
+  "viewReports": "View Reports",
+  
+  "totalRevenue": "Total Revenue",
+  "monthlyRevenue": "Monthly Revenue",
+  "totalExpenses": "Total Expenses",
+  "netProfit": "Net Profit",
+  "totalInvoices": "Total Invoices",
+  "pendingInvoices": "Pending Invoices",
+  "paidInvoices": "Paid Invoices",
+  "overdueInvoices": "Overdue Invoices",
+  "cancelledInvoices": "Cancelled Invoices",
+  "totalTransactions": "Total Transactions",
+  
+  "recentInvoices": "Recent Invoices",
+  "latestBillingActivities": "Latest billing activities",
+  "viewAll": "View All",
+  "recentTransactions": "Recent Transactions",
+  "latestFinancialActivities": "Latest financial activities",
+  
+  "customer": "Customer",
+  "amount": "Amount",
+  "status": "Status",
+  "dueDate": "Due Date",
+  "actions": "Actions",
+  "trip": "Trip",
+  
+  "transactionId": "Transaction ID",
+  "description": "Description",
+  "date": "Date",
+  "type": "Type",
+  
+  "pending": "Pending",
+  "sent": "Sent",
+  "paid": "Paid",
+  "overdue": "Overdue",
+  "cancelled": "Cancelled",
+  "completed": "Completed",
+  
+  "income": "Income",
+  "expense": "Expense",
+  "refund": "Refund",
+  "adjustment": "Adjustment",
+  
+  "currency": "SAR",
+  "sar": "Saudi Riyal",
+  
+  "loading": "Loading...",
+  "error": "Error",
+  "failedToLoadData": "Failed to load data",
+  "failedToLoadDashboard": "Failed to load dashboard data",
+  "retry": "Retry",
+  
+  "quickActions": "Quick Actions",
+  "commonAccountingTasks": "Common accounting tasks",
+  "generateInvoice": "Generate Invoice",
+  "recordPayment": "Record Payment",
+  "addExpense": "Add Expense",
+  "exportReports": "Export Reports",
+  
+  "view": "View",
+  "download": "Download",
+  "edit": "Edit",
+  "delete": "Delete",
+  
+  "noDataAvailable": "No data available",
+  "noInvoicesFound": "No invoices found",
+  "noTransactionsFound": "No transactions found",
+  
+  "fromLastMonth": "from last month",
+  "revenueGrowth": "+12%",
+  "expenseGrowth": "+5%",
+  "profitGrowth": "+18%"
+}

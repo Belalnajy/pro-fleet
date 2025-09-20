@@ -1,0 +1,77 @@
+{
+  "accountantDashboard": "اکاؤنٹنٹ ڈیش بورڈ",
+  "welcomeBack": "خوش آمدید",
+  "financialOverview": "مالی جائزہ",
+  "viewReports": "رپورٹس دیکھیں",
+  
+  "totalRevenue": "کل آمدنی",
+  "monthlyRevenue": "ماہانہ آمدنی",
+  "totalExpenses": "کل اخراجات",
+  "netProfit": "خالص منافع",
+  "totalInvoices": "کل انوائسز",
+  "pendingInvoices": "زیر التواء انوائسز",
+  "paidInvoices": "ادا شدہ انوائسز",
+  "overdueInvoices": "مؤخر انوائسز",
+  "cancelledInvoices": "منسوخ انوائسز",
+  "totalTransactions": "کل لین دین",
+  
+  "recentInvoices": "حالیہ انوائسز",
+  "latestBillingActivities": "تازہ ترین بلنگ سرگرمیاں",
+  "viewAll": "تمام دیکھیں",
+  "recentTransactions": "حالیہ لین دین",
+  "latestFinancialActivities": "تازہ ترین مالی سرگرمیاں",
+  
+  "customer": "کسٹمر",
+  "amount": "رقم",
+  "status": "حالت",
+  "dueDate": "مقررہ تاریخ",
+  "actions": "اقدامات",
+  "trip": "سفر",
+  
+  "transactionId": "ٹرانزیکشن آئی ڈی",
+  "description": "تفصیل",
+  "date": "تاریخ",
+  "type": "قسم",
+  
+  "pending": "زیر التواء",
+  "sent": "بھیجا گیا",
+  "paid": "ادا شدہ",
+  "overdue": "مؤخر",
+  "cancelled": "منسوخ",
+  "completed": "مکمل",
+  
+  "income": "آمدنی",
+  "expense": "خرچ",
+  "refund": "واپسی",
+  "adjustment": "تبدیلی",
+  
+  "currency": "ریال",
+  "sar": "سعودی ریال",
+  
+  "loading": "لوڈ ہو رہا ہے...",
+  "error": "خرابی",
+  "failedToLoadData": "ڈیٹا لوڈ کرنے میں ناکام",
+  "failedToLoadDashboard": "ڈیش بورڈ ڈیٹا لوڈ کرنے میں ناکام",
+  "retry": "دوبارہ کوشش",
+  
+  "quickActions": "فوری اقدامات",
+  "commonAccountingTasks": "عام اکاؤنٹنگ کام",
+  "generateInvoice": "انوائس بنائیں",
+  "recordPayment": "ادائیگی ریکارڈ کریں",
+  "addExpense": "خرچ شامل کریں",
+  "exportReports": "رپورٹس ایکسپورٹ کریں",
+  
+  "view": "دیکھیں",
+  "download": "ڈاؤن لوڈ",
+  "edit": "ترمیم",
+  "delete": "حذف",
+  
+  "noDataAvailable": "کوئی ڈیٹا دستیاب نہیں",
+  "noInvoicesFound": "کوئی انوائس نہیں ملا",
+  "noTransactionsFound": "کوئی لین دین نہیں ملا",
+  
+  "fromLastMonth": "پچھلے مہینے سے",
+  "revenueGrowth": "+12%",
+  "expenseGrowth": "+5%",
+  "profitGrowth": "+18%"
+}

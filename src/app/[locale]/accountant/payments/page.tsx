@@ -66,7 +66,8 @@ interface Pagination {
   limit: number
 }
 
-export default function AccountantPaymentsPage() {
+export default function AccountantPaymentsPage({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
@@ -93,7 +94,7 @@ export default function AccountantPaymentsPage() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ACCOUNTANT") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchPayments()
     }

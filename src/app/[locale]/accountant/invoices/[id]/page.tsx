@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react"
 import { useRouter, useParams } from "next/navigation"
 import { useEffect, useState } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { useTranslation } from "@/hooks/useTranslation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -63,11 +64,13 @@ interface InvoiceDetails {
   notes?: string
 }
 
-export default function InvoiceDetailsPage() {
+export default function InvoiceDetailsPage({ params: pageParams }: { params: { locale: string; id: string } }) {
+  const { locale } = pageParams
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const { toast } = useToast()
+  const { t } = useTranslation()
   
   const [invoice, setInvoice] = useState<InvoiceDetails | null>(null)
   const [loading, setLoading] = useState(true)
@@ -86,7 +89,7 @@ export default function InvoiceDetailsPage() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ACCOUNTANT") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else if (params.id) {
       fetchInvoiceDetails()
       
@@ -126,7 +129,7 @@ export default function InvoiceDetailsPage() {
         description: "فشل في تحميل تفاصيل الفاتورة",
         variant: "destructive"
       })
-      router.push(`/${params.locale}/accountant/invoices`)
+      router.push(`/${params.locale as string}/accountant/invoices`)
     } finally {
       setLoading(false)
     }
@@ -189,7 +192,7 @@ export default function InvoiceDetailsPage() {
       console.error('Error downloading PDF:', error)
       toast({
         title: "خطأ",
-        description: "فشل في تحميل الفاتورة",
+        description: t("downloadFailed"),
         variant: "destructive"
       })
     } finally {
@@ -305,7 +308,6 @@ export default function InvoiceDetailsPage() {
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">جاري تحميل تفاصيل الفاتورة...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -323,7 +325,7 @@ export default function InvoiceDetailsPage() {
           <div className="text-center">
             <FileText className="h-8 w-8 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">لم يتم العثور على الفاتورة</p>
-            <Button onClick={() => router.push(`/${params.locale}/accountant/invoices`)} className="mt-4">
+            <Button onClick={() => router.push(`/${params.locale as string}/accountant/invoices`)} className="mt-4">
               العودة للفواتير
             </Button>
           </div>
@@ -341,7 +343,7 @@ export default function InvoiceDetailsPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push(`/${params.locale}/accountant/invoices`)}
+              onClick={() => router.push(`/${params.locale as string}/accountant/invoices`)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               العودة
@@ -438,21 +440,21 @@ export default function InvoiceDetailsPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-500">رقم الفاتورة</p>
+                    <p className="text-sm text-gray-500">{t("invoiceNumber")}</p>
                     <p className="font-semibold">{invoice.invoiceNumber}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">رقم الرحلة</p>
+                    <p className="text-sm text-gray-500">{t("tripNumber")}</p>
                     <p className="font-semibold">{invoice.tripNumber}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">تاريخ الإصدار</p>
+                    <p className="text-sm text-gray-500">{t("createdAt")}</p>
                     <p className="font-semibold">
                       {new Date(invoice.createdAt).toLocaleDateString('ar-SA')}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">تاريخ الاستحقاق</p>
+                    <p className="text-sm text-gray-500">{t("dueDate")}</p>
                     <p className="font-semibold">
                       {new Date(invoice.dueDate).toLocaleDateString('ar-SA')}
                     </p>
@@ -460,7 +462,7 @@ export default function InvoiceDetailsPage() {
                   {invoice.paidDate && (
                     <>
                       <div>
-                        <p className="text-sm text-gray-500">تاريخ الدفع</p>
+                        <p className="text-sm text-gray-500">{t("paidDate")}</p>
                         <p className="font-semibold text-green-600">
                           {new Date(invoice.paidDate).toLocaleDateString('ar-SA')}
                         </p>
@@ -497,20 +499,20 @@ export default function InvoiceDetailsPage() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-green-600" />
-                        <span className="text-sm">من: {invoice.route.from}</span>
+                        <span className="text-sm">{t("from")}: {invoice.route.from}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-red-600" />
-                        <span className="text-sm">إلى: {invoice.route.to}</span>
+                        <span className="text-sm">{t("to")}: {invoice.route.to}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Truck className="h-4 w-4 text-blue-600" />
                         <span className="text-sm">
-                          {invoice.vehicle.type} - {invoice.vehicle.capacity} طن
+                          {invoice.vehicle.type} - {invoice.vehicle.capacity} {t("ton")}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600">السائق: {invoice.driver}</p>
-                      <p className="text-sm text-gray-600">وسيط الجمارك: {invoice.customsBroker}</p>
+                      <p className="text-sm text-gray-600">{t("driver")}: {invoice.driver}</p>
+                      <p className="text-sm text-gray-600">{t("customsBroker")}: {invoice.customsBroker}</p>
                     </div>
                   </div>
                 </div>
@@ -530,21 +532,21 @@ export default function InvoiceDetailsPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">المبلغ الفرعي</span>
+                    <span className="text-gray-600">{t("subtotal")}</span>
                     <span className="font-medium">
                       {invoice.subtotal.toLocaleString()} ريال
                     </span>
                   </div>
                   
                   <div className="flex justify-between">
-                    <span className="text-gray-600">الضريبة (15%)</span>
+                    <span className="text-gray-600">{t("taxAmount")} (15%)</span>
                     <span className="font-medium">
                       {invoice.taxAmount.toLocaleString()} ريال
                     </span>
                   </div>
                   
                   <div className="flex justify-between">
-                    <span className="text-gray-600">رسوم الجمارك</span>
+                    <span className="text-gray-600">{t("customsFee")}</span>
                     <span className="font-medium">
                       {invoice.customsFee?.toLocaleString() || '0'} ريال
                     </span>
@@ -553,7 +555,7 @@ export default function InvoiceDetailsPage() {
                   <Separator />
                   
                   <div className="flex justify-between text-lg font-bold">
-                    <span>المبلغ الإجمالي</span>
+                    <span>{t("total")}</span>
                     <span className="text-primary">
                       {invoice.total?.toLocaleString() || '0'} ريال
                     </span>
@@ -574,7 +576,7 @@ export default function InvoiceDetailsPage() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                     <div>
-                      <Label htmlFor="subtotal">المبلغ الفرعي</Label>
+                      <Label htmlFor="subtotal">{t("subtotal")}</Label>
                       <Input
                         id="subtotal"
                         type="number"
@@ -585,7 +587,7 @@ export default function InvoiceDetailsPage() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="taxAmount">مبلغ الضريبة</Label>
+                      <Label htmlFor="taxAmount">{t("taxAmount")}</Label>
                       <Input
                         id="taxAmount"
                         type="number"
@@ -596,7 +598,7 @@ export default function InvoiceDetailsPage() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="customsFee">رسوم الجمارك</Label>
+                      <Label htmlFor="customsFee">{t("customsFee")}</Label>
                       <Input
                         id="customsFee"
                         type="number"
@@ -607,7 +609,7 @@ export default function InvoiceDetailsPage() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="total">المبلغ الإجمالي</Label>
+                      <Label htmlFor="total">{t("total")}</Label>
                       <Input
                         id="total"
                         type="number"
@@ -618,7 +620,7 @@ export default function InvoiceDetailsPage() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="paymentStatus">حالة الدفع</Label>
+                      <Label htmlFor="paymentStatus">{t("paymentStatus")}</Label>
                       <Select
                         value={editForm.paymentStatus}
                         onValueChange={(value) => setEditForm(prev => ({ ...prev, paymentStatus: value }))}
@@ -627,17 +629,17 @@ export default function InvoiceDetailsPage() {
                           <SelectValue placeholder="اختر حالة الدفع" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="PENDING">في الانتظار</SelectItem>
-                          <SelectItem value="SENT">مرسلة</SelectItem>
-                          <SelectItem value="PAID">مدفوعة</SelectItem>
-                          <SelectItem value="OVERDUE">متأخرة</SelectItem>
-                          <SelectItem value="CANCELLED">ملغية</SelectItem>
+                          <SelectItem value="PENDING">{t("PENDING")}</SelectItem>
+                          <SelectItem value="SENT">{t("SENT")}</SelectItem>
+                          <SelectItem value="PAID">{t("PAID")}</SelectItem>
+                          <SelectItem value="OVERDUE">{t("OVERDUE")}</SelectItem>
+                          <SelectItem value="CANCELLED">{t("CANCELLED")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     
                     <div>
-                      <Label htmlFor="dueDate">تاريخ الاستحقاق</Label>
+                      <Label htmlFor="dueDate">{t("dueDate")}</Label>
                       <Input
                         id="dueDate"
                         type="date"
@@ -647,7 +649,7 @@ export default function InvoiceDetailsPage() {
                     </div>
                     
                     <div>
-                      <Label htmlFor="notes">ملاحظات</Label>
+                      <Label htmlFor="notes">{t("notes")}</Label>
                       <Textarea
                         id="notes"
                         value={editForm.notes}

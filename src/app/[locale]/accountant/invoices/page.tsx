@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, use } from "react"
+import { useTranslation } from "@/hooks/useTranslation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -98,6 +99,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
   const router = useRouter()
   const { toast } = useToast()
   const { locale } = use(params)
+  const { t, language } = useTranslation()
   
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [pagination, setPagination] = useState<Pagination | null>(null)
@@ -111,7 +113,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ACCOUNTANT") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchInvoices()
     }
@@ -201,7 +203,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
       console.error('Error downloading PDF:', error)
       toast({
         title: "خطأ",
-        description: "فشل في تحميل الفاتورة",
+        description: t("downloadFailed"),
         variant: "destructive"
       })
     } finally {
@@ -332,20 +334,33 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
   }
 
   const getStatusText = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "paid":
-        return "مدفوعة"
-      case "pending":
-        return "في الانتظار"
-      case "sent":
-        return "مرسلة"
-      case "overdue":
-        return "متأخرة"
-      case "cancelled":
-        return "ملغية"
-      default:
-        return status
+    // Use the status translations from acc-invoices.json
+    const statusTranslations: Record<string, Record<string, string>> = {
+      'ar': {
+        'PENDING': 'في الانتظار',
+        'SENT': 'تم الإرسال',
+        'PAID': 'مدفوعة',
+        'OVERDUE': 'متأخرة',
+        'CANCELLED': 'ملغية'
+      },
+      'en': {
+        'PENDING': 'Pending',
+        'SENT': 'Sent',
+        'PAID': 'Paid',
+        'OVERDUE': 'Overdue',
+        'CANCELLED': 'Cancelled'
+      },
+      'ur': {
+        'PENDING': 'زیر التواء',
+        'SENT': 'بھیج دیا گیا',
+        'PAID': 'ادا شدہ',
+        'OVERDUE': 'تاخیر شدہ',
+        'CANCELLED': 'منسوخ شدہ'
+      }
     }
+    
+    const currentLang = language || 'ar'
+    return statusTranslations[currentLang]?.[status.toUpperCase()] || status
   }
 
   const handleExportInvoices = async () => {
@@ -366,7 +381,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         invoice.invoiceNumber,
         invoice.trip?.customer?.name || 'غير محدد',
         `${invoice.trip?.fromCity?.name || ''} - ${invoice.trip?.toCity?.name || ''}`,
-        `${invoice.total} ريال`,
+        `${invoice.total} SAR  ` ,
         getStatusText(invoice.paymentStatus),
         new Date(invoice.createdAt).toLocaleDateString('ar-SA'),
         invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('ar-SA') : 'غير محدد'
@@ -407,7 +422,6 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">جاري تحميل الفواتير...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -424,8 +438,8 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">إدارة الفواتير</h1>
-            <p className="text-gray-600">مراقبة وإدارة جميع الفواتير والمدفوعات</p>
+            <h1 className="text-3xl font-bold">{t("title")}</h1>
+            <p className="text-gray-600">{t("subtitle")}</p>
           </div>
           <Button onClick={handleExportInvoices} disabled={exportLoading}>
             {exportLoading ? (
@@ -433,7 +447,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
             ) : (
               <Download className="h-4 w-4 mr-2" />
             )}
-            {exportLoading ? "جاري التصدير..." : "تصدير التقرير"}
+            {exportLoading ? t("loading") : t("exportInvoices")}
           </Button>
         </div>
 
@@ -441,7 +455,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">إجمالي الفواتير</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("totalInvoices")}</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -451,7 +465,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">في الانتظار</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("pendingInvoices")}</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -463,7 +477,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">مدفوعة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("paidInvoices")}</CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -475,7 +489,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">متأخرة</CardTitle>
+              <CardTitle className="text-sm font-medium">{t("overdueInvoices")}</CardTitle>
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -493,7 +507,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         {/* Filters */}
         <Card>
           <CardHeader>
-            <CardTitle>البحث والتصفية</CardTitle>
+            <CardTitle>{t("searchInvoices")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4">
@@ -501,7 +515,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="البحث برقم الفاتورة، رقم الرحلة، أو اسم العميل..."
+                    placeholder={t("searchPlaceholder")}
                     value={searchTerm}
                     onChange={(e) => handleSearch(e.target.value)}
                     className="pl-10"
@@ -511,15 +525,15 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
               <Select value={statusFilter} onValueChange={handleStatusFilter}>
                 <SelectTrigger className="w-48">
                   <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="تصفية حسب الحالة" />
+                  <SelectValue placeholder={t("filterByStatus")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">جميع الحالات</SelectItem>
-                  <SelectItem value="PENDING">في الانتظار</SelectItem>
-                  <SelectItem value="SENT">مرسلة</SelectItem>
-                  <SelectItem value="PAID">مدفوعة</SelectItem>
-                  <SelectItem value="OVERDUE">متأخرة</SelectItem>
-                  <SelectItem value="CANCELLED">ملغية</SelectItem>
+                  <SelectItem value="all">{t("allStatus")}</SelectItem>
+                  <SelectItem value="PENDING">{getStatusText('PENDING')}</SelectItem>
+                  <SelectItem value="SENT">{getStatusText('SENT')}</SelectItem>
+                  <SelectItem value="PAID">{getStatusText('PAID')}</SelectItem>
+                  <SelectItem value="OVERDUE">{getStatusText('OVERDUE')}</SelectItem>
+                  <SelectItem value="CANCELLED">{getStatusText('CANCELLED')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -539,13 +553,13 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>رقم الفاتورة</TableHead>
-                    <TableHead>العميل</TableHead>
-                    <TableHead>المسار</TableHead>
-                    <TableHead>المبلغ</TableHead>
-                    <TableHead>الحالة</TableHead>
-                    <TableHead>تاريخ الاستحقاق</TableHead>
-                    <TableHead>الإجراءات</TableHead>
+                    <TableHead>{t("invoiceNumber")}</TableHead>
+                    <TableHead>{t("customer")}</TableHead>
+                    <TableHead>{t("route")}</TableHead>
+                    <TableHead>{t("total")}</TableHead>
+                    <TableHead>{t("paymentStatus")}</TableHead>
+                    <TableHead>{t("dueDate")}</TableHead>
+                    <TableHead>{t("actions")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -555,7 +569,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                         <div>
                           <div>{invoice.invoiceNumber}</div>
                           <div className="text-sm text-gray-500">
-                            رحلة: {invoice.tripNumber}
+                            {t("trip")}: {invoice.tripNumber}
                           </div>
                         </div>
                       </TableCell>
@@ -568,15 +582,15 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                       <TableCell>
                         <div className="text-sm">
                           <div>{invoice.route.from}</div>
-                          <div className="text-gray-500">إلى {invoice.route.to}</div>
+                          <div className="text-gray-500">{t("to")} {invoice.route.to}</div>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="font-semibold">
-                          {invoice.total?.toLocaleString() || '0'} ريال
+                          {invoice.total?.toLocaleString() || '0'} {t("sar")}
                         </div>
                         <div className="text-sm text-gray-500">
-                          ضريبة: {invoice.taxAmount?.toLocaleString() || '0'}
+                          {t("tax")}: {invoice.taxAmount?.toLocaleString() || '0'}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -593,7 +607,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                         </div>
                         {invoice.paidDate && (
                           <div className="text-sm text-green-600">
-                            دُفعت: {new Date(invoice.paidDate).toLocaleDateString('ar-SA')}
+                            {t("paid")}: {new Date(invoice.paidDate).toLocaleDateString('ar-SA')}
                           </div>
                         )}
                       </TableCell>
@@ -603,7 +617,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                             variant="outline" 
                             size="sm"
                             onClick={() => handleViewInvoice(invoice.id)}
-                            title="عرض الفاتورة"
+                            title={t("viewInvoice")}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -612,7 +626,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                             size="sm"
                             onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
                             disabled={actionLoading[`pdf-${invoice.id}`]}
-                            title="تحميل PDF"
+                            title={t("downloadPDFTooltip")}
                           >
                             {actionLoading[`pdf-${invoice.id}`] ? (
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -626,7 +640,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                               size="sm"
                               onClick={() => handleSendEmail(invoice.id, invoice.customer.email)}
                               disabled={actionLoading[`email-${invoice.id}`]}
-                              title="إرسال بالبريد الإلكتروني"
+                              title={t("sendEmailTooltip")}
                             >
                               {actionLoading[`email-${invoice.id}`] ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -638,18 +652,18 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                           
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" title="المزيد">
+                              <Button variant="outline" size="sm" title={t("moreTooltip")}>
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={() => handleViewInvoice(invoice.id)}>
                                 <Eye className="h-4 w-4 mr-2" />
-                                عرض التفاصيل
+                                {t("viewDetailsAction")}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleEditInvoice(invoice.id)}>
                                 <Edit className="h-4 w-4 mr-2" />
-                                تعديل الفاتورة
+                                {t("editInvoiceAction")}
                               </DropdownMenuItem>
                               {invoice.paymentStatus !== 'PAID' && (
                                 <DropdownMenuItem 
@@ -657,7 +671,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                                   className="text-red-600"
                                 >
                                   <Trash2 className="h-4 w-4 mr-2" />
-                                  حذف الفاتورة
+                                  {t("deleteInvoiceAction")}
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -674,7 +688,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
             {pagination && pagination.totalPages > 1 && (
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-gray-600">
-                  صفحة {pagination.currentPage} من {pagination.totalPages}
+                  {t("pageText")} {pagination.currentPage} {t("ofText")} {pagination.totalPages}
                 </div>
                 <div className="flex space-x-2">
                   <Button
@@ -684,7 +698,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                     disabled={!pagination.hasPreviousPage}
                   >
                     <ChevronLeft className="h-4 w-4" />
-                    السابق
+                    {t("previousButton")}
                   </Button>
                   <Button
                     variant="outline"
@@ -692,7 +706,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                     onClick={() => setCurrentPage(currentPage + 1)}
                     disabled={!pagination.hasNextPage}
                   >
-                    التالي
+                    {t("nextButton")}
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>

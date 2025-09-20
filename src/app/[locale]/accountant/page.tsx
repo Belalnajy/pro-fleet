@@ -59,7 +59,7 @@ interface Transaction {
   customer?: string
 }
 
-export default function AccountantDashboard() {
+export default function AccountantDashboard({ params }: { params: { locale: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
@@ -75,7 +75,7 @@ export default function AccountantDashboard() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ACCOUNTANT") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchDashboardData()
     }
@@ -93,8 +93,8 @@ export default function AccountantDashboard() {
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
       toast({
-        title: "خطأ",
-        description: "فشل في تحميل بيانات لوحة التحكم",
+        title: t("error"),
+        description: t("failedToLoadDashboard"),
         variant: "destructive"
       })
     } finally {
@@ -107,7 +107,6 @@ export default function AccountantDashboard() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">جاري تحميل لوحة التحكم...</p>
         </div>
       </div>
     )
@@ -122,9 +121,9 @@ export default function AccountantDashboard() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="h-8 w-8 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-600">فشل في تحميل البيانات</p>
+          <p className="text-gray-600">{t("failedToLoadData")}</p>
           <Button onClick={fetchDashboardData} className="mt-4">
-            إعادة المحاولة
+            {t("retry")}
           </Button>
         </div>
       </div>
@@ -147,6 +146,23 @@ export default function AccountantDashboard() {
         return "bg-gray-100 text-gray-800"
       default:
         return "bg-gray-100 text-gray-800"
+    }
+  }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+        return t('pendingStatus')
+      case 'SENT':
+        return t('sentStatus')
+      case 'PAID':
+        return t('paidStatus')
+      case 'OVERDUE':
+        return t('overdueStatus')
+      case 'CANCELLED':
+        return t('cancelled')
+      default:
+        return status
     }
   }
 
@@ -181,17 +197,17 @@ export default function AccountantDashboard() {
 
   return (
     <DashboardLayout
-      title="Accountant Dashboard"
-      subtitle="Financial management and reporting"
+      title={t("accountantDashboard")}
+      subtitle={t("financialOverview")}
       actions={
         <div className="flex space-x-2">
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
-            Export Report
+            {t("exportReports")}
           </Button>
           <Button>
             <FileText className="h-4 w-4 mr-2" />
-            New Invoice
+            {t("generateInvoice")}
           </Button>
         </div>
       }
@@ -200,7 +216,7 @@ export default function AccountantDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("totalRevenue")}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -208,14 +224,14 @@ export default function AccountantDashboard() {
               {t("currency")} {stats.totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              +12% from last month
+              {t("revenueGrowth")} {t("fromLastMonth")}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("totalExpenses")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -223,14 +239,14 @@ export default function AccountantDashboard() {
               {t("currency")} {stats.totalExpenses.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              +5% from last month
+              {t("expenseGrowth")} {t("fromLastMonth")}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("netProfit")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -238,20 +254,20 @@ export default function AccountantDashboard() {
               {t("currency")} {stats.netProfit.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              +18% from last month
+              {t("profitGrowth")} {t("fromLastMonth")}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Invoices</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("pendingInvoices")}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pendingInvoices}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.overdueInvoices} overdue
+              {stats.overdueInvoices} {t("overdue")}
             </p>
           </CardContent>
         </Card>
@@ -263,11 +279,11 @@ export default function AccountantDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Invoices</CardTitle>
-                <CardDescription>Latest invoices and payment status</CardDescription>
+                <CardTitle>{t("recentInvoices")}</CardTitle>
+                <CardDescription>{t("latestBillingActivities")}</CardDescription>
               </div>
               <Button variant="outline" size="sm">
-                View All
+                {t("viewAll")}
               </Button>
             </div>
           </CardHeader>
@@ -280,10 +296,10 @@ export default function AccountantDashboard() {
                     <div>
                       <h3 className="font-semibold">{invoice.id}</h3>
                       <div className="text-sm text-muted-foreground">
-                        {invoice.customer} • Trip: {invoice.tripId}
+                        {invoice.customer} • {t("trip")}: {invoice.tripId}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                        {t("dueDate")}: {new Date(invoice.dueDate).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
@@ -293,7 +309,7 @@ export default function AccountantDashboard() {
                       <Badge className={getStatusColor(invoice.status)}>
                         <div className="flex items-center space-x-1">
                           {getStatusIcon(invoice.status)}
-                          <span>{t(invoice.status)}</span>
+                          <span>{getStatusText(invoice.status)}</span>
                         </div>
                       </Badge>
                     </div>
@@ -317,11 +333,11 @@ export default function AccountantDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Transactions</CardTitle>
-                <CardDescription>Latest financial activities</CardDescription>
+                <CardTitle>{t("recentTransactions")}</CardTitle>
+                <CardDescription>{t("latestFinancialActivities")}</CardDescription>
               </div>
               <Button variant="outline" size="sm">
-                View All
+                {t("viewAll")}
               </Button>
             </div>
           </CardHeader>
@@ -352,7 +368,7 @@ export default function AccountantDashboard() {
                       <Badge className={getStatusColor(transaction.status)}>
                         <div className="flex items-center space-x-1">
                           {getStatusIcon(transaction.status)}
-                          <span>{t(transaction.status)}</span>
+                          <span>{getStatusText(transaction.status)}</span>
                         </div>
                       </Badge>
                     </div>
@@ -368,7 +384,7 @@ export default function AccountantDashboard() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="mt-6">
+      {/* <Card className="mt-6">
         <CardHeader>
           <CardTitle>Quick Actions</CardTitle>
           <CardDescription>Common accounting tasks</CardDescription>
@@ -393,7 +409,7 @@ export default function AccountantDashboard() {
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </DashboardLayout>
   )
 }

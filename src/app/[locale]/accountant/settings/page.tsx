@@ -25,7 +25,8 @@ import {
   Loader2
 } from "lucide-react"
 
-export default function AccountantSettingsPage() {
+export default function AccountantSettingsPage({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
@@ -58,7 +59,7 @@ export default function AccountantSettingsPage() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ACCOUNTANT") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     }
   }, [session, status, router])
 

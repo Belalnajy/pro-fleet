@@ -34,7 +34,8 @@ interface Invoice {
   dueDate: string
 }
 
-export default function RecordPaymentPage() {
+export default function RecordPaymentPage({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -57,7 +58,7 @@ export default function RecordPaymentPage() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ACCOUNTANT") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else if (paymentData.invoiceId) {
       searchInvoice(paymentData.invoiceId)
     }

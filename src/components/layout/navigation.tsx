@@ -80,7 +80,8 @@ export function Navigation({ className }: NavigationProps) {
           ...baseItems,
           { href: `/${language}/customer/book-trip`, label: t("bookTrip"), icon: FileText },
           { href: `/${language}/customer/my-trips`, label: t("myTrips"), icon: FileText },
-          { href: `/${language}/customer/tracking`, label: t("tracking"), icon: MapPin },
+          { href: `/${language}/customer/addresses`, label: t("savedAddresses"), icon: MapPin },
+          { href: `/${language}/customer/tracking`, label: t("tracking"), icon: NavigationIcon },
           { href: `/${language}/customer/invoices`, label: t("invoices"), icon: FileText },
 
         ]
@@ -212,7 +213,7 @@ export function Navigation({ className }: NavigationProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut()}>
+                <DropdownMenuItem onClick={() => signOut({ callbackUrl: `/${language}/auth/signin` })}>
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>{t("signOut")}</span>
                 </DropdownMenuItem>

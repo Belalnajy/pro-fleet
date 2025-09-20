@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
+import L from "leaflet";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -68,7 +69,8 @@ interface TrackingMapProps {
   refreshInterval?: number;
   center?: [number, number] | null;
   showRoute?: boolean;
-  adminMode?: boolean; // New prop to determine if using admin API
+  adminMode?: boolean;
+  customerMode?: boolean;
 }
 
 export function TrackingMap({
@@ -80,6 +82,7 @@ export function TrackingMap({
   center = null,
   showRoute = false,
   adminMode = false,
+  customerMode = false,
 }: TrackingMapProps) {
   const [trackingData, setTrackingData] = useState<{
     trips: Array<TripInfo & { trackingLogs: TrackingPoint[] }>;
@@ -114,40 +117,72 @@ export function TrackingMap({
       setError(null);
       
       // If showRoute is enabled and we have a tripId, fetch route data
+      console.log('TrackingMap showRoute:', showRoute, 'tripId:', tripId);
       if (showRoute && tripId) {
-        const routeApiUrl = adminMode 
-          ? `/api/admin/trips/${tripId}/route`
-          : `/api/driver/trips/${tripId}/route`;
+        let routeApiUrl;
+        if (adminMode) {
+          routeApiUrl = `/api/admin/trips/${tripId}/route`;
+        } else if (customerMode) {
+          routeApiUrl = `/api/customer/trips/${tripId}/route`;
+        } else {
+          routeApiUrl = `/api/driver/trips/${tripId}/route`;
+        }
         
+        console.log('TrackingMap fetching route from:', routeApiUrl);
         const routeResponse = await fetch(routeApiUrl);
+        console.log('TrackingMap route response status:', routeResponse.status);
         
         if (routeResponse.ok) {
           const routeData = await routeResponse.json();
-          setRouteData(routeData.route);
+          console.log('TrackingMap received route data:', routeData);
           
-          // Also set trip data for display
-          // Always include start and end points for map centering
-          const allPoints = [
-            routeData.route.startPoint,
-            ...(routeData.route.trackingPoints || []),
-            routeData.route.endPoint
-          ].filter(Boolean);
+          // The API returns data in format: { success: true, trip: {...}, route: {...} }
+          const route = routeData.route;
           
-          setTrackingData({
-            trips: [{
-              ...routeData.trip,
-              trackingLogs: routeData.route.trackingPoints || []
-            }],
-            points: allPoints
-          });
-          
-          setLastUpdate(new Date());
-          return;
+          if (route) {
+            // Transform route data - API already returns correct structure
+            const transformedRoute = {
+              ...route,
+              // API returns startPoint and endPoint directly
+              startPoint: route.startPoint,
+              endPoint: route.endPoint,
+              trackingPoints: route.trackingPoints || []
+            };
+            
+            setRouteData(transformedRoute);
+            console.log('TrackingMap transformedRoute:', transformedRoute);
+            
+            // Create points array for tracking display
+            const allPoints = [
+              route.startPoint,
+              ...(route.trackingPoints || []),
+              route.endPoint
+            ].filter(Boolean);
+            
+            setTrackingData({
+              trips: [{
+                ...routeData.trip,
+                trackingLogs: route.trackingPoints || []
+              }],
+              points: allPoints
+            });
+            
+            setLastUpdate(new Date());
+            return;
+          }
         }
       }
       
       // Fallback to regular tracking API
-      let url = "/api/tracking";
+      let url;
+      if (customerMode) {
+        url = "/api/customer/tracking";
+      } else if (adminMode) {
+        url = "/api/admin/tracking";
+      } else {
+        url = "/api/tracking";
+      }
+      
       const params = new URLSearchParams();
       
       if (tripId) {
@@ -169,10 +204,14 @@ export function TrackingMap({
       }
 
       const data = await response.json();
+      console.log('TrackingMap API Response:', data);
       
       // Transform data for map display
-      if (Array.isArray(data)) {
-        const trips = data.map((item: any) => ({
+      const dataArray = customerMode ? (data.data || []) : (Array.isArray(data) ? data : []);
+      console.log('TrackingMap dataArray:', dataArray);
+      
+      if (Array.isArray(dataArray)) {
+        const trips = dataArray.map((item: any) => ({
           id: item.trip?.id || item.id,
           tripNumber: item.trip?.tripNumber || item.tripNumber,
           status: item.trip?.status || item.status,
@@ -181,7 +220,7 @@ export function TrackingMap({
           vehicle: item.trip?.vehicle || item.vehicle,
           customer: item.customer,
           driver: item.driver,
-          trackingLogs: item.trackingLogs || [],
+          trackingLogs: item.trackingHistory || item.trackingLogs || [],
         }));
         
         const allPoints = trips.flatMap((trip: any) => 
@@ -294,17 +333,94 @@ export function TrackingMap({
     ];
   };
 
-  const createCustomIcon = (color: string = "red") => {
+  const createCustomIcon = (color: string = "red", emoji: string = "📍") => {
     if (typeof window === "undefined") return null;
     
     const L = require("leaflet");
-    return new L.Icon({
-      iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
-      shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png",
-      iconSize: [25, 41],
-      iconAnchor: [12, 41],
-      popupAnchor: [1, -34],
-      shadowSize: [41, 41]
+    
+    // Create a custom HTML icon with emoji and color
+    const iconHtml = `
+      <div style="
+        background-color: ${getColorValue(color)};
+        width: 30px;
+        height: 30px;
+        border-radius: 50% 50% 50% 0;
+        border: 3px solid white;
+        transform: rotate(-45deg);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+      ">
+        <span style="
+          transform: rotate(45deg);
+          font-size: 16px;
+          line-height: 1;
+        ">${emoji}</span>
+      </div>
+    `;
+    
+    return new L.DivIcon({
+      html: iconHtml,
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -30],
+      className: 'custom-marker-icon'
+    });
+  };
+
+  const getColorValue = (color: string) => {
+    const colors: { [key: string]: string } = {
+      'red': '#ef4444',
+      'green': '#22c55e', 
+      'blue': '#3b82f6',
+      'yellow': '#eab308',
+      'orange': '#f97316',
+      'purple': '#a855f7'
+    };
+    return colors[color] || colors['red'];
+  };
+
+  // Create current location icon with pulsing circle like Google Maps
+  const createCurrentLocationIcon = () => {
+    const iconHtml = `
+      <div style="
+        width: 20px;
+        height: 20px;
+        background: #1e40af;
+        border: 3px solid white;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        position: relative;
+      ">
+        <div style="
+          position: absolute;
+          top: -10px;
+          left: -10px;
+          width: 40px;
+          height: 40px;
+          border: 2px solid #1e40af;
+          border-radius: 50%;
+          opacity: 0.3;
+          animation: pulse 2s infinite;
+        "></div>
+      </div>
+      <style>
+        @keyframes pulse {
+          0% { transform: scale(0.8); opacity: 0.7; }
+          50% { transform: scale(1.2); opacity: 0.3; }
+          100% { transform: scale(0.8); opacity: 0.7; }
+        }
+      </style>
+    `;
+    
+    return new L.DivIcon({
+      html: iconHtml,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10],
+      popupAnchor: [0, -10],
+      className: 'current-location-icon'
     });
   };
 
@@ -346,6 +462,10 @@ export function TrackingMap({
   }
 
   const mapCenter = getMapCenter();
+  console.log('TrackingMap mapCenter:', mapCenter);
+  console.log('TrackingMap routeData:', routeData);
+  console.log('TrackingMap trackingData.points:', trackingData.points.length);
+  
   // Adjust zoom based on available data
   let zoom = 6; // Default zoom for Saudi Arabia
   if (routeData && routeData.startPoint) {
@@ -354,6 +474,8 @@ export function TrackingMap({
   if (trackingData.points.length > 2) {
     zoom = 10; // Close zoom when we have tracking points
   }
+  
+  console.log('TrackingMap zoom:', zoom);
 
   return (
     <div className="space-y-4">
@@ -374,33 +496,31 @@ export function TrackingMap({
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           
-          {/* Render tracking points */}
-          {trackingData.points.map((point, index) => {
-            const isLatest = index === trackingData.points.length - 1;
-            const icon = createCustomIcon(isLatest ? "red" : "blue");
+          {/* Only render current location from regular tracking points */}
+          {trackingData.points.length > 0 && (() => {
+            // Show only the latest tracking point (current location)
+            const latestPoint = trackingData.points[trackingData.points.length - 1];
+            const icon = createCurrentLocationIcon();
             
             return (
               <Marker
-                key={`${point.id}-${index}`}
-                position={[point.latitude, point.longitude]}
+                key={`current-location-${latestPoint.id}-${latestPoint.latitude}-${latestPoint.longitude}`}
+                position={[latestPoint.latitude, latestPoint.longitude]}
                 icon={icon}
               >
                 <Popup>
                   <div className="text-sm">
-                    <div className="font-semibold">{(point as any).tripNumber}</div>
-                    <div>📍 {point.latitude.toFixed(6)}, {point.longitude.toFixed(6)}</div>
-                    <div>🕒 {formatTime(point.timestamp)}</div>
-                    {point.speed && (
-                      <div>🚗 {Math.round(point.speed * 3.6)} كم/س</div>
-                    )}
-                    {isLatest && (
-                      <div className="text-green-600 font-medium">الموقع الحالي</div>
+                    <div className="font-semibold text-red-600">الموقع الحالي للسائق</div>
+                    <div>📍 {latestPoint.latitude.toFixed(6)}, {latestPoint.longitude.toFixed(6)}</div>
+                    <div>🕒 {formatTime(latestPoint.timestamp)}</div>
+                    {latestPoint.speed && (
+                      <div>🚗 {Math.round(latestPoint.speed * 3.6)} كم/س</div>
                     )}
                   </div>
                 </Popup>
               </Marker>
             );
-          })}
+          })()}
           
           {/* Draw route lines for each trip */}
           {trackingData.trips.map((trip) => {
@@ -410,7 +530,7 @@ export function TrackingMap({
             
             return (
               <Polyline
-                key={trip.id}
+                key={`trip-route-${trip.id}`}
                 positions={routePoints}
                 color={trip.status === "IN_PROGRESS" ? "#22c55e" : "#3b82f6"}
                 weight={3}
@@ -426,7 +546,7 @@ export function TrackingMap({
               {routeData.startPoint && (
                 <Marker
                   position={[routeData.startPoint.latitude, routeData.startPoint.longitude]}
-                  icon={createCustomIcon("green")}
+                  icon={createCustomIcon("green", "🚀")}
                 >
                   <Popup>
                     <div className="text-center">
@@ -444,7 +564,7 @@ export function TrackingMap({
               {routeData.endPoint && (
                 <Marker
                   position={[routeData.endPoint.latitude, routeData.endPoint.longitude]}
-                  icon={createCustomIcon("red")}
+                  icon={createCustomIcon("red", "🏁")}
                 >
                   <Popup>
                     <div className="text-center">
@@ -458,20 +578,69 @@ export function TrackingMap({
                 </Marker>
               )}
               
-              {/* Route Path */}
-              {routeData.startPoint && routeData.endPoint && (
-                <Polyline
-                  positions={[
-                    [routeData.startPoint.latitude, routeData.startPoint.longitude],
-                    ...routeData.trackingPoints.map(point => [point.latitude, point.longitude] as [number, number]),
-                    [routeData.endPoint.latitude, routeData.endPoint.longitude]
-                  ]}
-                  color="#3b82f6"
-                  weight={4}
-                  opacity={0.8}
-                  dashArray="10, 5"
-                />
-              )}
+              {/* Route Tracking Points - Show only important points */}
+              {routeData.trackingPoints && (() => {
+                // Filter to show only start, end, and current location
+                const importantPoints = routeData.trackingPoints.filter((point, index) => {
+                  const pointType = (point as any).type;
+                  // Show start, end, current, and every 3rd tracking point to reduce clutter
+                  return pointType === 'start' || pointType === 'end' || pointType === 'current' || index % 3 === 0;
+                });
+                
+                return importantPoints.map((point, index) => (
+                  <Marker
+                    key={`route-point-${point.id || index}-${point.latitude}-${point.longitude}`}
+                    position={[point.latitude, point.longitude]}
+                    icon={(point as any).type === 'current' ? 
+                      createCurrentLocationIcon() : 
+                      createCustomIcon('blue', '🔵')
+                    }
+                  >
+                    <Popup>
+                      <div className="text-center">
+                        <div className="font-bold text-blue-600">
+                          {(point as any).type === 'current' ? '📍 الموقع الحالي' : '🔵 نقطة تتبع'}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          📍 {point.latitude.toFixed(4)}, {point.longitude.toFixed(4)}
+                        </div>
+                        {point.timestamp && (
+                          <div className="text-xs text-gray-500">
+                            🕒 {formatTime(point.timestamp)}
+                          </div>
+                        )}
+                        {point.speed && (
+                          <div className="text-xs text-blue-600">
+                            🚗 {Math.round(point.speed * 3.6)} كم/س
+                          </div>
+                        )}
+                      </div>
+                    </Popup>
+                  </Marker>
+                ));
+              })()}
+              
+              {/* Route Path - Only historical tracking points, not current location */}
+              {routeData.startPoint && routeData.endPoint && (() => {
+                // Filter out current location from route path - it should be a separate pin
+                const historicalPoints = (routeData.trackingPoints || []).filter(point => 
+                  (point as any).type !== 'current'
+                );
+                
+                return (
+                  <Polyline
+                    positions={[
+                      [routeData.startPoint!.latitude, routeData.startPoint!.longitude],
+                      ...historicalPoints.map(point => [point.latitude, point.longitude] as [number, number]),
+                      [routeData.endPoint!.latitude, routeData.endPoint!.longitude]
+                    ]}
+                    color="#3b82f6"
+                    weight={4}
+                    opacity={0.8}
+                    dashArray="10, 5"
+                  />
+                );
+              })()}
             </>
           )}
         </MapContainer>
@@ -484,7 +653,7 @@ export function TrackingMap({
             const lastPoint = trip.trackingLogs[trip.trackingLogs.length - 1];
             
             return (
-              <Card key={`${trip.id}-card-${index}`}>
+              <Card key={`trip-card-${trip.id}-${index}`}>
                 <CardContent className="p-4">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">

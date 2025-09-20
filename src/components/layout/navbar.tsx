@@ -27,6 +27,8 @@ import {
   Bell,
   Search
 } from "lucide-react"
+import { LanguageSelector } from "@/components/ui/language-selector"
+import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { useState } from "react"
 import { UserRole } from "@prisma/client"
 
@@ -179,6 +181,12 @@ export function Navbar({ onMenuClick }: NavbarProps) {
 
         {/* Right Side Actions */}
         <div className="ml-auto flex items-center space-x-4">
+          {/* Language Selector */}
+          <LanguageSelector variant="compact" showLabel={false} />
+          
+          {/* Theme Toggle */}
+          <ThemeToggle />
+          
           {/* Search */}
           <Button variant="ghost" size="sm">
             <Search className="h-4 w-4" />
@@ -224,7 +232,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => signOut()}>
+              <DropdownMenuItem onClick={() => signOut({ callbackUrl: `/${locale}/auth/signin` })}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

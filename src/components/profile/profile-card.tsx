@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
+import { useLanguage } from '@/components/providers/language-provider'
 import { 
   User, 
   Mail, 
@@ -35,6 +36,7 @@ interface ProfileCardProps {
 }
 
 export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loading = false }: ProfileCardProps) {
+  const { t } = useLanguage()
   const [formData, setFormData] = useState({
     name: profile?.name || '',
     phone: profile?.phone || '',
@@ -73,11 +75,11 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
 
   const getRoleName = (role: string) => {
     switch (role) {
-      case 'ADMIN': return 'مدير النظام'
-      case 'DRIVER': return 'سائق'
-      case 'CUSTOMER': return 'عميل'
-      case 'ACCOUNTANT': return 'محاسب'
-      case 'CUSTOMS_BROKER': return 'مخلص جمركي'
+      case 'ADMIN': return t('admin')
+      case 'DRIVER': return t('driver')
+      case 'CUSTOMER': return t('customer')
+      case 'ACCOUNTANT': return t('accountant')
+      case 'CUSTOMS_BROKER': return t('customsBroker')
       default: return role
     }
   }
@@ -115,7 +117,7 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
                   {getRoleName(profile.role)}
                 </Badge>
                 <Badge variant={profile.isActive ? 'default' : 'secondary'}>
-                  {profile.isActive ? 'نشط' : 'غير نشط'}
+                  {profile.isActive ? t('active') : t('inactive')}
                 </Badge>
               </CardDescription>
             </div>
@@ -124,17 +126,17 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
             {!editMode ? (
               <Button onClick={onEdit} variant="outline">
                 <Edit className="h-4 w-4 mr-2" />
-                تعديل
+                {t('edit')}
               </Button>
             ) : (
               <>
                 <Button onClick={onCancel} variant="outline" size="sm">
                   <X className="h-4 w-4 mr-2" />
-                  إلغاء
+                  {t('cancel')}
                 </Button>
                 <Button onClick={handleSave} disabled={loading} size="sm">
                   {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                  حفظ
+                  {t('save')}
                 </Button>
               </>
             )}
@@ -146,11 +148,11 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
         <div className="space-y-4">
           <h3 className="font-semibold flex items-center gap-2">
             <User className="h-4 w-4" />
-            المعلومات الأساسية
+            {t('basicInfo')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">الاسم الكامل</Label>
+              <Label htmlFor="name">{t('fullName')}</Label>
               <Input
                 id="name"
                 value={editMode ? formData.name : profile.name}
@@ -159,7 +161,7 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Label htmlFor="email">{t('email')}</Label>
               <Input
                 id="email"
                 value={profile.email}
@@ -168,17 +170,17 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">رقم الهاتف</Label>
+              <Label htmlFor="phone">{t('phone')}</Label>
               <Input
                 id="phone"
                 value={editMode ? formData.phone : profile.phone || ''}
                 onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
                 disabled={!editMode}
-                placeholder="رقم الهاتف"
+                placeholder={t('phone')}
               />
             </div>
             <div className="space-y-2">
-              <Label>تاريخ الانضمام</Label>
+              <Label>{t('joinedDate')}</Label>
               <p className="text-sm text-muted-foreground">
                 {new Date(profile.createdAt).toLocaleDateString('ar-SA')}
               </p>
@@ -193,11 +195,11 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <Truck className="h-4 w-4" />
-              معلومات السائق
+              {t('driverInfo')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber">رقم الرخصة</Label>
+                <Label htmlFor="licenseNumber">{t('licenseNumber')}</Label>
                 <Input
                   id="licenseNumber"
                   value={editMode ? formData.profileData.licenseNumber || '' : (profile.driverprofile || profile.driverProfile)?.licenseNumber || ''}
@@ -209,7 +211,7 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
                 />
               </div>
               <div className="space-y-2">
-                <Label>تفعيل التتبع</Label>
+                <Label>{t('trackingEnabled')}</Label>
                 <div className="flex items-center space-x-2">
                   <Switch
                     checked={editMode ? formData.profileData.trackingEnabled : (profile.driverprofile || profile.driverProfile)?.trackingEnabled}
@@ -220,13 +222,13 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
                     disabled={!editMode}
                   />
                   <span className="text-sm">
-                    {(editMode ? formData.profileData.trackingEnabled : (profile.driverprofile || profile.driverProfile)?.trackingEnabled) ? 'مفعل' : 'معطل'}
+                    {(editMode ? formData.profileData.trackingEnabled : (profile.driverprofile || profile.driverProfile)?.trackingEnabled) ? t('enabled') : t('disabled')}
                   </span>
                 </div>
               </div>
               {(profile.driverprofile || profile.driverProfile)?.assignedVehicle && (
                 <div className="space-y-2">
-                  <Label>المركبة المخصصة</Label>
+                  <Label>{t('vehicleAssigned')}</Label>
                   <p className="text-sm">
                     {(profile.driverprofile || profile.driverProfile)?.assignedVehicle?.vehicleType?.name} - {(profile.driverprofile || profile.driverProfile)?.assignedVehicle?.capacity} طن
                   </p>
@@ -240,11 +242,11 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <Building className="h-4 w-4" />
-              معلومات العميل
+              {t('customerInfo')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="companyName">اسم الشركة</Label>
+                <Label htmlFor="companyName">{t('companyName')}</Label>
                 <Input
                   id="companyName"
                   value={editMode ? formData.profileData.companyName || '' : (profile.customerprofile || profile.customerProfile)?.companyName || ''}
@@ -256,7 +258,7 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="businessType">نوع النشاط</Label>
+                <Label htmlFor="businessType">{t('businessType')}</Label>
                 <Input
                   id="businessType"
                   value={editMode ? formData.profileData.businessType || '' : (profile.customerprofile || profile.customerProfile)?.businessType || ''}
@@ -268,7 +270,7 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="taxNumber">الرقم الضريبي</Label>
+                <Label htmlFor="taxNumber">{t('taxNumber')}</Label>
                 <Input
                   id="taxNumber"
                   value={editMode ? formData.profileData.taxNumber || '' : (profile.customerprofile || profile.customerProfile)?.taxNumber || ''}
@@ -287,11 +289,11 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <Calculator className="h-4 w-4" />
-              معلومات المحاسب
+              {t('accountantInfo')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="department">القسم</Label>
+                <Label htmlFor="department">{t('department')}</Label>
                 <Input
                   id="department"
                   value={editMode ? formData.profileData.department || '' : (profile.accountantprofile || profile.accountantProfile)?.department || ''}
@@ -303,7 +305,7 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="employeeId">رقم الموظف</Label>
+                <Label htmlFor="employeeId">{t('employeeId')}</Label>
                 <Input
                   id="employeeId"
                   value={editMode ? formData.profileData.employeeId || '' : (profile.accountantprofile || profile.accountantProfile)?.employeeId || ''}
@@ -322,11 +324,11 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              معلومات مخلص الجمارك
+              {t('customsBrokerInfo')}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="brokerLicense">رخصة التخليص</Label>
+                <Label htmlFor="brokerLicense">{t('brokerLicense')}</Label>
                 <Input
                   id="brokerLicense"
                   value={editMode ? formData.profileData.brokerLicense || '' : (profile.customsbrokerprofile || profile.customsBrokerProfile)?.brokerLicense || ''}
@@ -338,7 +340,7 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="customsCode">كود الجمارك</Label>
+                <Label htmlFor="customsCode">{t('customsCode')}</Label>
                 <Input
                   id="customsCode"
                   value={editMode ? formData.profileData.customsCode || '' : (profile.customsbrokerprofile || profile.customsBrokerProfile)?.customsCode || ''}
@@ -357,11 +359,11 @@ export function ProfileCard({ profile, editMode, onEdit, onSave, onCancel, loadi
           <div className="space-y-4">
             <h3 className="font-semibold flex items-center gap-2">
               <Shield className="h-4 w-4" />
-              معلومات المدير
+              {t('adminInfo')}
             </h3>
             <div className="text-sm text-muted-foreground">
-              <p>أنت مدير النظام ولديك صلاحيات كاملة لإدارة جميع أجزاء التطبيق.</p>
-              <p>يمكنك الوصول إلى جميع الصفحات والوظائف الإدارية.</p>
+              <p>{t('adminDescription1')}</p>
+              <p>{t('adminDescription2')}</p>
             </div>
           </div>
         )}

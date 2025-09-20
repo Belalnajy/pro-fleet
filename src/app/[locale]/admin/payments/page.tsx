@@ -68,7 +68,8 @@ interface PaymentStats {
   monthlyGrowth: number
 }
 
-export default function PaymentsManagement() {
+export default function PaymentsManagement({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()
@@ -96,7 +97,7 @@ export default function PaymentsManagement() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")) {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchPayments()
       fetchStats()

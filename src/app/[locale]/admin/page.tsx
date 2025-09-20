@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { PageLoading } from "@/components/ui/loading"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/components/providers/language-provider"
+import { TrackingStatusIndicator } from "@/components/admin/tracking-status-indicator"
 import {
   Users,
   Truck,
@@ -23,7 +24,8 @@ import {
   CheckCircle,
 } from "lucide-react"
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()
@@ -45,7 +47,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchStats()
     }
@@ -335,6 +337,11 @@ export default function AdminDashboard() {
             </p>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Real-Time Tracking Status */}
+      <div className="mb-8">
+        <TrackingStatusIndicator />
       </div>
 
       {/* Management Actions Grid */}

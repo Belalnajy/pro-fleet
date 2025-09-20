@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -62,8 +62,9 @@ interface EnhancedReportData {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
-export default function EnhancedReports() {
+export default function EnhancedReports({ params }: { params: Promise<{ locale: string }> }) {
   const { data: session, status } = useSession()
+  const { locale } = use(params)
   const router = useRouter()
   const { t, language } = useLanguage()
   
@@ -74,7 +75,7 @@ export default function EnhancedReports() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")) {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchReportData()
     }

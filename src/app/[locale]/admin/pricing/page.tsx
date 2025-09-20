@@ -61,7 +61,8 @@ interface Pricing {
   vehicle: Vehicle
 }
 
-export default function PricingManagement() {
+export default function PricingManagement({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
@@ -91,7 +92,7 @@ export default function PricingManagement() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
       return
     }
     fetchData()

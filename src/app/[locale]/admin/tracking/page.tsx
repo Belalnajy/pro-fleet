@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -80,7 +80,8 @@ interface AdminTrip {
   }>;
 }
 
-export default function AdminTrackingPage() {
+export default function AdminTrackingPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params);
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
@@ -96,7 +97,7 @@ export default function AdminTrackingPage() {
   useEffect(() => {
     if (status === "loading") return;
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin");
+      router.push(`/${locale}/auth/signin`);
       return;
     }
     fetchActiveTrips();
@@ -269,7 +270,6 @@ export default function AdminTrackingPage() {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
-            <p>جارٍ تحميل بيانات التتبع...</p>
           </div>
         </div>
       </DashboardLayout>

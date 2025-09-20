@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, use } from "react"
+import { use } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Save, RefreshCw, Settings, MapPin, Thermometer } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/hooks/useTranslation"
-import { useToast } from "@/hooks/use-toast"
+import { useSystemSettings } from "@/hooks/useSystemSettings"
 
 interface SystemSettings {
   business: {
@@ -49,128 +49,16 @@ interface SystemSettings {
 
 export default function AdminSettingsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params)
-  const [settings, setSettings] = useState<SystemSettings>({
-    business: {
-      companyName: "PRO FLEET",
-      companyEmail: "info@profleet.com",
-      companyPhone: "+966 11 123 4567",
-      companyAddress: "الرياض، المملكة العربية السعودية",
-    },
-    financial: {
-      defaultTaxRate: 0,
-      enableVAT: false,
-      vatRate: 0,
-      defaultCurrency: "USD",
-      currencySymbol: "$",
-    },
-    operations: {
-      freeCancellationMinutes: 30,
-      cancellationFeePercentage: 10,
-    },
-    tracking: {
-      enableRealTimeTracking: true,
-      trackingInterval: 30,
-    },
-    notifications: {
-      emailNotifications: true,
-      smsNotifications: true,
-      pushNotifications: true,
-    },
-    system: {
-      maintenanceMode: false,
-    },
-    localization: {
-      defaultLanguage: "ar",
-    },
-  })
-
-  const [saving, setSaving] = useState(false)
-  const [loading, setLoading] = useState(true)
   const { t } = useTranslation()
-  const { toast } = useToast()
-
-  useEffect(() => {
-    loadSettings()
-  }, [])
-
-  const loadSettings = async () => {
-    try {
-      const response = await fetch("/api/admin/settings")
-      if (response.ok) {
-        const data = await response.json()
-        // دمج البيانات المحملة مع القيم الافتراضية
-        setSettings(prevSettings => ({
-          business: {
-            companyName: data.business?.companyName || prevSettings.business.companyName,
-            companyEmail: data.business?.companyEmail || prevSettings.business.companyEmail,
-            companyPhone: data.business?.companyPhone || prevSettings.business.companyPhone,
-            companyAddress: data.business?.companyAddress || prevSettings.business.companyAddress,
-          },
-          financial: {
-            ...prevSettings.financial,
-            ...data.financial
-          },
-          operations: {
-            ...prevSettings.operations,
-            ...data.operations
-          },
-          tracking: {
-            ...prevSettings.tracking,
-            ...data.tracking
-          },
-          notifications: {
-            ...prevSettings.notifications,
-            ...data.notifications
-          },
-          system: {
-            ...prevSettings.system,
-            ...data.system
-          },
-          localization: {
-            ...prevSettings.localization,
-            ...data.localization
-          }
-        }))
-      }
-    } catch (error) {
-      console.error("Error loading settings:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const { settings, setSettings, loading, saving, saveSettings } = useSystemSettings()
 
   const handleSaveSettings = async () => {
-    setSaving(true)
-    try {
-      const response = await fetch("/api/admin/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      })
-      
-      if (response.ok) {
-        toast({
-          title: "✅ " + t('settingsSavedSuccessfully'),
-          description: t('configureSystemSettings'),
-        })
-      } else {
-        toast({
-          title: "❌ " + t('errorSavingSettings'),
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error("Error saving settings:", error)
-      toast({
-        title: "❌ " + t('errorSavingSettings'),
-        variant: "destructive",
-      })
-    } finally {
-      setSaving(false)
+    if (settings) {
+      await saveSettings(settings)
     }
   }
 
-  if (loading) {
+  if (loading || !settings) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <RefreshCw className="h-8 w-8 animate-spin" />
@@ -195,8 +83,8 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
         </Button>
       </div>
 
-      <Tabs defaultValue="business" className="space-y-4 mb-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2">
+      <Tabs defaultValue="business" className="space-y-4 mb-6 ">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2 ">
           <TabsTrigger value="business">{t('business')}</TabsTrigger>
           <TabsTrigger value="financial">{t('financial')}</TabsTrigger>
           <TabsTrigger value="operations">{t('operations')}</TabsTrigger>
@@ -403,18 +291,51 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
               <CardDescription>{t('configureGPSTracking')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="enableRealTimeTracking"
-                  checked={settings.tracking.enableRealTimeTracking}
-                  onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      tracking: { ...settings.tracking, enableRealTimeTracking: checked },
-                    })
-                  }
-                />
-                <Label htmlFor="enableRealTimeTracking">{t('enableRealTimeTracking')}</Label>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="enableRealTimeTracking"
+                      checked={settings.tracking.enableRealTimeTracking}
+                      onCheckedChange={(checked) =>
+                        setSettings({
+                          ...settings,
+                          tracking: { ...settings.tracking, enableRealTimeTracking: checked },
+                        })
+                      }
+                    />
+                    <div className="space-y-1">
+                      <Label htmlFor="enableRealTimeTracking" className="text-base font-medium">
+                        {t('enableRealTimeTracking')}
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        {settings.tracking.enableRealTimeTracking 
+                          ? "العملاء يمكنهم رؤية موقع شحناتهم في الوقت الفعلي" 
+                          : "العملاء لا يمكنهم الوصول لصفحة التتبع"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    settings.tracking.enableRealTimeTracking 
+                      ? "bg-green-100 text-green-800" 
+                      : "bg-red-100 text-red-800"
+                  }`}>
+                    {settings.tracking.enableRealTimeTracking ? "مفعل" : "معطل"}
+                  </div>
+                </div>
+                
+                {settings.tracking.enableRealTimeTracking && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-medium text-blue-800">معلومات مهمة</span>
+                    </div>
+                    <p className="text-sm text-blue-700">
+                      عند تفعيل التتبع، سيتمكن العملاء من رؤية موقع شحناتهم المباشر والوصول لصفحة التتبع.
+                      عند إلغاء التفعيل، ستظهر للعملاء رسالة بأن الخدمة غير متاحة مؤقتاً.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="trackingInterval">{t('trackingInterval')}</Label>
@@ -444,7 +365,7 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
               <CardDescription>{t('manageCitiesTemperature')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4">
+              <div className="flex gap-4 justify-center flex-wrap">
                 <Link href={`/${locale}/admin/cities`}>
                   <Button variant="outline" className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />

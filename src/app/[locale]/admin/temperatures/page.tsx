@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PlusCircle, Edit, Trash2, Thermometer } from "lucide-react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 interface TemperatureSetting {
   id: string
@@ -26,9 +27,11 @@ interface TemperatureSetting {
   updatedAt: string
 }
 
-export default function TemperaturesManagement() {
+export default function TemperaturesManagement({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { t } = useLanguage() 
 
   const [temperatures, setTemperatures] = useState<TemperatureSetting[]>([])
   const [loading, setLoading] = useState(true)
@@ -51,11 +54,11 @@ export default function TemperaturesManagement() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
       return
     }
     fetchData()
-  }, [session, status, router])
+  }, [session, status, router, locale])
 
   const fetchData = async () => {
     try {
@@ -155,7 +158,7 @@ export default function TemperaturesManagement() {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">{t('loading')}</div>
+          <div className="text-lg">Loading...</div>
         </div>
       </DashboardLayout>
     )

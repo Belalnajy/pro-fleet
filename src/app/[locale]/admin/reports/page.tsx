@@ -69,7 +69,8 @@ interface KPIData {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
-export default function ReportsPage() {
+export default function ReportsPage({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()
@@ -104,7 +105,7 @@ export default function ReportsPage() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")) {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchReportData()
     }

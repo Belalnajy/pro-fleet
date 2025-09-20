@@ -69,7 +69,8 @@ interface Trip {
   toCity: string
 }
 
-export default function InvoicesManagement() {
+export default function InvoicesManagement({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
@@ -120,7 +121,7 @@ export default function InvoicesManagement() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")) {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchInvoices()
       fetchCustomers()

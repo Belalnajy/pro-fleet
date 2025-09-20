@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -48,7 +48,8 @@ interface Vehicle {
   vehicleType?: VehicleTypeModelRef
 }
 
-export default function VehiclesManagement() {
+export default function VehiclesManagement({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
@@ -72,7 +73,7 @@ export default function VehiclesManagement() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
       return
     }
     fetchData()
@@ -321,7 +322,7 @@ export default function VehiclesManagement() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("vehicleTypes")}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("vehicleType")}</CardTitle>
             <Settings className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

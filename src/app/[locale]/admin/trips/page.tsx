@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useLanguage } from "@/components/providers/language-provider"
-import { useTranslation } from "@/hooks/useTranslation"
+// import { useTranslation } from "@/hooks/useTranslation"
 import { LocationSelector } from "@/components/ui/location-selector"
 import { useToast } from "@/hooks/use-toast"
 import {
@@ -96,12 +96,13 @@ interface Trip {
   }
 }
 
-export default function TripsManagement() {
+export default function TripsManagement({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
   const { toast } = useToast()
-  const { t: translate } = useTranslation()
+  // const { t: t } = useTranslation()
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
@@ -140,11 +141,11 @@ export default function TripsManagement() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
       return
     }
     fetchTrips()
-  }, [session, status, router])
+  }, [session, status, router, locale])
 
   // Load data for both create and edit dialogs
   const loadFormData = async () => {
@@ -558,13 +559,13 @@ export default function TripsManagement() {
 
 return (
   <DashboardLayout
-    title={translate('tripManagement')}
-    subtitle={translate('monitorManageTrips')}
+    title={t('tripManagement')}
+    subtitle={t('monitorManageTrips')}
     actions={
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={() => setIsDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          {translate('newTrip')}
+          {t('newTrip')}
         </Button>
       </div>
     }
@@ -573,7 +574,7 @@ return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{translate('totalTrips')}</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('totalTrips')}</CardTitle>
           <Truck className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -582,7 +583,7 @@ return (
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{translate('pending')}</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('pending')}</CardTitle>
           <Clock className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -591,7 +592,7 @@ return (
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{translate('inProgress')}</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('inProgress')}</CardTitle>
           <Truck className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -600,7 +601,7 @@ return (
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{translate('delivered')}</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('delivered')}</CardTitle>
           <CheckCircle className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -609,12 +610,12 @@ return (
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{translate('revenue')}</CardTitle>
+          <CardTitle className="text-sm font-medium">{t('revenue')}</CardTitle>
           <Calendar className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">
-            {t("currency")} {stats.totalRevenue.toLocaleString()}
+            {t('currency')} {stats.totalRevenue.toLocaleString()}
           </div>
         </CardContent>
       </Card>
@@ -628,9 +629,9 @@ return (
       <CardContent>
         <div className="flex items-center space-x-4">
           <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -t-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder={translate('searchTrips')}
+              placeholder={t('searchTrips')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -638,14 +639,14 @@ return (
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={translate('filterByStatus')} />
+              <SelectValue placeholder={t('filterByStatus')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{translate('allStatus')}</SelectItem>
-              <SelectItem value={TripStatus.PENDING}>{translate('pending')}</SelectItem>
-              <SelectItem value={TripStatus.IN_PROGRESS}>{translate('inProgress')}</SelectItem>
-              <SelectItem value={TripStatus.DELIVERED}>{translate('delivered')}</SelectItem>
-              <SelectItem value={TripStatus.CANCELLED}>{translate('cancelled')}</SelectItem>
+              <SelectItem value="all">{t('allStatus')}</SelectItem>
+              <SelectItem value={TripStatus.PENDING}>{t('pending')}</SelectItem>
+              <SelectItem value={TripStatus.IN_PROGRESS}>{t('inProgress')}</SelectItem>
+              <SelectItem value={TripStatus.DELIVERED}>{t('delivered')}</SelectItem>
+              <SelectItem value={TripStatus.CANCELLED}>{t('cancelled')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -669,15 +670,15 @@ return (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{translate('tripHash')}</TableHead>
-                <TableHead>{translate('route')}</TableHead>
-                <TableHead>{translate('customer')}</TableHead>
-                <TableHead>{translate('driver')}</TableHead>
-                <TableHead>{translate('vehicle')}</TableHead>
-                <TableHead>{translate('status')}</TableHead>
-                <TableHead>{translate('price')}</TableHead>
-                <TableHead>{translate('scheduled')}</TableHead>
-                <TableHead className="text-right">{translate('actions')}</TableHead>
+                <TableHead>{t('tripHash')}</TableHead>
+                <TableHead>{t('route')}</TableHead>
+                <TableHead>{t('customer')}</TableHead>
+                <TableHead>{t('driver')}</TableHead>
+                <TableHead>{t('vehicle')}</TableHead>
+                <TableHead>{t('Status')}</TableHead>
+                <TableHead>{t('price')}</TableHead>
+                <TableHead>{t('scheduled')}</TableHead>
+                <TableHead className="text-right">{t('actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -729,7 +730,7 @@ return (
                   </TableCell>
                   <TableCell>
                     <div className="font-medium">
-                      {t("currency")} {trip.price}
+                      {t('currency')} {trip.price}
                     </div>
                   </TableCell>
                   <TableCell>
@@ -799,10 +800,10 @@ return (
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
               🚚
             </div>
-            {translate('newTrip')}
+            {t('newTrip')}
           </DialogTitle>
           <DialogDescription className="text-gray-600">
-            {translate('createTripDescription')}
+            {t('createTripDescription')}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-6 py-6">
@@ -813,10 +814,10 @@ return (
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('customer')} *</Label>
+                <Label className="text-sm font-medium">{t('customer')} *</Label>
                 <Select value={tripForm.customerId} onValueChange={(v) => setTripForm(prev => ({ ...prev, customerId: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder={translate('selectCustomer')} />
+                    <SelectValue placeholder={t('selectCustomer')} />
                   </SelectTrigger>
                   <SelectContent>
                     {customers.map((c) => (
@@ -826,7 +827,7 @@ return (
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('driver')}</Label>
+                <Label className="text-sm font-medium">{t('driver')}</Label>
                 <Select value={tripForm.driverId || ''} onValueChange={(v) => setTripForm(prev => ({ ...prev, driverId: v || null }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Optional" />
@@ -839,10 +840,10 @@ return (
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('vehicle')} *</Label>
+                <Label className="text-sm font-medium">{t('vehicle')} *</Label>
                 <Select value={tripForm.vehicleId} onValueChange={(v) => setTripForm(prev => ({ ...prev, vehicleId: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder={translate('selectVehicle')} />
+                    <SelectValue placeholder={t('selectVehicle')} />
                   </SelectTrigger>
                   <SelectContent>
                     {vehicles.map((v) => (
@@ -869,7 +870,7 @@ return (
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <LocationSelector
-                  label="🟢 {translate('from')}"
+                  label="🟢 {t('from')}"
                   placeholder="اختر نقطة البداية من الخريطة"
                   value={tripForm.originLocation}
                   onChange={(location) => setTripForm(prev => ({ 
@@ -882,7 +883,7 @@ return (
                 />
                 
                 <LocationSelector
-                  label="🔴 {translate('to')}"
+                  label="🔴 {t('to')}"
                   placeholder="اختر نقطة النهاية من الخريطة"
                   value={tripForm.destinationLocation}
                   onChange={(location) => setTripForm(prev => ({ 
@@ -914,7 +915,7 @@ return (
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-right">{translate('from')}</Label>
+                <Label className="text-right">{t('from')}</Label>
                 <Select 
                   value={tripForm.fromCityId} 
                   onValueChange={(v) => setTripForm(prev => ({ 
@@ -926,7 +927,7 @@ return (
                   disabled={!!tripForm.originLocation}
                 >
                   <SelectTrigger className={tripForm.originLocation ? 'opacity-50' : ''}>
-                    <SelectValue placeholder={translate('selectOrigin')} />
+                    <SelectValue placeholder={t('selectOrigin')} />
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((c) => (
@@ -936,7 +937,7 @@ return (
                 </Select>
               </div>
               <div>
-                <Label className="text-right">{translate('to')}</Label>
+                <Label className="text-right">{t('to')}</Label>
                 <Select 
                   value={tripForm.toCityId} 
                   onValueChange={(v) => setTripForm(prev => ({ 
@@ -948,7 +949,7 @@ return (
                   disabled={!!tripForm.destinationLocation}
                 >
                   <SelectTrigger className={tripForm.destinationLocation ? 'opacity-50' : ''}>
-                    <SelectValue placeholder={translate('selectDestination')} />
+                    <SelectValue placeholder={t('selectDestination')} />
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((c) => (
@@ -969,10 +970,10 @@ return (
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('temperature')} *</Label>
+                <Label className="text-sm font-medium">{t('temperature')} *</Label>
                 <Select value={tripForm.temperatureId} onValueChange={(v) => setTripForm(prev => ({ ...prev, temperatureId: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder={translate('selectTemperature')} />
+                    <SelectValue placeholder={t('selectTemperature')} />
                   </SelectTrigger>
                   <SelectContent>
                     {temperatures.map((t) => (
@@ -983,7 +984,7 @@ return (
               </div>
               
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('scheduled')} *</Label>
+                <Label className="text-sm font-medium">{t('scheduled')} *</Label>
                 <Input 
                   ref={dateRef} 
                   type="datetime-local" 
@@ -993,7 +994,7 @@ return (
               </div>
               
               <div className="space-y-2">
-                <Label className="text-sm font-medium">Price ({t("currency")}) *</Label>
+                <Label className="text-sm font-medium">Price ({t('currency')}) *</Label>
                 <Input 
                   type="number" 
                   min="0" 
@@ -1005,11 +1006,11 @@ return (
               </div>
             
             <div className="md:col-span-2 space-y-2">
-              <Label className="text-sm font-medium">{translate('notes')}</Label>
+              <Label className="text-sm font-medium">{t('notes')}</Label>
               <Textarea 
                 value={tripForm.notes} 
                 onChange={(e) => setTripForm(prev => ({ ...prev, notes: e.target.value }))} 
-                placeholder={translate('optionalRemarks')}
+                placeholder={t('optionalRemarks')}
                 rows={3}
                 className="resize-none"
               />
@@ -1033,7 +1034,7 @@ return (
               onClick={() => setIsDialogOpen(false)}
               className="flex-1"
             >
-              {translate('cancel')}
+              {t('cancel')}
             </Button>
             <Button 
               onClick={handleCreateTrip} 
@@ -1043,12 +1044,12 @@ return (
               {submitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  {translate('creating')}
+                  {t('creating')}
                 </>
               ) : (
                 <>
                   <span className="mr-2">✓</span>
-                  {translate('createTrip')}
+                  {t('createTrip')}
                 </>
               )}
             </Button>
@@ -1138,7 +1139,7 @@ return (
                 <div>
                   <Label className="text-sm font-medium text-gray-600">السعر</Label>
                   <p className="text-lg font-semibold text-green-600">
-                    {t("currency")} {trip.price}
+                    {t('currency')} {trip.price}
                   </p>
                 </div>
               </div>
@@ -1197,10 +1198,10 @@ return (
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('customer')} *</Label>
+                <Label className="text-sm font-medium">{t('customer')} *</Label>
                 <Select value={tripForm.customerId} onValueChange={(v) => setTripForm(prev => ({ ...prev, customerId: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder={translate('selectCustomer')} />
+                    <SelectValue placeholder={t('selectCustomer')} />
                   </SelectTrigger>
                   <SelectContent>
                     {customers.map((c) => (
@@ -1210,7 +1211,7 @@ return (
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('driver')}</Label>
+                <Label className="text-sm font-medium">{t('driver')}</Label>
                 <Select value={tripForm.driverId || ''} onValueChange={(v) => setTripForm(prev => ({ ...prev, driverId: v || null }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="اختياري" />
@@ -1232,10 +1233,10 @@ return (
             </h3>
             
             <div className="space-y-2">
-              <Label className="text-sm font-medium">{translate('vehicle')} *</Label>
+              <Label className="text-sm font-medium">{t('vehicle')} *</Label>
               <Select value={tripForm.vehicleId} onValueChange={(v) => setTripForm(prev => ({ ...prev, vehicleId: v }))}>
                 <SelectTrigger>
-                  <SelectValue placeholder={translate('selectVehicle')} />
+                  <SelectValue placeholder={t('selectVehicle')} />
                 </SelectTrigger>
                 <SelectContent>
                   {vehicles.map((v) => (
@@ -1254,10 +1255,10 @@ return (
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label className="text-right">{translate('from')}</Label>
+                <Label className="text-right">{t('from')}</Label>
                 <Select value={tripForm.fromCityId} onValueChange={(v) => setTripForm(prev => ({ ...prev, fromCityId: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder={translate('selectOrigin')} />
+                    <SelectValue placeholder={t('selectOrigin')} />
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((c) => (
@@ -1267,10 +1268,10 @@ return (
                 </Select>
               </div>
               <div>
-                <Label className="text-right">{translate('to')}</Label>
+                <Label className="text-right">{t('to')}</Label>
                 <Select value={tripForm.toCityId} onValueChange={(v) => setTripForm(prev => ({ ...prev, toCityId: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder={translate('selectDestination')} />
+                    <SelectValue placeholder={t('selectDestination')} />
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((c) => (
@@ -1290,10 +1291,10 @@ return (
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('temperature')} *</Label>
+                <Label className="text-sm font-medium">{t('temperature')} *</Label>
                 <Select value={tripForm.temperatureId} onValueChange={(v) => setTripForm(prev => ({ ...prev, temperatureId: v }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder={translate('selectTemperature')} />
+                    <SelectValue placeholder={t('selectTemperature')} />
                   </SelectTrigger>
                   <SelectContent>
                     {temperatures.map((t) => (
@@ -1304,7 +1305,7 @@ return (
               </div>
               
               <div className="space-y-2">
-                <Label className="text-sm font-medium">{translate('scheduled')} *</Label>
+                <Label className="text-sm font-medium">{t('scheduled')} *</Label>
                 <Input 
                   type="datetime-local" 
                   value={tripForm.scheduledDate} 
@@ -1313,7 +1314,7 @@ return (
               </div>
               
               <div className="space-y-2">
-                <Label className="text-sm font-medium">السعر ({t("currency")}) *</Label>
+                <Label className="text-sm font-medium">السعر ({t('currency')}) *</Label>
                 <Input 
                   type="number" 
                   min="0" 
@@ -1325,11 +1326,11 @@ return (
               </div>
             
               <div className="md:col-span-2 space-y-2">
-                <Label className="text-sm font-medium">{translate('notes')}</Label>
+                <Label className="text-sm font-medium">{t('notes')}</Label>
                 <Textarea 
                   value={tripForm.notes} 
                   onChange={(e) => setTripForm(prev => ({ ...prev, notes: e.target.value }))} 
-                  placeholder={translate('optionalRemarks')}
+                  placeholder={t('optionalRemarks')}
                   rows={3}
                   className="resize-none"
                 />
@@ -1354,7 +1355,7 @@ return (
               onClick={() => setIsEditDialogOpen(false)}
               className="flex-1"
             >
-              {translate('cancel')}
+              {t('cancel')}
             </Button>
             <Button 
               onClick={handleUpdateTrip} 

@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Download, Upload } from "lucide-react"
 
-export default function ImportsPage() {
+export default function ImportsPage({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const [file, setFile] = useState<File | null>(null)
   const [dataset, setDataset] = useState<"vehicles" | "pricing">("vehicles")
   const [uploading, setUploading] = useState(false)

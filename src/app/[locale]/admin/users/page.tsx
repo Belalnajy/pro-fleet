@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -46,7 +46,8 @@ interface User {
   customsBrokerProfile?: any
 }
 
-export default function UsersManagement() {
+export default function UsersManagement({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
@@ -74,11 +75,11 @@ export default function UsersManagement() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
       return
     }
     fetchUsers()
-  }, [session, status, router])
+  }, [session, status, router, locale])
 
   const fetchUsers = async () => {
     try {

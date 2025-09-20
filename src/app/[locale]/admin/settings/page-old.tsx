@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -76,8 +76,9 @@ interface SystemSettings {
   supportedLanguages: string[]
 }
 
-export default function SettingsPage() {
+export default function SettingsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { data: session, status } = useSession()
+  const { locale } = use(params)
   const router = useRouter()
   const { t, language } = useLanguage()
   
@@ -123,7 +124,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchSettings()
     }

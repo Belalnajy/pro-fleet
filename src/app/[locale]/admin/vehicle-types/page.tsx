@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { toast } from "sonner"
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -34,9 +34,10 @@ interface VehicleTypeModel {
 
 interface TemperatureSetting { id: string; option: string; value: number; unit: string; isActive: boolean }
 
-export default function VehicleTypesManagement() {
+export default function VehicleTypesManagement({ params }: { params: { locale: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { locale } = params
   const { t } = useLanguage()
 
   const [items, setItems] = useState<VehicleTypeModel[]>([])
@@ -60,11 +61,11 @@ export default function VehicleTypesManagement() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "ADMIN") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
       return
     }
     fetchData()
-  }, [session, status, router])
+  }, [session, status, router, locale])
 
   const fetchData = async () => {
     try {

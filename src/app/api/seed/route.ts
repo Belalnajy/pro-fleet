@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       message: "Demo data seeded successfully",
       demoAccounts: {
-        admin: "admin@profleet.com / demo123",
+        admin: "admin@profleet.com / demo1234",
         driver: "driver@profleet.com / demo123",
         customer: "customer@profleet.com / demo123",
         accountant: "accountant@profleet.com / demo123",

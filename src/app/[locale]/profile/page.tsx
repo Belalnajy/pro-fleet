@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect ,use} from 'react'
 import { useSession } from 'next-auth/react'
 import { useToast } from '@/hooks/use-toast'
 import { ProfileCard } from '@/components/profile/profile-card'
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { useLanguage } from '@/components/providers/language-provider'
-import { 
+  import { 
   Lock,
   Loader2,
   Eye,
@@ -36,7 +36,7 @@ interface ProfileData {
 export default function ProfilePage({ params }: { params: Promise<{ locale: string }> }) {
   const { data: session } = useSession()
   const { toast } = useToast()
-  const { locale } = use(params)
+  const locale = use(params)
   const { t } = useLanguage()
   
   const [profile, setProfile] = useState<ProfileData | null>(null)

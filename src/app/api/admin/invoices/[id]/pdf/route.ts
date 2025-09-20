@@ -7,9 +7,10 @@ import puppeteer from "puppeteer"
 // GET /api/admin/invoices/[id]/pdf - Generate PDF for invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     
     if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")) {
@@ -17,7 +18,7 @@ export async function GET(
     }
 
     const invoice = await db.invoice.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         trip: {
           include: {

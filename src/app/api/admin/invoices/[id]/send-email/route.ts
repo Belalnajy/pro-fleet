@@ -8,10 +8,11 @@ import nodemailer from "nodemailer"
 // POST /api/admin/invoices/[id]/send-email - Send invoice via email
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   try {
-    console.log('=== EMAIL API START ===', { invoiceId: params.id })
+    console.log('=== EMAIL API START ===', { invoiceId: id })
     const session = await getServerSession(authOptions)
     
     if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")) {
@@ -19,7 +20,7 @@ export async function POST(
     }
 
     const invoice = await db.invoice.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         trip: {
           include: {
@@ -329,7 +330,7 @@ export async function POST(
       // Update invoice to mark as sent (only if currently PENDING)
       if (invoice.paymentStatus === PaymentStatus.PENDING) {
         await db.invoice.update({
-          where: { id: params.id },
+          where: { id },
           data: { 
             paymentStatus: 'SENT' as any // Force type since SENT exists in schema
           }
@@ -370,7 +371,7 @@ export async function POST(
       error: error,
       message: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : 'No stack',
-      invoiceId: params.id
+      invoiceId: id
     })
     return NextResponse.json({ 
       error: "Internal server error",

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 
 // GET /api/admin/invoices - Fetch all invoices
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
@@ -12,11 +12,44 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    // Get query parameters
+    const { searchParams } = new URL(request.url)
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const status = searchParams.get('status')
+    const search = searchParams.get('search')
+
+    // Calculate skip for pagination
+    const skip = (page - 1) * limit
+
+    // Build where clause
+    const where: any = {}
+    
+    if (status && status !== 'all') {
+      where.paymentStatus = status
+    }
+
+    if (search) {
+      where.OR = [
+        { invoiceNumber: { contains: search, mode: 'insensitive' } },
+        { 'trip.tripNumber': { contains: search, mode: 'insensitive' } },
+        { 'trip.customer.name': { contains: search, mode: 'insensitive' } },
+        { 'trip.fromCity.name': { contains: search, mode: 'insensitive' } },
+        { 'trip.toCity.name': { contains: search, mode: 'insensitive' } }
+      ]
+    }
+
+    // Get total count for pagination
+    const totalCount = await db.invoice.count({ where })
+    const totalPages = Math.ceil(totalCount / limit)
+
+    // Get paginated invoices
     const invoices = await db.invoice.findMany({
+      where,
       include: {
         trip: {
           include: {
-            customer: true, // customer is User directly
+            customer: true,
             fromCity: true,
             toCity: true
           }
@@ -24,7 +57,9 @@ export async function GET() {
       },
       orderBy: {
         createdAt: 'desc'
-      }
+      },
+      skip,
+      take: limit
     })
 
     // Transform data to match frontend interface
@@ -39,7 +74,7 @@ export async function GET() {
       taxAmount: invoice.taxAmount,
       customsFees: invoice.customsFee,
       totalAmount: invoice.total,
-      status: invoice.paymentStatus, // PENDING, PAID, OVERDUE, CANCELLED
+      paymentStatus: invoice.paymentStatus, // PENDING, PAID, OVERDUE, CANCELLED
       dueDate: invoice.dueDate.toISOString(),
       paidDate: invoice.paidDate?.toISOString() || null,
       createdAt: invoice.createdAt.toISOString(),
@@ -48,7 +83,17 @@ export async function GET() {
       notes: invoice.notes
     }))
 
-    return NextResponse.json(transformedInvoices)
+    return NextResponse.json({
+      invoices: transformedInvoices,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalCount,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+        limit
+      }
+    })
   } catch (error) {
     console.error("Error fetching invoices:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

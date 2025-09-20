@@ -28,7 +28,6 @@
   "cannotUndo": "لا يمكن التراجع عن هذا الإجراء.",
   "deleteInvoice": "حذف الفاتورة",
   "deleting": "جاري الحذف...",
-
   "customer": "العميل",
   "customerRequired": "العميل *",
   "trip": "الرحلة (اختياري)",
@@ -48,6 +47,14 @@
   "dueDateLabel": "تاريخ الاستحقاق",
   "tripNumber": "رقم الرحلة",
   "amountDetails": "تفاصيل المبلغ",
+  "unknownCustomer": "عميل غير معروف",
+  "noTripAssociated": "لا توجد رحلة مرتبطة",
+  "none": "لا يوجد",
+  "amount": "المبلغ",
+  "invoicesTitle": "الفواتير",
+  "showingInvoices": "عرض {current} من {total} فاتورة",
+  "showing": "عرض",
+  "of": "من",
   "grandTotal": "المجموع الكلي",
   "notesLabel": "ملاحظات",
 
@@ -140,6 +147,5 @@
   "noInvoicesMessage": "لم يتم العثور على فواتير تطابق معايير البحث",
   "paymentProcessed": "تم معالجة الدفع بنجاح",
   "paymentFailed": "فشل في معالجة الدفع",
-  "currency": "ر.س",
-  "cancelled": "ملغاة"
+  "currency": "ر.س"
 }

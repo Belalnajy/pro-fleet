@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 // GET /api/admin/invoices/[id] - Get specific invoice
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,22 +15,52 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const invoice = await db.invoice.findUnique({
-      where: { id: params.id },
+      where: {
+        id
+      },
       include: {
         trip: {
           include: {
-            customer: true, // customer is User directly
-            fromCity: true,
-            toCity: true,
+            customer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true
+              }
+            },
             driver: {
-              include: {
-                user: true
+              select: {
+                id: true,
+                user: {
+                  select: {
+                    name: true,
+                    phone: true,
+                    email: true
+                  }
+                }
               }
             },
             vehicle: {
               include: {
                 vehicleType: true
+              }
+            },
+            fromCity: true,
+            toCity: true,
+            temperature: true
+          }
+        },
+        customsBroker: {
+          select: {
+            id: true,
+            user: {
+              select: {
+                name: true,
+                email: true,
+                phone: true
               }
             }
           }
@@ -42,26 +72,66 @@ export async function GET(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
     }
 
-    return NextResponse.json({
+    // Format the response to match the frontend interface
+    const formattedInvoice = {
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
-      customerId: invoice.trip?.customer?.id || '',
-      customerName: invoice.trip?.customer?.name || 'Unknown Customer',
-      tripId: invoice.tripId,
-      tripNumber: invoice.trip?.tripNumber || null,
+      tripNumber: invoice.trip?.tripNumber || '',
+      customer: {
+        id: invoice.trip?.customer?.id || '',
+        name: invoice.trip?.customer?.name || '',
+        email: invoice.trip?.customer?.email || '',
+        phone: invoice.trip?.customer?.phone || ''
+      },
+      route: {
+        from: invoice.trip?.fromCity?.name || '',
+        to: invoice.trip?.toCity?.name || ''
+      },
+      driver: invoice.trip?.driver?.user?.name || '',
+      vehicle: {
+        type: invoice.trip?.vehicle?.vehicleType?.name || '',
+        capacity: invoice.trip?.vehicle?.capacity || 0
+      },
+      customsBroker: invoice.customsBroker?.user?.name || '',
       subtotal: invoice.subtotal,
       taxAmount: invoice.taxAmount,
-      customsFees: invoice.customsFee,
-      totalAmount: invoice.total,
-      status: invoice.paymentStatus,
-      dueDate: invoice.dueDate.toISOString(),
+      customsFee: invoice.customsFee,
+      total: invoice.total,
+      paymentStatus: invoice.paymentStatus,
+      dueDate: invoice.dueDate?.toISOString() || '',
       paidDate: invoice.paidDate?.toISOString() || null,
       createdAt: invoice.createdAt.toISOString(),
-      updatedAt: invoice.updatedAt.toISOString(),
-      currency: invoice.currency,
-      notes: invoice.notes,
-      trip: invoice.trip
-    })
+      // Additional details for the details page
+      trip: {
+        tripNumber: invoice.trip?.tripNumber,
+        scheduledDate: invoice.trip?.scheduledDate?.toISOString(),
+        actualStartDate: invoice.trip?.actualStartDate?.toISOString(),
+        deliveredDate: invoice.trip?.deliveredDate?.toISOString(),
+        status: invoice.trip?.status,
+        price: invoice.trip?.price,
+        notes: invoice.trip?.notes,
+        temperature: {
+          option: invoice.trip?.temperature?.option,
+          value: invoice.trip?.temperature?.value,
+          unit: invoice.trip?.temperature?.unit
+        },
+        vehicle: {
+          capacity: invoice.trip?.vehicle?.capacity,
+          description: invoice.trip?.vehicle?.description,
+          vehicleType: {
+            name: invoice.trip?.vehicle?.vehicleType?.name,
+            nameAr: invoice.trip?.vehicle?.vehicleType?.nameAr
+          }
+        },
+        driver: {
+          name: invoice.trip?.driver?.user?.name,
+          phone: invoice.trip?.driver?.user?.phone,
+          email: invoice.trip?.driver?.user?.email
+        }
+      }
+    }
+
+    return NextResponse.json(formattedInvoice)
   } catch (error) {
     console.error("Error fetching invoice:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -71,7 +141,7 @@ export async function GET(
 // PUT /api/admin/invoices/[id] - Update invoice
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -80,72 +150,44 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
-    const { subtotal, taxAmount, customsFees, dueDate, notes, status } = body
+    const { 
+      subtotal, 
+      taxAmount, 
+      customsFee, 
+      total, 
+      paymentStatus, 
+      dueDate,
+      notes 
+    } = body
 
-    // Calculate total if amounts are provided
-    let updateData: any = {}
-    
-    if (subtotal !== undefined) updateData.subtotal = subtotal
-    if (taxAmount !== undefined) updateData.taxAmount = taxAmount
-    if (customsFees !== undefined) updateData.customsFee = customsFees
-    if (dueDate) updateData.dueDate = new Date(dueDate)
-    if (notes !== undefined) updateData.notes = notes
-    if (status) updateData.paymentStatus = status
-
-    // Calculate total if any amount fields are updated
-    if (subtotal !== undefined || taxAmount !== undefined || customsFees !== undefined) {
-      const currentInvoice = await db.invoice.findUnique({
-        where: { id: params.id }
-      })
-      
-      if (!currentInvoice) {
-        return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
-      }
-
-      updateData.total = (subtotal || currentInvoice.subtotal) + 
-                        (taxAmount || currentInvoice.taxAmount) + 
-                        (customsFees || currentInvoice.customsFee)
-    }
-
-    // Set paid date if status is changed to PAID
-    if (status === 'PAID') {
-      updateData.paidDate = new Date()
-    } else if (status && status !== 'PAID') {
-      updateData.paidDate = null
-    }
-
-    const invoice = await db.invoice.update({
-      where: { id: params.id },
-      data: updateData,
+    const updatedInvoice = await db.invoice.update({
+      where: {
+        id
+      },
+      data: {
+        subtotal: subtotal ? parseFloat(subtotal) : undefined,
+        taxAmount: taxAmount ? parseFloat(taxAmount) : undefined,
+        customsFee: customsFee ? parseFloat(customsFee) : undefined,
+        total: total ? parseFloat(total) : undefined,
+        paymentStatus: paymentStatus || undefined,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        paidDate: paymentStatus === 'PAID' ? new Date() : undefined,
+        notes: notes || undefined
+      },
       include: {
         trip: {
           include: {
-            customer: true // customer is User directly
+            customer: true,
+            fromCity: true,
+            toCity: true
           }
         }
       }
     })
 
-    return NextResponse.json({
-      id: invoice.id,
-      invoiceNumber: invoice.invoiceNumber,
-      customerId: invoice.trip?.customer?.id || '',
-      customerName: invoice.trip?.customer?.name || 'Unknown Customer',
-      tripId: invoice.tripId,
-      tripNumber: invoice.trip?.tripNumber || null,
-      subtotal: invoice.subtotal,
-      taxAmount: invoice.taxAmount,
-      customsFees: invoice.customsFee,
-      totalAmount: invoice.total,
-      status: invoice.paymentStatus,
-      dueDate: invoice.dueDate.toISOString(),
-      paidDate: invoice.paidDate?.toISOString() || null,
-      createdAt: invoice.createdAt.toISOString(),
-      updatedAt: invoice.updatedAt.toISOString(),
-      currency: invoice.currency,
-      notes: invoice.notes
-    })
+    return NextResponse.json(updatedInvoice)
   } catch (error) {
     console.error("Error updating invoice:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -155,7 +197,7 @@ export async function PUT(
 // PATCH /api/admin/invoices/[id] - Update invoice status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -164,6 +206,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const { status } = body
 
@@ -181,12 +224,12 @@ export async function PATCH(
     }
 
     const invoice = await db.invoice.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       include: {
         trip: {
           include: {
-            customer: true // customer is User directly
+            customer: true
           }
         }
       }
@@ -208,7 +251,7 @@ export async function PATCH(
 // DELETE /api/admin/invoices/[id] - Delete invoice
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -217,22 +260,25 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Check if invoice exists
+    const { id } = await params
+    // Check if invoice can be deleted (only if not paid)
     const invoice = await db.invoice.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
     }
 
-    // Don't allow deletion of paid invoices
     if (invoice.paymentStatus === 'PAID') {
-      return NextResponse.json({ error: "Cannot delete paid invoices" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Cannot delete paid invoice" }, 
+        { status: 400 }
+      )
     }
 
     await db.invoice.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return NextResponse.json({ message: "Invoice deleted successfully" })

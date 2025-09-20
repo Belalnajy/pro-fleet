@@ -5,63 +5,74 @@ import { db } from "@/lib/db"
 
 // System settings interface
 interface SystemSettings {
-  defaultTaxRate: number
-  vatEnabled: boolean
-  vatRate: number
-  freeCancellationMinutes: number
-  cancellationFeePercentage: number
-  temperatureOptions: Array<{ value: string; label: string; price: number }>
-  trackingEnabled: boolean
-  trackingInterval: number
-  emailNotifications: boolean
-  smsNotifications: boolean
-  pushNotifications: boolean
-  companyName: string
-  companyAddress: string
-  companyPhone: string
-  companyEmail: string
-  companyLogo: string
-  maintenanceMode: boolean
-  allowRegistration: boolean
-  requireEmailVerification: boolean
-  sessionTimeout: number
-  defaultCurrency: string
-  currencySymbol: string
-  defaultLanguage: string
-  supportedLanguages: string[]
+  business: {
+    companyName: string
+    companyEmail: string
+    companyPhone: string
+    companyAddress: string
+  }
+  financial: {
+    defaultTaxRate: number
+    enableVAT: boolean
+    vatRate: number
+    defaultCurrency: string
+    currencySymbol: string
+  }
+  operations: {
+    freeCancellationMinutes: number
+    cancellationFeePercentage: number
+  }
+  tracking: {
+    enableRealTimeTracking: boolean
+    trackingInterval: number
+  }
+  notifications: {
+    emailNotifications: boolean
+    smsNotifications: boolean
+    pushNotifications: boolean
+  }
+  system: {
+    maintenanceMode: boolean
+  }
+  localization: {
+    defaultLanguage: string
+  }
 }
 
 // Default settings
 const defaultSettings: SystemSettings = {
-  defaultTaxRate: 15,
-  vatEnabled: true,
-  vatRate: 15,
-  freeCancellationMinutes: 15,
-  cancellationFeePercentage: 10,
-  temperatureOptions: [
-    { value: "ambient", label: "Ambient", price: 0 },
-    { value: "cold_2", label: "+2°C", price: 50 },
-    { value: "cold_10", label: "+10°C", price: 100 },
-    { value: "custom", label: "Custom", price: 150 },
-  ],
-  trackingEnabled: true,
-  trackingInterval: 30,
-  emailNotifications: true,
-  smsNotifications: true,
-  pushNotifications: true,
-  companyName: "PRO FLEET",
-  companyAddress: "الرياض، المملكة العربية السعودية",
-  companyPhone: "+966 11 123 4567",
-  companyEmail: "info@profleet.com",
-  companyLogo: "",
-  maintenanceMode: false,
-  allowRegistration: true,
-  requireEmailVerification: true,
-  sessionTimeout: 30,
-  defaultCurrency: "SAR",
-  currencySymbol: "ر.س",
-  defaultLanguage: "ar",
-  supportedLanguages: ["en", "ar", "ur"],
+  business: {
+    companyName: "PRO FLEET",
+    companyEmail: "info@profleet.com",
+    companyPhone: "+966 11 123 4567",
+    companyAddress: "الرياض، المملكة العربية السعودية",
+  },
+  financial: {
+    defaultTaxRate: 15,
+    enableVAT: true,
+    vatRate: 15,
+    defaultCurrency: "SAR",
+    currencySymbol: "ر.س",
+  },
+  operations: {
+    freeCancellationMinutes: 30,
+    cancellationFeePercentage: 10,
+  },
+  tracking: {
+    enableRealTimeTracking: true,
+    trackingInterval: 30,
+  },
+  notifications: {
+    emailNotifications: true,
+    smsNotifications: true,
+    pushNotifications: true,
+  },
+  system: {
+    maintenanceMode: false,
+  },
+  localization: {
+    defaultLanguage: "ar",
+  },
 }
 
 // GET - Fetch system settings
@@ -80,26 +91,34 @@ export async function GET() {
     
     if (settingsRecords.length > 0) {
       // Convert key-value pairs to settings object
-      const settings = { ...defaultSettings }
+      const settings = JSON.parse(JSON.stringify(defaultSettings))
       
       settingsRecords.forEach(record => {
-        const key = record.key as keyof SystemSettings
+        const keyParts = record.key.split('.')
         let value: any = record.value
         
         // Parse JSON strings for complex types
-        if (key === 'temperatureOptions' || key === 'supportedLanguages') {
-          try {
+        try {
+          if (value.startsWith('{') || value.startsWith('[')) {
             value = JSON.parse(value)
-          } catch {
-            value = key === 'temperatureOptions' ? defaultSettings.temperatureOptions : defaultSettings.supportedLanguages
+          } else if (value === 'true' || value === 'false') {
+            value = value === 'true'
+          } else if (!isNaN(Number(value))) {
+            value = Number(value)
           }
-        } else if (typeof defaultSettings[key] === 'number') {
-          value = parseFloat(value) || defaultSettings[key]
-        } else if (typeof defaultSettings[key] === 'boolean') {
-          value = value === 'true'
+        } catch {
+          // Keep as string if parsing fails
         }
         
-        ;(settings as any)[key] = value
+        // Set nested value
+        if (keyParts.length === 2) {
+          const [section, key] = keyParts
+          if (settings[section]) {
+            settings[section][key] = value
+          }
+        } else {
+          settings[record.key] = value
+        }
       })
       
       return NextResponse.json(settings)
@@ -124,20 +143,33 @@ export async function PUT(request: NextRequest) {
 
     const settings: SystemSettings = await request.json()
 
-    // Convert settings object to key-value pairs for SystemSetting model
-    const settingsEntries = Object.entries(settings).map(([key, value]) => {
-      let stringValue: string
-      
-      if (typeof value === 'object') {
-        stringValue = JSON.stringify(value)
+    // Convert nested settings object to key-value pairs for SystemSetting model
+    const settingsEntries: Array<{ key: string; value: string; isActive: boolean }> = []
+    
+    // Flatten nested settings
+    Object.entries(settings).forEach(([section, sectionData]) => {
+      if (typeof sectionData === 'object' && sectionData !== null) {
+        Object.entries(sectionData).forEach(([key, value]) => {
+          let stringValue: string
+          
+          if (typeof value === 'object') {
+            stringValue = JSON.stringify(value)
+          } else {
+            stringValue = String(value)
+          }
+          
+          settingsEntries.push({
+            key: `${section}.${key}`,
+            value: stringValue,
+            isActive: true,
+          })
+        })
       } else {
-        stringValue = String(value)
-      }
-      
-      return {
-        key,
-        value: stringValue,
-        isActive: true,
+        settingsEntries.push({
+          key: section,
+          value: String(sectionData),
+          isActive: true,
+        })
       }
     })
 

@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
+        latitude: true,
+        longitude: true,
       },
       orderBy: {
         name: "asc"

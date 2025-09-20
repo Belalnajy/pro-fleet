@@ -69,7 +69,7 @@ export async function GET(
           orderBy: {
             timestamp: 'desc'
           },
-          take: 50 // Limit to last 50 tracking points
+          take: 10 // Limit to last 10 tracking points only
         }
       }
     })

@@ -33,10 +33,10 @@ interface ProfileData {
   customsBrokerProfile?: any
 }
 
-export default function ProfilePage({ params }: { params: { locale: string } }) {
+export default function ProfilePage({ params }: { params: Promise<{ locale: string }> }) {
   const { data: session } = useSession()
   const { toast } = useToast()
-  const { locale } = params
+  const { locale } = use(params)
   const { t } = useLanguage()
   
   const [profile, setProfile] = useState<ProfileData | null>(null)

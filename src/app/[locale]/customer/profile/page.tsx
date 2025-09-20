@@ -54,10 +54,10 @@ interface NotificationSettings {
   promotionalEmails: boolean
 }
 
-export default function CustomerProfile({ params }: { params: { locale: string } }) {
+export default function CustomerProfile({ params }: { params: Promise<{ locale: string }> }) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { locale } = params
+  const { locale } = use(params)
   const { t, language } = useLanguage()
   
   const [profile, setProfile] = useState<UserProfile | null>(null)

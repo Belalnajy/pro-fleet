@@ -86,6 +86,7 @@
   "ofText": "of",
   "previousButton": "Previous",
   "nextButton": "Next",
+  "ton": "tons",
   "invoiceDetails": {
     "title": "Invoice Details",
     "backButton": "Back",

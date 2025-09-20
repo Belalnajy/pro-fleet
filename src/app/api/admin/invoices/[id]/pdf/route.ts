@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
+import puppeteer from "puppeteer"
 
 // GET /api/admin/invoices/[id]/pdf - Generate PDF for invoice
 export async function GET(
@@ -365,12 +366,32 @@ export async function GET(
     </html>
     `
 
-    // For now, return HTML content as response
-    // In production, you would use a library like puppeteer to generate actual PDF
-    return new NextResponse(htmlContent, {
+    // Generate actual PDF using puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
+    
+    const page = await browser.newPage()
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
+    
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20px',
+        right: '20px',
+        bottom: '20px',
+        left: '20px'
+      }
+    })
+    
+    await browser.close()
+    
+    return new NextResponse(pdfBuffer, {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Content-Disposition': `attachment; filename="invoice-${invoice.invoiceNumber}.html"`
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`
       }
     })
 

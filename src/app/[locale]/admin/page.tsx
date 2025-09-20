@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -24,8 +24,8 @@ import {
   CheckCircle,
 } from "lucide-react"
 
-export default function AdminDashboard({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function AdminDashboard({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()

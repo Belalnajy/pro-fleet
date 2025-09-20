@@ -34,10 +34,10 @@ interface VehicleTypeModel {
 
 interface TemperatureSetting { id: string; option: string; value: number; unit: string; isActive: boolean }
 
-export default function VehicleTypesManagement({ params }: { params: { locale: string } }) {
+export default function VehicleTypesManagement({ params }: { params: Promise<{ locale: string }> }) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { locale } = params
+  const { locale } = use(params)
   const { t } = useLanguage()
 
   const [items, setItems] = useState<VehicleTypeModel[]>([])

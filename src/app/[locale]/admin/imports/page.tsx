@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, use } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Download, Upload } from "lucide-react"
 
-export default function ImportsPage({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function ImportsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const [file, setFile] = useState<File | null>(null)
   const [dataset, setDataset] = useState<"vehicles" | "pricing">("vehicles")
   const [uploading, setUploading] = useState(false)

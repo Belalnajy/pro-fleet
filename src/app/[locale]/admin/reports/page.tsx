@@ -69,8 +69,8 @@ interface KPIData {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
-export default function ReportsPage({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function ReportsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()

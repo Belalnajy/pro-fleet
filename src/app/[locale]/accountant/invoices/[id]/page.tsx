@@ -1,8 +1,8 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { useRouter, useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState, use } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { useTranslation } from "@/hooks/useTranslation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -64,11 +64,10 @@ interface InvoiceDetails {
   notes?: string
 }
 
-export default function InvoiceDetailsPage({ params: pageParams }: { params: { locale: string; id: string } }) {
-  const { locale } = pageParams
+export default function InvoiceDetailsPage({ params: pageParams }: { params: Promise<{ locale: string; id: string }> }) {
+  const { locale, id } = use(pageParams)
   const { data: session, status } = useSession()
   const router = useRouter()
-  const params = useParams()
   const { toast } = useToast()
   const { t } = useTranslation()
   
@@ -90,7 +89,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
     if (status === "loading") return
     if (!session || session.user.role !== "ACCOUNTANT") {
       router.push(`/${locale}/auth/signin`)
-    } else if (params.id) {
+    } else if (id) {
       fetchInvoiceDetails()
       
       // Check if edit mode is requested via query parameter
@@ -99,12 +98,12 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
         setIsEditing(true)
       }
     }
-  }, [session, status, router, params.id])
+  }, [session, status, router, id])
 
   const fetchInvoiceDetails = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/accountant/invoices/${params.id}`)
+      const response = await fetch(`/api/accountant/invoices/${id}`)
       if (!response.ok) {
         throw new Error('Failed to fetch invoice details')
       }
@@ -129,7 +128,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
         description: "فشل في تحميل تفاصيل الفاتورة",
         variant: "destructive"
       })
-      router.push(`/${params.locale as string}/accountant/invoices`)
+      router.push(`/${locale}/accountant/invoices`)
     } finally {
       setLoading(false)
     }
@@ -138,7 +137,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
   const handleSendEmail = async () => {
     try {
       setActionLoading("email")
-      const response = await fetch(`/api/accountant/invoices/${params.id}/send-email`, {
+      const response = await fetch(`/api/accountant/invoices/${id}/send-email`, {
         method: 'POST'
       })
       
@@ -168,7 +167,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
     try {
       setActionLoading("download")
       
-      const response = await fetch(`/api/accountant/invoices/${params.id}/pdf`)
+      const response = await fetch(`/api/accountant/invoices/${id}/pdf`)
       if (!response.ok) {
         throw new Error('Failed to generate PDF')
       }
@@ -178,7 +177,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
       const a = document.createElement('a')
       a.style.display = 'none'
       a.href = url
-      a.download = `invoice-${invoice?.invoiceNumber || params.id}.pdf`
+      a.download = `invoice-${invoice?.invoiceNumber || id}.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -204,7 +203,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
     try {
       setActionLoading("save")
       
-      const response = await fetch(`/api/accountant/invoices/${params.id}`, {
+      const response = await fetch(`/api/accountant/invoices/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -325,7 +324,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
           <div className="text-center">
             <FileText className="h-8 w-8 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">لم يتم العثور على الفاتورة</p>
-            <Button onClick={() => router.push(`/${params.locale as string}/accountant/invoices`)} className="mt-4">
+            <Button onClick={() => router.push(`/${locale}/accountant/invoices`)} className="mt-4">
               العودة للفواتير
             </Button>
           </div>
@@ -343,7 +342,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: { l
             <Button
               variant="outline"
               size="sm"
-              onClick={() => router.push(`/${params.locale as string}/accountant/invoices`)}
+              onClick={() => router.push(`/${locale}/accountant/invoices`)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               العودة

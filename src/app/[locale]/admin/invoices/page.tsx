@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
@@ -69,8 +69,8 @@ interface Trip {
   toCity: string
 }
 
-export default function InvoicesManagement({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function InvoicesManagement({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
@@ -327,7 +327,7 @@ export default function InvoicesManagement({ params }: { params: { locale: strin
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `invoice-${invoiceNumber}.html`
+        a.download = `invoice-${invoiceNumber}.pdf`
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
@@ -1043,7 +1043,7 @@ export default function InvoicesManagement({ params }: { params: { locale: strin
       <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>{t('invoiceDetails')}</DialogTitle>
+            <DialogTitle>Invoice Details</DialogTitle>
             <DialogDescription>
               {t('viewInvoiceDetails').replace('{invoiceNumber}', viewingInvoice?.invoiceNumber || '')}
             </DialogDescription>

@@ -25,8 +25,8 @@ import {
   Loader2
 } from "lucide-react"
 
-export default function AccountantSettingsPage({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function AccountantSettingsPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()

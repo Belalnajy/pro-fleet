@@ -68,8 +68,8 @@ interface PaymentStats {
   monthlyGrowth: number
 }
 
-export default function PaymentsManagement({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function PaymentsManagement({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()

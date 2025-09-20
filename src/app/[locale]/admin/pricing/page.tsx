@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, use } from "react"
 import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -61,8 +61,8 @@ interface Pricing {
   vehicle: Vehicle
 }
 
-export default function PricingManagement({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function PricingManagement({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()

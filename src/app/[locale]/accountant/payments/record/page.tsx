@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, use } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -34,8 +34,8 @@ interface Invoice {
   dueDate: string
 }
 
-export default function RecordPaymentPage({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function RecordPaymentPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -180,7 +180,6 @@ export default function RecordPaymentPage({ params }: { params: { locale: string
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p className="text-gray-600">{t('loading')}</p>
           </div>
         </div>
       </DashboardLayout>

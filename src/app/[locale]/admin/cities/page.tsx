@@ -28,8 +28,8 @@ interface City {
   updatedAt: string
 }
 
-export default function CitiesManagement({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function CitiesManagement({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()

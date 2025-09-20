@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -71,8 +71,8 @@ interface LocationData {
   heading?: number;
 }
 
-export default function DriverTrackingPage({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function DriverTrackingPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();

@@ -69,8 +69,8 @@ interface VehicleType {
   pricePerKm: number
 }
 
-export default function CustomerTrips({ params }: { params: { locale: string } }) {
-  const { locale } = params
+export default function CustomerTrips({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()

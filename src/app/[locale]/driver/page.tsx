@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -21,7 +22,8 @@ import {
   Eye,
 } from "lucide-react"
 
-export default function DriverDashboard() {
+export default function DriverDashboard({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = React.use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()
@@ -35,7 +37,7 @@ export default function DriverDashboard() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "DRIVER") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchTrips()
     }
@@ -77,14 +79,14 @@ export default function DriverDashboard() {
         
         // Show success toast
         toast({
-          title: action === "accept" ? "✅ تم قبول الرحلة" : "❌ تم رفض الرحلة",
-          description: action === "accept" ? "تم قبول الرحلة بنجاح" : "تم رفض الرحلة"
+          title: action === "accept" ? `✅ ${t('tripAccepted')}` : `❌ ${t('tripDeclined')}`,
+          description: action === "accept" ? t('tripAcceptedSuccess') : t('tripDeclinedSuccess')
         })
       } else {
         const error = await response.json()
         toast({
           variant: "destructive",
-          title: "❌ خطأ في العملية",
+          title: `❌ ${t('operationError')}`,
           description: error.error || `Failed to ${action} trip`
         })
       }
@@ -92,8 +94,8 @@ export default function DriverDashboard() {
       console.error(`Error ${action}ing trip:`, error)
       toast({
         variant: "destructive",
-        title: "❌ خطأ في العملية",
-        description: `حدث خطأ أثناء ${action === "accept" ? "قبول" : "رفض"} الرحلة`
+        title: `❌ ${t('operationError')}`,
+        description: action === "accept" ? t('errorAcceptingTrip') : t('errorDecliningTrip')
       })
     } finally {
       setActionLoading(null)
@@ -174,16 +176,16 @@ export default function DriverDashboard() {
     switch (status) {
       case "PENDING":
       case "pending":
-        return "في الانتظار"
+        return t('pending')
       case "IN_PROGRESS":
       case "inProgress":
-        return "قيد التنفيذ"
+        return t('inProgress')
       case "DELIVERED":
       case "delivered":
-        return "تم التسليم"
+        return t('delivered')
       case "CANCELLED":
       case "cancelled":
-        return "ملغية"
+        return t('cancelled')
       default:
         return status
     }
@@ -191,15 +193,15 @@ export default function DriverDashboard() {
 
   return (
     <DashboardLayout
-      title="Driver Dashboard"
-      subtitle={`Welcome back, ${driverInfo.name}!`}
+      title={t('driverDashboard')}
+      subtitle={`${t('welcomeBack')}, ${driverInfo.name}!`}
     >
       {/* Current Trip */}
       {currentTrip && (
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Current Trip</CardTitle>
-            <CardDescription>Trip currently in progress</CardDescription>
+            <CardTitle>{t('currentTrip')}</CardTitle>
+            <CardDescription>{t('tripCurrentlyInProgress')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -215,50 +217,53 @@ export default function DriverDashboard() {
 
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <span>{currentTrip.fromCity?.name}</span>
+                <span>{t('from')} {currentTrip.fromCity?.name}</span>
                 <span>→</span>
-                <span>{currentTrip.toCity?.name}</span>
+                <span>{t('to')} {currentTrip.toCity?.name}</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Customer</label>
-                  <p className="font-semibold">{currentTrip.customer?.name || 'N/A'}</p>
+                  <label className="text-sm font-medium text-muted-foreground">{t('customer')}</label>
+                  <p className="font-semibold">{currentTrip.customer?.name || t('na')}</p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Vehicle</label>
+                  <label className="text-sm font-medium text-muted-foreground">{t('vehicle')}</label>
                   <p className="font-semibold">{currentTrip.vehicle?.vehicleType?.name || currentTrip.vehicle?.vehicleType?.nameAr} ({currentTrip.vehicle?.capacity})</p>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">Temperature</label>
+                  <label className="text-sm font-medium text-muted-foreground">{t('temperature')}</label>
                   <p className="font-semibold">{currentTrip.temperature?.option} ({currentTrip.temperature?.value}{currentTrip.temperature?.unit})</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>Started: {new Date(currentTrip.actualStartDate!).toLocaleString()}</span>
+                <span>{t('started')}: {new Date(currentTrip.actualStartDate!).toLocaleString()}</span>
               </div>
 
               <div className="flex items-center space-x-4">
-                <Button className="bg-blue-600 hover:bg-blue-700">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/80">
                   <Navigation className="h-4 w-4 mr-2" />
-                  Start Navigation
+                  {t('startNavigation')}
                 </Button>
-                <Button variant="outline">
+                <Button 
+                  variant="outline"
+                  className="border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950/20"
+                >
                   <Phone className="h-4 w-4 mr-2" />
-                  Contact Customer
+                  {t('contactCustomer')}
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="bg-secondary hover:bg-secondary/80" 
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/20" 
                   onClick={() => {
                     setSelectedTrip(currentTrip)
                     setShowDetailsModal(true)
                   }}
                 >
                   <Eye className="h-4 w-4 mr-2" />
-                  View Details
+                  {t('viewDetails')}
                 </Button>
               </div>
             </div>
@@ -269,8 +274,8 @@ export default function DriverDashboard() {
       {/* Available Trips */}
       <Card>
         <CardHeader>
-          <CardTitle>Available Trips</CardTitle>
-          <CardDescription>Trips assigned to you or available for assignment</CardDescription>
+          <CardTitle>{t('availableTrips')}</CardTitle>
+          <CardDescription>{t('tripsAssignedOrAvailable')}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -282,7 +287,7 @@ export default function DriverDashboard() {
               {availableTrips.length === 0 ? (
                 <div className="text-center py-8">
                   <Truck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No trips available at the moment</p>
+                  <p className="text-muted-foreground">{t('noTripsAvailable')}</p>
                 </div>
               ) : (
                 availableTrips.map((trip) => (
@@ -301,10 +306,10 @@ export default function DriverDashboard() {
                           {trip.customer?.name} • {trip.vehicle?.vehicleType?.name || trip.vehicle?.vehicleType?.nameAr} ({trip.vehicle?.capacity}) • {trip.temperature?.option}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          Scheduled: {new Date(trip.scheduledDate).toLocaleDateString()}
+                          {t('scheduled')}: {new Date(trip.scheduledDate).toLocaleDateString()}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          Price: SAR {trip.price?.toLocaleString()}
+                          {t('price')}: {t('sar')} {trip.price?.toLocaleString()}
                         </div>
                       </div>
                     </div>
@@ -320,31 +325,34 @@ export default function DriverDashboard() {
                           <>
                             <Button 
                               size="sm" 
+                              className="bg-green-600 hover:bg-green-700 text-white"
                               onClick={() => handleTripAction(trip.id, "accept")}
                               disabled={actionLoading === trip.id}
                             >
-                              {actionLoading === trip.id ? "Loading..." : "Accept"}
+                              {actionLoading === trip.id ? t('loading') : t('accept')}
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
+                              className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/20"
                               onClick={() => handleTripAction(trip.id, "decline")}
                               disabled={actionLoading === trip.id}
                             >
-                              {actionLoading === trip.id ? "Loading..." : "Decline"}
+                              {actionLoading === trip.id ? t('loading') : t('decline')}
                             </Button>
                           </>
                         )}
                         <Button 
                           variant="outline" 
                           size="sm"
+                          className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/20"
                           onClick={() => {
                             setSelectedTrip(trip)
                             setShowDetailsModal(true)
                           }}
                         >
                           <Eye className="h-4 w-4 mr-2" />
-                          View Details
+                          {t('viewDetails')}
                         </Button>
                       </div>
                     </div>
@@ -358,24 +366,24 @@ export default function DriverDashboard() {
       
       {/* Trip Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>تفاصيل الرحلة</DialogTitle>
-            <DialogDescription>
-              عرض تفاصيل الرحلة رقم {selectedTrip?.tripNumber}
+            <DialogTitle className="text-foreground">{t('tripDetails')}</DialogTitle>
+            <DialogDescription className="text-muted-foreground">
+              {t('viewTripDetails')} {selectedTrip?.tripNumber}
             </DialogDescription>
           </DialogHeader>
           
           {selectedTrip && (
-            <div className="space-y-6">
+            <div className="space-y-6 p-1">
               {/* Trip Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">رقم الرحلة</label>
-                  <p className="font-medium">{selectedTrip.tripNumber}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">{t('tripNumber')}</label>
+                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{selectedTrip.tripNumber}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">الحالة</label>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">{t('status')}</label>
                   <div className="mt-1">
                     <Badge className={getStatusColor(selectedTrip.status)}>
                       {getStatusIcon(selectedTrip.status)}
@@ -386,45 +394,49 @@ export default function DriverDashboard() {
               </div>
               
               {/* Route Info */}
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">المسار</label>
-                <div className="mt-2 flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span>{selectedTrip.fromCity?.name}</span>
-                  </div>
-                  <div className="flex-1 border-t border-dashed border-gray-300"></div>
-                  <div className="flex items-center gap-2">
-                    <span>{selectedTrip.toCity?.name}</span>
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">{t('route')}</label>
+                <div className="p-3 bg-muted/30 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-sm"></div>
+                      <span className="font-medium text-foreground">{selectedTrip.fromCity?.name}</span>
+                    </div>
+                    <div className="flex-1 border-t-2 border-dashed border-muted-foreground/30"></div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-foreground">{selectedTrip.toCity?.name}</span>
+                      <div className="w-3 h-3 bg-red-500 rounded-full shadow-sm"></div>
+                    </div>
                   </div>
                 </div>
               </div>
               
               {/* Customer Info */}
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">بيانات العميل</label>
-                <div className="mt-2 p-3 bg-secondary rounded-lg">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">{t('customerInfo')}</label>
+                <div className="p-4 bg-card border rounded-lg">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">{selectedTrip.customer?.name}</p>
+                    <div className="space-y-1">
+                      <p className="font-semibold text-foreground">{selectedTrip.customer?.name}</p>
                       {selectedTrip.customer?.phone && (
-                        <p className="text-sm text-muted-foreground">{selectedTrip.customer.phone}</p>
+                        <p className="text-sm text-muted-foreground font-mono">{selectedTrip.customer.phone}</p>
                       )}
                     </div>
                     {selectedTrip.customer?.phone && (
                       <Button 
                         size="sm" 
+                        variant="default"
+                        className="bg-green-600 hover:bg-green-700 text-white"
                         onClick={() => {
                           window.open(`tel:${selectedTrip.customer.phone}`, '_self')
                           toast({
-                            title: "📞 اتصال بالعميل",
-                            description: `جاري الاتصال بـ ${selectedTrip.customer.name}`
+                            title: `📞 ${t('callingCustomer')}`,
+                            description: `${t('callingWith')} ${selectedTrip.customer.name}`
                           })
                         }}
                       >
                         <Phone className="h-4 w-4 mr-2" />
-                        اتصال
+                        {t('call')}
                       </Button>
                     )}
                   </div>
@@ -432,64 +444,68 @@ export default function DriverDashboard() {
               </div>
               
               {/* Vehicle & Temperature */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">المركبة</label>
-                  <p className="font-medium">{selectedTrip.vehicle?.vehicleType?.name || selectedTrip.vehicle?.vehicleType?.nameAr} - {selectedTrip.vehicle?.capacity}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">{t('vehicleAndTemperature')}</label>
+                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{selectedTrip.vehicle?.vehicleType?.name || selectedTrip.vehicle?.vehicleType?.nameAr} - {selectedTrip.vehicle?.capacity}</p>
                 </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">درجة الحرارة</label>
-                  <p className="font-medium">{selectedTrip.temperature?.option} ({selectedTrip.temperature?.value}°{selectedTrip.temperature?.unit})</p>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">{t('temperature')}</label>
+                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{selectedTrip.temperature?.option} ({selectedTrip.temperature?.value}°{selectedTrip.temperature?.unit})</p>
                 </div>
               </div>
               
               {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">تاريخ الجدولة</label>
-                  <p className="font-medium">{new Date(selectedTrip.scheduledDate).toLocaleDateString('ar-SA')}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">{t('scheduledDate')}</label>
+                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{new Date(selectedTrip.scheduledDate).toLocaleDateString('ar-SA')}</p>
                 </div>
                 {selectedTrip.actualStartDate && (
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">تاريخ البدء</label>
-                    <p className="font-medium">{new Date(selectedTrip.actualStartDate).toLocaleDateString('ar-SA')}</p>
+                  <div className="space-y-1">
+                    <label className="text-sm font-medium text-muted-foreground">{t('startDate')}</label>
+                    <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{new Date(selectedTrip.actualStartDate).toLocaleDateString('ar-SA')}</p>
                   </div>
                 )}
               </div>
               
               {selectedTrip.deliveredDate && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">تاريخ التسليم</label>
-                  <p className="font-medium">{new Date(selectedTrip.deliveredDate).toLocaleDateString('ar-SA')}</p>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-muted-foreground">{t('deliveryDate')}</label>
+                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{new Date(selectedTrip.deliveredDate).toLocaleDateString('ar-SA')}</p>
                 </div>
               )}
               
               {/* Price */}
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">السعر</label>
-                <p className="text-lg font-bold text-green-600">{selectedTrip.price} {selectedTrip.currency}</p>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">{t('price')}</label>
+                <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-2xl font-bold text-green-700 dark:text-green-400">{selectedTrip.price} {selectedTrip.currency}</p>
+                </div>
               </div>
               
               {/* Notes */}
               {selectedTrip.notes && (
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">ملاحظات</label>
-                  <p className="mt-1 p-3 bg-secondary rounded-lg">{selectedTrip.notes}</p>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">{t('notes')}</label>
+                  <div className="p-3 bg-card border rounded-lg">
+                    <p className="text-foreground leading-relaxed">{selectedTrip.notes}</p>
+                  </div>
                 </div>
               )}
               
               {/* Action Buttons */}
-              <div className="flex gap-2 pt-4 border-t">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
                 {selectedTrip.status === "IN_PROGRESS" && (
                   <Button 
                     onClick={() => {
                       setShowDetailsModal(false)
-                      router.push(`/${language}/driver/tracking?tripId=${selectedTrip.id}`)
+                      router.push(`/${locale}/driver/tracking?tripId=${selectedTrip.id}`)
                     }}
-                    className="flex-1"
+                    className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <Navigation className="h-4 w-4 mr-2" />
-                    فتح التتبع
+                    {t('openTracking')}
                   </Button>
                 )}
                 
@@ -501,14 +517,14 @@ export default function DriverDashboard() {
                         setShowDetailsModal(false)
                       }}
                       disabled={actionLoading === selectedTrip.id}
-                      className="flex-1"
+                      className="w-full sm:flex-1 bg-green-600 hover:bg-green-700 text-white"
                     >
                       {actionLoading === selectedTrip.id ? (
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                       ) : (
                         <>
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          قبول الرحلة
+                          {t('acceptTrip')}
                         </>
                       )}
                     </Button>
@@ -519,14 +535,14 @@ export default function DriverDashboard() {
                         setShowDetailsModal(false)
                       }}
                       disabled={actionLoading === selectedTrip.id}
-                      className="flex-1"
+                      className="w-full sm:flex-1 border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/20"
                     >
                       {actionLoading === selectedTrip.id ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
                       ) : (
                         <>
                           <AlertTriangle className="h-4 w-4 mr-2" />
-                          رفض الرحلة
+                          {t('declineTrip')}
                         </>
                       )}
                     </Button>

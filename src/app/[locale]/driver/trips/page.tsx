@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
@@ -70,7 +70,8 @@ interface Trip {
   notes?: string
 }
 
-export default function DriverTrips() {
+export default function DriverTrips({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = React.use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
   const { toast } = useToast()
@@ -87,7 +88,7 @@ export default function DriverTrips() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "DRIVER") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
       return
     }
     fetchTrips()
@@ -132,14 +133,14 @@ export default function DriverTrips() {
         )
         
         toast({
-          title: "✅ تم تحديث حالة الرحلة",
-          description: `تم تغيير حالة الرحلة إلى ${getStatusText(newStatus)}`
+          title: `✅ ${t('tripStatusUpdated')}`,
+          description: `${t('statusChangedTo')} ${getStatusText(newStatus)}`
         })
       } else {
         const error = await response.json()
         toast({
           variant: "destructive",
-          title: "❌ خطأ في تحديث الحالة",
+          title: `❌ ${t('errorUpdatingStatus')}`,
           description: error.error || "Failed to update status"
         })
       }
@@ -147,8 +148,8 @@ export default function DriverTrips() {
       console.error("Error updating trip status:", error)
       toast({
         variant: "destructive",
-        title: "❌ خطأ في تحديث الحالة",
-        description: "حدث خطأ أثناء تحديث حالة الرحلة"
+        title: `❌ ${t('errorUpdatingStatus')}`,
+        description: t('errorOccurredUpdating')
       })
     } finally {
       setUpdatingStatus(null)
@@ -199,13 +200,13 @@ export default function DriverTrips() {
   const getStatusText = (status: TripStatus) => {
     switch (status) {
       case TripStatus.PENDING:
-        return "في الانتظار"
+        return t('pending')
       case TripStatus.IN_PROGRESS:
-        return "قيد التنفيذ"
+        return t('inProgress')
       case TripStatus.DELIVERED:
-        return "تم التسليم"
+        return t('delivered')
       case TripStatus.CANCELLED:
-        return "ملغية"
+        return t('cancelled')
       default:
         return status
     }
@@ -223,7 +224,7 @@ export default function DriverTrips() {
   const getStatusAction = (status: TripStatus) => {
     switch (status) {
       case TripStatus.IN_PROGRESS:
-        return { label: "Mark as Delivered", icon: <CheckCircle className="h-4 w-4" />, color: "bg-green-600 hover:bg-green-700" }
+        return { label: t('markAsDelivered'), icon: <CheckCircle className="h-4 w-4" />, color: "bg-green-600 hover:bg-green-700" }
       default:
         return null
     }
@@ -251,28 +252,45 @@ export default function DriverTrips() {
 
   return (
     <DashboardLayout
-      title="My Trips"
-      subtitle="Manage your assigned trips and deliveries"
+      title={t('myTrips')}
+      subtitle={t('manageTripsSubtitle')}
       actions={
-        <div className="flex items-center gap-2">
-          <Button onClick={() => {
-            const activeTrip = trips.find(trip => trip.status === TripStatus.IN_PROGRESS);
-            const url = activeTrip 
-              ? `/${language}/driver/tracking?tripId=${activeTrip.id}`
-              : `/${language}/driver/tracking`;
-            router.push(url);
-          }}>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <Button 
+            className="w-full sm:w-auto relative"
+            onClick={() => {
+              const activeTrip = trips.find(trip => trip.status === TripStatus.IN_PROGRESS);
+              const url = activeTrip 
+                ? `/${locale}/driver/tracking?tripId=${activeTrip.id}`
+                : `/${locale}/driver/tracking`;
+              router.push(url);
+            }}>
             <Navigation className="h-4 w-4 mr-2" />
-            Start Tracking
+            {t('startTracking')}
+            {trips.some(trip => trip.status === TripStatus.IN_PROGRESS) && (
+              <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" title="التتبع التلقائي مفعل" />
+            )}
           </Button>
         </div>
       }
     >
+      {/* Auto-tracking Notice */}
+      {trips.some(trip => trip.status === TripStatus.IN_PROGRESS) && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center gap-2 text-green-800">
+            <Navigation className="h-4 w-4" />
+            <span className="text-sm font-medium">
+              🟢 التتبع التلقائي مفعل - سيتم تتبع موقعك تلقائياً عند دخول صفحة التتبع
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Trips</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('totalTrips')}</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -281,7 +299,7 @@ export default function DriverTrips() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pending')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -290,7 +308,7 @@ export default function DriverTrips() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('inProgress')}</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -299,7 +317,7 @@ export default function DriverTrips() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Delivered</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('delivered')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -308,7 +326,7 @@ export default function DriverTrips() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cancelled</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('cancelled')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -320,50 +338,51 @@ export default function DriverTrips() {
       {/* Search and Filter */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
+          <CardTitle className="text-lg">{t('searchAndFilter')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex-1">
               <Input
-                placeholder="Search trips..."
+                placeholder={t('searchTrips')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="w-full"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value={TripStatus.PENDING}>Pending</SelectItem>
-                <SelectItem value={TripStatus.IN_PROGRESS}>In Progress</SelectItem>
-                <SelectItem value={TripStatus.DELIVERED}>Delivered</SelectItem>
-                <SelectItem value={TripStatus.CANCELLED}>Cancelled</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="w-full sm:w-48">
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('filterByStatus')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('allStatus')}</SelectItem>
+                  <SelectItem value={TripStatus.PENDING}>{t('pending')}</SelectItem>
+                  <SelectItem value={TripStatus.IN_PROGRESS}>{t('inProgress')}</SelectItem>
+                  <SelectItem value={TripStatus.DELIVERED}>{t('delivered')}</SelectItem>
+                  <SelectItem value={TripStatus.CANCELLED}>{t('cancelled')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Trips Grid */}
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 gap-4 sm:gap-6">
         {loading ? (
-          <div className="flex items-center justify-center h-64">
+          <div className="col-span-full flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : filteredTrips.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center h-64">
+          <Card className="col-span-full">
+            <CardContent className="flex flex-col items-center justify-center h-64 text-center px-4">
               <Package className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No trips found</h3>
-              <p className="text-muted-foreground mb-4">
+              <h3 className="text-lg font-semibold mb-2">{t('noTripsFound')}</h3>
+              <p className="text-muted-foreground mb-4 max-w-md">
                 {searchTerm || statusFilter !== "all" 
-                  ? "Try adjusting your search or filter criteria"
-                  : "You don't have any assigned trips yet"
+                  ? t('adjustSearchCriteria')
+                  : t('noAssignedTrips')
                 }
               </p>
             </CardContent>
@@ -371,14 +390,14 @@ export default function DriverTrips() {
         ) : (
           filteredTrips.map((trip) => (
             <Card key={trip.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+                  <div className="flex-1">
                     <h3 className="font-semibold text-lg">{trip.tripNumber}</h3>
                     <div className="flex items-center space-x-2 text-muted-foreground">
                       <MapPin className="h-4 w-4" />
                       <span className="text-sm">
-                        {trip.fromCity?.name || 'Unknown'} → {trip.toCity?.name || 'Unknown'}
+                        {trip.fromCity?.name || t('unknown')} → {trip.toCity?.name || t('unknown')}
                       </span>
                     </div>
                   </div>
@@ -390,11 +409,11 @@ export default function DriverTrips() {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
                   <div>
                     <div className="flex items-center space-x-1 text-muted-foreground mb-1">
                       <Calendar className="h-4 w-4" />
-                      <span className="text-sm">Scheduled</span>
+                      <span className="text-sm">{t('scheduled')}</span>
                     </div>
                     <p className="text-sm font-medium">
                       {new Date(trip.scheduledDate).toLocaleDateString()}
@@ -404,9 +423,9 @@ export default function DriverTrips() {
                   <div>
                     <div className="flex items-center space-x-1 text-muted-foreground mb-1">
                       <User className="h-4 w-4" />
-                      <span className="text-sm">Customer</span>
+                      <span className="text-sm">{t('customer')}</span>
                     </div>
-                    <p className="text-sm font-medium">{trip.customer?.name || 'N/A'}</p>
+                    <p className="text-sm font-medium">{trip.customer?.name || t('na')}</p>
                     {trip.customer?.phone && (
                       <p className="text-xs text-muted-foreground">{trip.customer.phone}</p>
                     )}
@@ -415,20 +434,20 @@ export default function DriverTrips() {
                   <div>
                     <div className="flex items-center space-x-1 text-muted-foreground mb-1">
                       <Thermometer className="h-4 w-4" />
-                      <span className="text-sm">Temperature</span>
+                      <span className="text-sm">{t('temperature')}</span>
                     </div>
                     <p className="text-sm font-medium">
-                      {trip.temperature?.option?.replace('_', ' ') || 'Standard'} ({trip.temperature?.value || 0}{trip.temperature?.unit || '°C'})
+                      {trip.temperature?.option?.replace('_', ' ') || t('standard')} ({trip.temperature?.value || 0}{trip.temperature?.unit || '°C'})
                     </p>
                   </div>
                   
                   <div>
                     <div className="flex items-center space-x-1 text-muted-foreground mb-1">
                       <DollarSign className="h-4 w-4" />
-                      <span className="text-sm">Price</span>
+                      <span className="text-sm">{t('price')}</span>
                     </div>
                     <p className="text-sm font-medium">
-                      SAR {trip.price?.toLocaleString() || '0'}
+                      {t('sar')} {trip.price?.toLocaleString() || '0'}
                     </p>
                   </div>
                 </div>
@@ -436,42 +455,45 @@ export default function DriverTrips() {
                 {trip.notes && (
                   <div className="mb-4">
                     <p className="text-sm text-muted-foreground">
-                      <strong>Notes:</strong> {trip.notes}
+                      <strong>{t('notes')}:</strong> {trip.notes}
                     </p>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Truck className="h-4 w-4" />
-                    <span>Vehicle: {trip.vehicle?.vehicleType?.name || trip.vehicle?.vehicleType?.nameAr} ({trip.vehicle?.capacity})</span>
+                    <span className="truncate">{t('vehicle')}: {trip.vehicle?.vehicleType?.name || trip.vehicle?.vehicleType?.nameAr} ({trip.vehicle?.capacity})</span>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     {trip.customer?.phone && (
                       <Button 
                         variant="outline" 
                         size="sm"
+                        className="flex-1 sm:flex-none min-w-[120px]"
                         onClick={() => {
                           window.open(`tel:${trip.customer.phone}`, '_self')
                           toast({
-                            title: "📞 اتصال بالعميل",
-                            description: `جاري الاتصال بـ ${trip.customer.name}`
+                            title: `📞 ${t('callingCustomer')}`,
+                            description: `${t('callingWith')} ${trip.customer.name}`
                           })
                         }}
                       >
                         <Phone className="h-4 w-4 mr-2" />
-                        Call Customer
+                        {t('contactCustomer')}
                       </Button>
                     )}
                     
                     {trip.status === TripStatus.IN_PROGRESS && (
                       <Button 
-                        onClick={() => router.push(`/${language}/driver/tracking?tripId=${trip.id}`)}
+                        onClick={() => router.push(`/${locale}/driver/tracking?tripId=${trip.id}`)}
                         variant="outline" 
                         size="sm"
+                        className="flex-1 sm:flex-none min-w-[100px] relative"
                       >
                         <Navigation className="h-4 w-4 mr-2" />
-                        Track
+                        {t('track')}
+                        <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" title="التتبع التلقائي مفعل" />
                       </Button>
                     )}
 
@@ -480,7 +502,7 @@ export default function DriverTrips() {
                         onClick={() => updateTripStatus(trip.id, getNextStatus(trip.status)!)}
                         disabled={updatingStatus === trip.id}
                         size="sm"
-                        className={getStatusAction(trip.status)?.color}
+                        className={`${getStatusAction(trip.status)?.color} flex-1 sm:flex-none min-w-[140px]`}
                       >
                         {updatingStatus === trip.id ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
@@ -496,13 +518,14 @@ export default function DriverTrips() {
                     <Button 
                       variant="outline" 
                       size="sm"
+                      className="flex-1 sm:flex-none min-w-[100px]"
                       onClick={() => {
                         setSelectedTrip(trip)
                         setShowDetailsModal(true)
                       }}
                     >
                       <Eye className="h-4 w-4 mr-2" />
-                      Details
+                      {t('details')}
                     </Button>
                   </div>
                 </div>
@@ -514,24 +537,24 @@ export default function DriverTrips() {
       
       {/* Trip Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-2xl z-50">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto mx-4 z-50">
           <DialogHeader>
-            <DialogTitle>تفاصيل الرحلة</DialogTitle>
+            <DialogTitle>{t('tripDetails')}</DialogTitle>
             <DialogDescription>
-              عرض تفاصيل الرحلة رقم {selectedTrip?.tripNumber}
+              {t('viewTripDetails')} {selectedTrip?.tripNumber}
             </DialogDescription>
           </DialogHeader>
           
           {selectedTrip && (
             <div className="space-y-6">
               {/* Trip Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">رقم الرحلة</label>
+                  <label className="text-sm font-medium text-muted-foreground">{t('tripNumber')}</label>
                   <p className="font-medium">{selectedTrip.tripNumber}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">الحالة</label>
+                  <label className="text-sm font-medium text-muted-foreground">{t('status')}</label>
                   <div className="mt-1">
                     <Badge className={getStatusColor(selectedTrip.status)}>
                       {getStatusIcon(selectedTrip.status)}
@@ -543,7 +566,7 @@ export default function DriverTrips() {
               
               {/* Route Info */}
               <div>
-                <label className="text-sm font-medium text-muted-foreground">المسار</label>
+                <label className="text-sm font-medium text-muted-foreground">{t('route')}</label>
                 <div className="mt-2 flex items-center gap-2">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-green-500 rounded-full"></div>
@@ -559,9 +582,9 @@ export default function DriverTrips() {
               
               {/* Customer Info */}
               <div>
-                <label className="text-sm font-medium text-muted-foreground">بيانات العميل</label>
+                <label className="text-sm font-medium text-muted-foreground">{t('customerInfo')}</label>
                 <div className="mt-2 p-3 bg-secondary rounded-lg">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                       <p className="font-medium">{selectedTrip.customer?.name}</p>
                       {selectedTrip.customer?.phone && (
@@ -571,16 +594,17 @@ export default function DriverTrips() {
                     {selectedTrip.customer?.phone && (
                       <Button 
                         size="sm" 
+                        className="w-full sm:w-auto"
                         onClick={() => {
                           window.open(`tel:${selectedTrip.customer.phone}`, '_self')
                           toast({
-                            title: "📞 اتصال بالعميل",
-                            description: `جاري الاتصال بـ ${selectedTrip.customer.name}`
+                            title: `📞 ${t('callingCustomer')}`,
+                            description: `${t('callingWith')} ${selectedTrip.customer.name}`
                           })
                         }}
                       >
                         <Phone className="h-4 w-4 mr-2" />
-                        اتصال
+                        {t('call')}
                       </Button>
                     )}
                   </div>

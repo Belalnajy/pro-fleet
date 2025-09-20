@@ -71,7 +71,8 @@ interface LocationData {
   heading?: number;
 }
 
-export default function DriverTrackingPage() {
+export default function DriverTrackingPage({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -89,11 +90,21 @@ export default function DriverTrackingPage() {
   useEffect(() => {
     if (status === "loading") return;
     if (!session || session.user.role !== "DRIVER") {
-      router.push("/auth/signin");
+      router.push(`/${locale}/auth/signin`);
       return;
     }
     fetchCurrentTrip();
   }, [session, status, router, tripId]);
+
+  // Auto-start tracking when component mounts and trip is loaded
+  useEffect(() => {
+    if (currentTrip && currentTrip.status === "IN_PROGRESS" && !isTracking && !locationError) {
+      // Auto-start tracking for active trips
+      setTimeout(() => {
+        startTracking();
+      }, 1000); // Small delay to ensure UI is ready
+    }
+  }, [currentTrip, isTracking, locationError]);
 
   useEffect(() => {
     return () => {
@@ -169,20 +180,33 @@ export default function DriverTrackingPage() {
     };
 
     const errorCallback = (error: GeolocationPositionError) => {
-      let errorMessage = "Unknown location error";
+      let errorMessage = "خطأ غير معروف في الموقع";
+      let errorDetails = "";
+      
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          errorMessage = "Location access denied by user";
+          errorMessage = "تم رفض الوصول للموقع الجغرافي";
+          errorDetails = "يرجى السماح للتطبيق بالوصول للموقع من إعدادات المتصفح";
           break;
         case error.POSITION_UNAVAILABLE:
-          errorMessage = "Location information unavailable";
+          errorMessage = "الموقع الجغرافي غير متاح";
+          errorDetails = "تأكد من تفعيل GPS أو خدمات الموقع على جهازك";
           break;
         case error.TIMEOUT:
-          errorMessage = "Location request timed out";
+          errorMessage = "انتهت مهلة طلب الموقع";
+          errorDetails = "تأكد من اتصالك بالإنترنت وحاول مرة أخرى";
           break;
       }
-      setLocationError(errorMessage);
+      
+      setLocationError(`${errorMessage}. ${errorDetails}`);
       setIsTracking(false);
+      
+      // Show toast with detailed instructions
+      toast({
+        title: "❌ خطأ في التتبع",
+        description: errorMessage,
+        variant: "destructive",
+      });
     };
 
     const id = navigator.geolocation.watchPosition(
@@ -337,8 +361,32 @@ export default function DriverTrackingPage() {
 
         {locationError && (
           <Alert variant="destructive">
-            <MapPin className="h-4 w-4" />
-            <AlertDescription>{locationError}</AlertDescription>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="space-y-2">
+              <div className="font-medium">خطأ في الوصول للموقع الجغرافي</div>
+              <div className="text-sm">{locationError}</div>
+              <div className="mt-3 space-y-2">
+                <div className="text-sm font-medium">خطوات الحل:</div>
+                <div className="text-xs space-y-1">
+                  <div>• اضغط على أيقونة القفل 🔒 في شريط العنوان</div>
+                  <div>• اختر "السماح" للموقع الجغرافي</div>
+                  <div>• أعد تحميل الصفحة وحاول مرة أخرى</div>
+                  <div>• تأكد من تفعيل GPS على جهازك</div>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => {
+                    setLocationError(null);
+                    startTracking();
+                  }}
+                  className="mt-2"
+                >
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  إعادة المحاولة
+                </Button>
+              </div>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -427,18 +475,37 @@ export default function DriverTrackingPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">تفعيل التتبع</span>
-                    <Switch
-                      checked={isTracking}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          startTracking();
-                        } else {
-                          stopTracking();
-                        }
-                      }}
-                    />
+                    <span className="text-sm font-medium">حالة التتبع</span>
+                    <div className="flex items-center gap-2">
+                      {isTracking ? (
+                        <Badge variant="default" className="bg-green-600">
+                          <Navigation className="h-3 w-3 mr-1" />
+                          مفعل
+                        </Badge>
+                      ) : (
+                        <Badge variant="secondary">
+                          <Pause className="h-3 w-3 mr-1" />
+                          معطل
+                        </Badge>
+                      )}
+                      <Switch
+                        checked={isTracking}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            startTracking();
+                          } else {
+                            stopTracking();
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
+
+                  {currentTrip?.status === "IN_PROGRESS" && (
+                    <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                      💡 التتبع مفعل تلقائياً للرحلات النشطة
+                    </div>
+                  )}
 
                   {currentLocation && (
                     <div className="space-y-2 text-sm">
@@ -466,8 +533,15 @@ export default function DriverTrackingPage() {
                   )}
 
                   {isTracking && !currentLocation && (
-                    <div className="text-sm text-muted-foreground">
-                      جاري الحصول على الموقع...
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                      جاري الحصول على الموقع تلقائياً...
+                    </div>
+                  )}
+
+                  {!isTracking && currentTrip?.status === "IN_PROGRESS" && (
+                    <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                      ⚠️ التتبع معطل مؤقتاً - فعل التتبع لبدء إرسال موقعك
                     </div>
                   )}
                 </CardContent>

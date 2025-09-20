@@ -108,5 +108,17 @@
   
   "exportData": "ڈیٹا ایکسپورٹ کریں",
   "downloadData": "ڈیٹا ڈاؤن لوڈ کریں",
-  "dataExported": "ڈیٹا کامیابی سے ایکسپورٹ ہو گیا"
+  "dataExported": "ڈیٹا کامیابی سے ایکسپورٹ ہو گیا",
+  
+  "adminInfo": "ایڈمن کی معلومات",
+  "adminDescription1": "آپ سسٹم ایڈمن ہیں اور آپ کے پاس ایپلیکیشن کے تمام حصوں کو مینج کرنے کی مکمل اجازت ہے۔",
+  "adminDescription2": "آپ تمام صفحات اور ایڈمن فنکشنز تک رسائی حاصل کر سکتے ہیں۔",
+  "enabled": "فعال",
+  "disabled": "غیر فعال",
+  
+  "errorLoadingProfile": "پروفائل لوڈ کرنے میں خرابی",
+  "managePersonalInfo": "اپنی ذاتی معلومات کا انتظام",
+  "managePasswordSecurity": "پاس ورڈ اور سیکیورٹی کی ترتیبات",
+  "updateYourPassword": "اپنا پاس ورڈ اپ ڈیٹ کریں",
+  "enterCurrentAndNewPassword": "موجودہ اور نیا پاس ورڈ داخل کریں"
 }

@@ -14,6 +14,10 @@ import enSettings from '@/locales/en/settings.json'
 import enInvoices from '@/locales/en/invoices.json'
 import enReports from '@/locales/en/reports.json'
 import enProfile from '@/locales/en/profile.json'
+import enCustomer from '@/locales/en/customer.json'
+import enDriver from '@/locales/en/driver.json'
+import enAccountant from '@/locales/en/accountant.json'
+import enAccInvoices from '@/locales/en/acc-invoices.json'
 
 // Import Arabic translations
 import arCommon from '@/locales/ar/common.json'
@@ -31,6 +35,10 @@ import arSettings from '@/locales/ar/settings.json'
 import arInvoices from '@/locales/ar/invoices.json'
 import arReports from '@/locales/ar/reports.json'
 import arProfile from '@/locales/ar/profile.json'
+import arCustomer from '@/locales/ar/customer.json'
+import arDriver from '@/locales/ar/driver.json'
+import arAccountant from '@/locales/ar/accountant.json'
+import arAccInvoices from '@/locales/ar/acc-invoices.json'
 
 // Import Urdu translations
 import urCommon from '@/locales/ur/common.json'
@@ -48,6 +56,10 @@ import urSettings from '@/locales/ur/settings.json'
 import urInvoices from '@/locales/ur/invoices.json'
 import urReports from '@/locales/ur/reports.json'
 import urProfile from '@/locales/ur/profile.json'
+import urCustomer from '@/locales/ur/customer.json'
+import urDriver from '@/locales/ur/driver.json'
+import urAccountant from '@/locales/ur/accountant.json'
+import urAccInvoices from '@/locales/ur/acc-invoices.json'
 
 export const languages = {
   en: {
@@ -87,6 +99,10 @@ export const translations = {
     ...enInvoices,
     ...enReports,
     ...enProfile,
+    ...enCustomer,
+    ...enDriver,
+    ...enAccountant,
+    ...enAccInvoices,
   },
   ar: {
     ...arCommon,
@@ -104,6 +120,10 @@ export const translations = {
     ...arInvoices,
     ...arReports,
     ...arProfile,
+    ...arCustomer,
+    ...arDriver,
+    ...arAccountant,
+    ...arAccInvoices,
   },
   ur: {
     ...urCommon,
@@ -121,6 +141,10 @@ export const translations = {
     ...urInvoices,
     ...urReports,
     ...urProfile,
+    ...urCustomer,
+    ...urDriver,
+    ...urAccountant,
+    ...urAccInvoices,
   },
 } as const
 

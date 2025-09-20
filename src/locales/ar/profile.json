@@ -108,5 +108,17 @@
   
   "exportData": "تصدير البيانات",
   "downloadData": "تحميل البيانات",
-  "dataExported": "تم تصدير البيانات بنجاح"
+  "dataExported": "تم تصدير البيانات بنجاح",
+  
+  "adminInfo": "معلومات المدير",
+  "adminDescription1": "أنت مدير النظام ولديك صلاحيات كاملة لإدارة جميع أجزاء التطبيق.",
+  "adminDescription2": "يمكنك الوصول إلى جميع الصفحات والوظائف الإدارية.",
+  "enabled": "مفعل",
+  "disabled": "معطل",
+  
+  "errorLoadingProfile": "خطأ في تحميل الملف الشخصي",
+  "managePersonalInfo": "إدارة معلوماتك الشخصية",
+  "managePasswordSecurity": "إدارة كلمة المرور وإعدادات الأمان",
+  "updateYourPassword": "تحديث كلمة المرور الخاصة بك",
+  "enterCurrentAndNewPassword": "أدخل كلمة المرور الحالية والجديدة"
 }

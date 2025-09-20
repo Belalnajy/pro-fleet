@@ -108,5 +108,17 @@
   
   "exportData": "Export Data",
   "downloadData": "Download Data",
-  "dataExported": "Data exported successfully"
+  "dataExported": "Data exported successfully",
+  
+  "adminInfo": "Administrator Information",
+  "adminDescription1": "You are a system administrator with full permissions to manage all parts of the application.",
+  "adminDescription2": "You can access all pages and administrative functions.",
+  "enabled": "Enabled",
+  "disabled": "Disabled",
+  
+  "errorLoadingProfile": "Error loading profile",
+  "managePersonalInfo": "Manage your personal information",
+  "managePasswordSecurity": "Manage password and security settings",
+  "updateYourPassword": "Update your password",
+  "enterCurrentAndNewPassword": "Enter current and new password"
 }

@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Textarea } from "@/components/ui/textarea"
 import { PageLoading } from "@/components/ui/loading"
 import { useLanguage } from "@/components/providers/language-provider"
+import { translations } from "@/lib/translations"
 import {
   Plus,
   Search,
@@ -68,7 +69,8 @@ interface VehicleType {
   pricePerKm: number
 }
 
-export default function CustomerTrips() {
+export default function CustomerTrips({ params }: { params: { locale: string } }) {
+  const { locale } = params
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t, language } = useLanguage()
@@ -100,7 +102,7 @@ export default function CustomerTrips() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "CUSTOMER") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchTrips()
       fetchCities()

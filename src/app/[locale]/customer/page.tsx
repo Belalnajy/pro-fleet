@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useLanguage } from "@/components/providers/language-provider"
+import { translations } from "@/lib/translations"
 import {
   Truck,
   MapPin,
@@ -30,7 +31,19 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { locale } = use(params)
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+
+  // Customer-specific translation function to avoid key conflicts
+  const translate = (key: string): string => {
+    const customerTranslations = translations[language as keyof typeof translations];
+    if (customerTranslations && typeof customerTranslations === 'object') {
+      const translation = (customerTranslations as any)[key];
+      if (translation && typeof translation === 'string') {
+        return translation;
+      }
+    }
+    return t(key as any) || key;
+  };
   const [trips, setTrips] = useState<any[]>([])
   const [invoices, setInvoices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -169,36 +182,36 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
 
   return (
     <DashboardLayout
-      title="Customer Dashboard"
-      subtitle={`Welcome back, ${customerInfo.name}!`}
+      title={t("customerDashboard")}
+      subtitle={`${t("welcomeBack")}, ${customerInfo.name}!`}
       actions={
         <Button onClick={() => router.push(`/${locale}/customer/book-trip`)}>
           <Plus className="h-4 w-4 mr-2" />
-          Book New Trip
+          {t("bookNewTrip")}
         </Button>
       }
     >
       {/* Customer Info Card */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Company Information</CardTitle>
+          <CardTitle>{t("companyInformation")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Company Name</label>
+              <label className="text-sm font-medium text-muted-foreground">{t("companyName")}</label>
               <p className="font-semibold">{customerInfo.companyName}</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Contact Person</label>
+              <label className="text-sm font-medium text-muted-foreground">{t("contactPerson")}</label>
               <p className="font-semibold">{customerInfo.name}</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Address</label>
+              <label className="text-sm font-medium text-muted-foreground">{t("address")}</label>
               <p className="font-semibold">{customerInfo.address}</p>
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-muted-foreground">Language</label>
+              <label className="text-sm font-medium text-muted-foreground">{t("language")}</label>
               <p className="font-semibold">{customerInfo.preferredLang.toUpperCase()}</p>
             </div>
           </div>
@@ -209,56 +222,56 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Trips</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("totalTrips")}</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalTrips}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.completedTrips} completed
+              {stats.completedTrips} {t("completed")}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Spent</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("totalSpent")}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {t("currency")} {stats.totalSpent.toLocaleString()}
+              {translate("currency")} {stats.totalSpent.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Lifetime spending
+              {t("lifetimeSpending")}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Trips</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("activeTrips")}</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.inProgressTrips}</div>
             <p className="text-xs text-muted-foreground">
-              Currently in transit
+              {t("currentlyInTransit")}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("pendingPayments")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {t("currency")} {stats.pendingPayments.toLocaleString()}
+              {translate("currency")} {stats.pendingPayments.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Due soon
+              {t("dueSoon")}
             </p>
           </CardContent>
         </Card>
@@ -270,11 +283,11 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Trips</CardTitle>
-                <CardDescription>Your latest shipment activities</CardDescription>
+                <CardTitle>{t("recentTrips")}</CardTitle>
+                <CardDescription>{t("latestShipmentActivities")}</CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={() => router.push(`/${locale}/customer/my-trips`)}>
-                View All
+                {t("viewAll")}
               </Button>
             </div>
           </CardHeader>
@@ -286,10 +299,10 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
             ) : trips.length === 0 ? (
               <div className="text-center py-8">
                 <Truck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No trips found</p>
+                <p className="text-muted-foreground">{t("noTripsFound")}</p>
                 <Button onClick={() => router.push(`/${locale}/customer/book-trip`)} className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />
-                  Book Your First Trip
+                  {t("bookYourFirstTrip")}
                 </Button>
               </div>
             ) : (
@@ -310,7 +323,7 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
                           {trip.vehicle?.type} ({trip.vehicle?.capacity}) • {trip.temperature?.option}
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          Scheduled: {new Date(trip.scheduledDate).toLocaleDateString()}
+                          {t("scheduled")}: {new Date(trip.scheduledDate).toLocaleDateString()}
                         </div>
                       </div>
                     </div>
@@ -320,12 +333,12 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
                         <Badge className={getStatusColor(trip.status)}>
                           <div className="flex items-center space-x-1">
                             {getStatusIcon(trip.status)}
-                            <span>{trip.status?.replace('_', ' ')}</span>
+                            <span>{t(trip.status || 'PENDING')}</span>
                           </div>
                         </Badge>
                       </div>
                       <Button variant="outline" size="sm" onClick={() => router.push(`/${locale}/customer/my-trips`)}>
-                        View
+                        {t("view")}
                       </Button>
                     </div>
                   </div>
@@ -340,11 +353,11 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Recent Invoices</CardTitle>
-                <CardDescription>Your billing and payment history</CardDescription>
+                <CardTitle>{t("recentInvoices")}</CardTitle>
+                <CardDescription>{t("billingPaymentHistory")}</CardDescription>
               </div>
               <Button variant="outline" size="sm" onClick={() => router.push(`/${locale}/customer/invoices`)}>
-                View All
+                {t("viewAll")}
               </Button>
             </div>
           </CardHeader>
@@ -357,16 +370,16 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
                     <div>
                       <h3 className="font-semibold">{invoice.id}</h3>
                       <div className="text-sm text-muted-foreground">
-                        Trip: {invoice.tripId}
+                        {t("trip")}: {invoice.tripId}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        Due: {new Date(invoice.dueDate).toLocaleDateString()}
+                        {t("due")}: {new Date(invoice.dueDate).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="font-semibold">{t("currency")} {(invoice.amount || 0).toLocaleString()}</div>
+                      <div className="font-semibold">{translate("currency")} {(invoice.amount || 0).toLocaleString()}</div>
                       <Badge className={getStatusColor(invoice.status)}>
                         <div className="flex items-center space-x-1">
                           {getStatusIcon(invoice.status)}

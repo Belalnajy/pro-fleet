@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { useTranslation } from "@/hooks/useTranslation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -63,6 +64,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const { locale } = use(params)
+  const { t } = useTranslation()
   
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [searchTerm, setSearchTerm] = useState("")
@@ -121,14 +123,14 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
       })
       
       if (response.ok) {
-        alert("تم معالجة الدفع بنجاح")
+        alert(t('paymentProcessed'))
         fetchInvoices()
       } else {
-        alert("فشل في معالجة الدفع")
+        alert(t('paymentFailed'))
       }
     } catch (error) {
       console.error("Error processing payment:", error)
-      alert("فشل في معالجة الدفع")
+      alert(t('paymentFailed'))
     }
   }
 
@@ -169,15 +171,15 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return "في الانتظار"
+        return t('pendingStatus')
       case 'SENT':
-        return "تم الإرسال"
+        return t('sentStatus')
       case 'PAID':
-        return "مدفوعة"
+        return t('paidStatus')
       case 'OVERDUE':
-        return "متأخرة"
+        return t('overdueStatus')
       case 'CANCELLED':
-        return "ملغاة"
+        return t('cancelled')
       default:
         return status
     }
@@ -207,12 +209,12 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
 
   return (
     <DashboardLayout
-      title="فواتيري"
-      subtitle="عرض ودفع الفواتير الخاصة بك"
+      title={t('myInvoices')}
+      subtitle={t('viewPayInvoices')}
       actions={
         <Button onClick={() => router.push(`/${locale}/customer/book-trip`)}>
           <FileText className="h-4 w-4 mr-2" />
-          حجز رحلة جديدة
+          {t('bookNewTrip')}
         </Button>
       }
     >
@@ -220,7 +222,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي الفواتير</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('totalInvoicesCard')}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -230,7 +232,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">الفواتير المدفوعة</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('paidInvoicesCard')}</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -240,21 +242,21 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">المدفوعات المعلقة</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('pendingPayments')}</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingPayment.toFixed(2)} ر.س</div>
+            <div className="text-2xl font-bold">{stats.pendingPayment.toFixed(2)} {t('currency')}</div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">المبالغ المتأخرة</CardTitle>
+            <CardTitle className="text-sm font-medium">{t('overdueAmounts')}</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.overdueAmount.toFixed(2)} ر.س</div>
+            <div className="text-2xl font-bold">{stats.overdueAmount.toFixed(2)} {t('currency')}</div>
           </CardContent>
         </Card>
       </div>
@@ -262,8 +264,8 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
       {/* Invoices Management */}
       <Card>
         <CardHeader>
-          <CardTitle>إدارة الفواتير</CardTitle>
-          <CardDescription>عرض ودفع فواتيرك</CardDescription>
+          <CardTitle>{t('invoiceManagementCard')}</CardTitle>
+          <CardDescription>{t('viewPayInvoicesDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           {/* Search and Filter */}
@@ -271,7 +273,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="البحث في الفواتير..."
+                placeholder={t('searchInvoicesPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -279,14 +281,14 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="فلترة حسب الحالة" />
+                <SelectValue placeholder={t('filterByStatusPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">جميع الحالات</SelectItem>
-                <SelectItem value="PENDING">في الانتظار</SelectItem>
-                <SelectItem value="SENT">تم الإرسال</SelectItem>
-                <SelectItem value="PAID">مدفوعة</SelectItem>
-                <SelectItem value="OVERDUE">متأخرة</SelectItem>
+                <SelectItem value="all">{t('allStatusesOption')}</SelectItem>
+                <SelectItem value="PENDING">{t('pendingStatus')}</SelectItem>
+                <SelectItem value="SENT">{t('sentStatus')}</SelectItem>
+                <SelectItem value="PAID">{t('paidStatus')}</SelectItem>
+                <SelectItem value="OVERDUE">{t('overdueStatus')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -296,13 +298,13 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>رقم الفاتورة</TableHead>
-                  <TableHead>رقم الرحلة</TableHead>
-                  <TableHead>المسار</TableHead>
-                  <TableHead>المبلغ</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead>تاريخ الاستحقاق</TableHead>
-                  <TableHead>الإجراءات</TableHead>
+                  <TableHead>{t('invoiceNumberCol')}</TableHead>
+                  <TableHead>{t('tripNumberCol')}</TableHead>
+                  <TableHead>{t('routeCol')}</TableHead>
+                  <TableHead>{t('amountCol')}</TableHead>
+                  <TableHead>{t('statusCol')}</TableHead>
+                  <TableHead>{t('dueDateCol')}</TableHead>
+                  <TableHead>{t('actionsCol')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -316,7 +318,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
                       {invoice.trip.fromCity} → {invoice.trip.toCity}
                       {invoice.customsBroker && (
                         <div className="text-sm text-muted-foreground">
-                          وسيط جمركي: {invoice.customsBroker.name}
+                          {t('customsBroker')}: {invoice.customsBroker.name}
                         </div>
                       )}
                     </TableCell>
@@ -325,7 +327,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
                         {invoice.totalAmount.toFixed(2)} {invoice.currency}
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        المبلغ الأساسي: {invoice.subtotal.toFixed(2)}
+                        {t('baseAmount')}: {invoice.subtotal.toFixed(2)}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -354,7 +356,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
                             onClick={() => handlePayInvoice(invoice.id)}
                           >
                             <CreditCard className="h-4 w-4 mr-1" />
-                            دفع
+                            {t('payButton')}
                           </Button>
                         )}
                       </div>
@@ -368,9 +370,9 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
           {filteredInvoices.length === 0 && (
             <div className="text-center py-8">
               <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">لا توجد فواتير</h3>
+              <h3 className="text-lg font-medium mb-2">{t('noInvoicesTitle')}</h3>
               <p className="text-muted-foreground mb-4">
-                لم يتم العثور على فواتير تطابق معايير البحث
+                {t('noInvoicesMessage')}
               </p>
             </div>
           )}

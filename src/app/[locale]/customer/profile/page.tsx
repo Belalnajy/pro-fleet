@@ -54,9 +54,10 @@ interface NotificationSettings {
   promotionalEmails: boolean
 }
 
-export default function CustomerProfile() {
+export default function CustomerProfile({ params }: { params: { locale: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { locale } = params
   const { t, language } = useLanguage()
   
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -78,7 +79,7 @@ export default function CustomerProfile() {
   useEffect(() => {
     if (status === "loading") return
     if (!session || session.user.role !== "CUSTOMER") {
-      router.push("/auth/signin")
+      router.push(`/${locale}/auth/signin`)
     } else {
       fetchProfile()
       fetchNotificationSettings()

@@ -11,6 +11,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
+    "db:seed": "tsx scripts/seed.ts",
     "db:deduplicate-vehicles": "tsx scripts/deduplicate-vehicles.ts"
   },
   "dependencies": {

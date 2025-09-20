@@ -202,11 +202,11 @@ export default function AccountantDashboard({ params }: { params: Promise<{ loca
       subtitle={t("financialOverview")}
       actions={
         <div className="flex space-x-2">
-          <Button variant="outline">
+          {/* <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
             {t("exportReports")}
-          </Button>
-          <Button>
+          </Button> */}
+          <Button onClick={() => router.push(`/${locale}/accountant/invoices`)}>
             <FileText className="h-4 w-4 mr-2" />
             {t("generateInvoice")}
           </Button>

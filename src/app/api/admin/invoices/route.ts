@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { extractCustomsBrokerFromNotes } from "@/lib/customs-broker-helper"
 
 // GET /api/admin/invoices - Fetch all invoices
 export async function GET(request: NextRequest) {
@@ -158,6 +159,9 @@ export async function POST(request: NextRequest) {
     // Calculate total
     const total = subtotal + taxAmount + (customsFees || 0)
 
+    // Extract customs broker ID from trip notes if available
+    const customsBrokerId = await extractCustomsBrokerFromNotes(trip.notes)
+
     // Create invoice
     const invoice = await db.invoice.create({
       data: {
@@ -171,7 +175,8 @@ export async function POST(request: NextRequest) {
         currency: 'SAR',
         paymentStatus: 'PENDING',
         dueDate: new Date(dueDate),
-        notes: notes || null
+        notes: notes || null,
+        customsBrokerId: customsBrokerId
       },
       include: {
         trip: {

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { FileText, Users, Truck, Shield, ArrowLeft, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
+import { DashboardLayout } from '@/components/layout/dashboard-layout';
 
 interface TermsPageProps {
   params: Promise<{
@@ -21,31 +22,23 @@ export default function TermsPage({ params }: TermsPageProps) {
   const { t, dir } = useLanguage();
   
   return (
-    <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-          <div className="mb-4 sm:mb-0">
-            <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-              <FileText className="h-8 w-8 text-primary" />
-              {t('termsTitle')}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {t('termsSubtitle')}
-            </p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Badge variant="outline">
-              {t('lastUpdated')}: {t('lastUpdatedDate')}
-            </Badge>
-            <Link href={`/${locale}`}>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Home className="h-4 w-4" />
-                {t('backToHome')}
-              </Button>
-            </Link>
-          </div>
+    <DashboardLayout
+      title={t('termsTitle')}
+      subtitle={t('termsSubtitle')}
+      actions={
+        <div className="flex items-center space-x-4">
+          <Badge variant="outline">
+            {t('lastUpdated')}: {t('lastUpdatedDate')}
+          </Badge>
+          <Link href={`/${locale}`}>
+            <Button variant="outline" size="sm" className="gap-2">
+              <Home className="h-4 w-4" />
+              {t('backToHome')}
+            </Button>
+          </Link>
         </div>
+      }
+    >
 
         {/* Terms Tabs */}
         <Tabs defaultValue="customer" className="w-full">
@@ -344,7 +337,6 @@ export default function TermsPage({ params }: TermsPageProps) {
             </p>
           </CardContent>
         </Card>
-      </main>
-    </div>
+    </DashboardLayout>
   );
 }

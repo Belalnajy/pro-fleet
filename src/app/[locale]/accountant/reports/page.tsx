@@ -200,10 +200,10 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
               <Download className="h-4 w-4 mr-2" />
               {t("exportExcel")}
             </Button>
-            <Button className="w-full md:w-auto " variant="outline" size="sm" onClick={handleExportPDF}>
+            {/* <Button className="w-full md:w-auto " variant="outline" size="sm" onClick={handleExportPDF}>
               <Download className="h-4 w-4 mr-2" />
               {t("exportPDF")}
-            </Button>
+            </Button> */}
           </div>
         </div>
 
@@ -332,20 +332,40 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("dailyTrends")}</CardTitle>
-                  <CardDescription>{t("dailyRevenueAndTrips")}</CardDescription>
+                  <CardTitle>{t("monthlyExpenses")}</CardTitle>
+                  <CardDescription>{t("expensesOverTime")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={reportData.dailyStats}>
+                    <AreaChart data={reportData.monthlyRevenue}>
                       <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip />
+                      <Area type="monotone" dataKey="expenses" stroke="#ff7300" fill="#ff7300" fillOpacity={0.6} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="grid grid-cols-1 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t("profitLossAnalysis")}</CardTitle>
+                  <CardDescription>{t("monthlyProfitLoss")}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={400}>
+                    <BarChart data={reportData.monthlyRevenue}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Line type="monotone" dataKey="revenue" stroke="#8884d8" name={t("revenue")} />
-                      <Line type="monotone" dataKey="trips" stroke="#82ca9d" name={t("trips")} />
-                    </LineChart>
+                      <Bar dataKey="revenue" fill="#8884d8" name={t("revenue")} />
+                      <Bar dataKey="expenses" fill="#ff7300" name={t("expenses")} />
+                      <Bar dataKey="profit" fill="#00C49F" name={t("profit")} />
+                    </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>

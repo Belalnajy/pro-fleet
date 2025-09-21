@@ -39,5 +39,11 @@
   "loading": "Loading...",
   "tripStatistics": "Trip Statistics",
   "revenue": "Revenue",
-  "trips": "Trips"
+  "trips": "Trips",
+  "monthlyExpenses": "Monthly Expenses",
+  "expensesOverTime": "Expenses Over Time",
+  "profitLossAnalysis": "Profit & Loss Analysis",
+  "monthlyProfitLoss": "Monthly Profit & Loss",
+  "expenses": "Expenses",
+  "profit": "Profit"
 }

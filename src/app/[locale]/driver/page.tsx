@@ -242,7 +242,7 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
                 <span>{t('started')}: {new Date(currentTrip.actualStartDate!).toLocaleString()}</span>
               </div>
 
-              <div className="flex items-center space-x-4">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button className="bg-primary text-primary-foreground hover:bg-primary/80">
                   <Navigation className="h-4 w-4 mr-2" />
                   {t('startNavigation')}
@@ -264,6 +264,13 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
                 >
                   <Eye className="h-4 w-4 mr-2" />
                   {t('viewDetails')}
+                </Button>
+                <Button 
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => router.push(`/${locale}/driver/live-tracking?tripId=${currentTrip.id}`)}
+                >
+                  <MapPin className="h-4 w-4 mr-2" />
+                  🚀 التتبع المباشر
                 </Button>
               </div>
             </div>

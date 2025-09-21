@@ -232,6 +232,13 @@ function SignInInner({ locale }: { locale: string }) {
                 <p className="text-xs text-muted-foreground">{t("financialManagement")}</p>
               </div>
             </Link>
+            <Link href={`/${locale}/auth/signin?demo=broker`}>
+              <div className="text-center p-4 bg-card rounded-lg border hover:bg-accent hover:border-primary transition-colors cursor-pointer">
+                <FileText className="h-6 w-6 text-primary mx-auto mb-2" />
+                <h3 className="font-semibold text-sm">{t("customsBroker")}</h3>
+                <p className="text-xs text-muted-foreground">{t("customsDocuments")}</p>
+              </div>
+            </Link>
           </div>
         </div>
       </div>

@@ -4,8 +4,10 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { MapPin, Users, AlertTriangle } from "lucide-react"
+import { useLanguage } from "@/components/providers/language-provider"
 
 export function TrackingStatusIndicator() {
+  const { t } = useLanguage()
   const [trackingEnabled, setTrackingEnabled] = useState<boolean | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -51,13 +53,13 @@ export function TrackingStatusIndicator() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            حالة نظام التتبع
+            {t("trackingSystemStatus")}
           </CardTitle>
           <Badge 
             variant={trackingEnabled ? "default" : "secondary"}
             className={trackingEnabled ? "bg-green-100 text-green-800" : "bg-orange-100 text-orange-800"}
           >
-            {trackingEnabled ? "مفعل" : "معطل"}
+            {trackingEnabled ? t("enabled") : t("disabled")}
           </Badge>
         </div>
       </CardHeader>
@@ -67,8 +69,8 @@ export function TrackingStatusIndicator() {
             <Users className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">
               {trackingEnabled 
-                ? "العملاء يمكنهم الوصول لصفحة التتبع ومشاهدة مواقع شحناتهم"
-                : "العملاء لا يمكنهم الوصول لصفحة التتبع - تظهر لهم رسالة أن الخدمة غير متاحة"
+                ? t("customersCanAccessTracking")
+                : t("customersCannotAccessTracking")
               }
             </span>
           </div>
@@ -77,7 +79,7 @@ export function TrackingStatusIndicator() {
             <div className="flex items-center gap-2 text-sm text-orange-600 bg-orange-50 p-2 rounded">
               <AlertTriangle className="h-4 w-4" />
               <span>
-                لتفعيل التتبع، اذهب إلى الإعدادات → Operations → Enable Real-Time Tracking
+                {t("enableTrackingInstructions")}
               </span>
             </div>
           )}

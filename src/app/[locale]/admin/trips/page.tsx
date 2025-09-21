@@ -116,6 +116,7 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
   const [vehicles, setVehicles] = useState<any[]>([])
   const [cities, setCities] = useState<any[]>([])
   const [temperatures, setTemperatures] = useState<any[]>([])
+  const [customsBrokers, setCustomsBrokers] = useState<any[]>([])
   const [formError, setFormError] = useState('')
   const [viewTripId, setViewTripId] = useState<string | null>(null)
   const [editTripId, setEditTripId] = useState<string | null>(null)
@@ -134,6 +135,7 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
     scheduledDate: "",
     price: "",
     notes: "",
+    customsBrokerId: "",
     originLocation: null as LocationData | null,
     destinationLocation: null as LocationData | null
   })
@@ -151,12 +153,13 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
   const loadFormData = async () => {
     try {
       console.log("Loading form data...")
-      const [cRes, dRes, vRes, ciRes, tRes] = await Promise.all([
+      const [cRes, dRes, vRes, ciRes, tRes, cbRes] = await Promise.all([
         fetch("/api/admin/customers"),
         fetch("/api/admin/drivers"),
         fetch("/api/admin/vehicles"),
         fetch("/api/admin/cities"),
         fetch("/api/admin/temperatures"),
+        fetch("/api/admin/customs-brokers"),
       ])
       
       if (cRes.ok) {
@@ -197,6 +200,14 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
         setTemperatures(temperaturesData)
       } else {
         console.error("Failed to load temperatures:", tRes.status)
+      }
+      
+      if (cbRes.ok) {
+        const customsBrokersData = await cbRes.json()
+        console.log("Customs brokers loaded:", customsBrokersData)
+        setCustomsBrokers(customsBrokersData)
+      } else {
+        console.error("Failed to load customs brokers:", cbRes.status)
       }
     } catch (e) {
       console.error("Error loading form data", e)
@@ -271,6 +282,7 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
       scheduledDate: "",
       price: "",
       notes: "",
+      customsBrokerId: "none",
       originLocation: null,
       destinationLocation: null
     })
@@ -311,7 +323,7 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
           temperatureId: tripForm.temperatureId,
           scheduledDate: tripForm.scheduledDate,
           price: parseFloat(tripForm.price),
-          notes: tripForm.notes,
+          notes: `${tripForm.notes || 'Admin created trip'}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}`,
           originLocation: tripForm.originLocation,
           destinationLocation: tripForm.destinationLocation,
         }),
@@ -398,6 +410,7 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
         scheduledDate: trip.scheduledDate.slice(0, 16), // Format for datetime-local
         price: trip.price.toString(),
         notes: trip.notes || '',
+        customsBrokerId: (trip as any).customsBrokerId || 'none',
         originLocation: null,
         destinationLocation: null
       })
@@ -424,7 +437,7 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
           temperatureId: tripForm.temperatureId,
           scheduledDate: tripForm.scheduledDate,
           price: parseFloat(tripForm.price),
-          notes: tripForm.notes
+          notes: `${tripForm.notes || 'Updated by admin'}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}`
         })
       })
       
@@ -1004,6 +1017,23 @@ return (
                   placeholder="0.00"
                 />
               </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">المخلص الجمركي</Label>
+                <Select value={tripForm.customsBrokerId} onValueChange={(v) => setTripForm(prev => ({ ...prev, customsBrokerId: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر المخلص الجمركي (اختياري)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون مخلص جمركي</SelectItem>
+                    {customsBrokers.map((broker) => (
+                      <SelectItem key={broker.id} value={broker.id}>
+                        {broker.name} - {broker.licenseNumber || 'غير محدد'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             
             <div className="md:col-span-2 space-y-2">
               <Label className="text-sm font-medium">{t('notes')}</Label>
@@ -1323,6 +1353,23 @@ return (
                   onChange={(e) => setTripForm(prev => ({ ...prev, price: e.target.value }))} 
                   placeholder="0.00"
                 />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">المخلص الجمركي</Label>
+                <Select value={tripForm.customsBrokerId} onValueChange={(v) => setTripForm(prev => ({ ...prev, customsBrokerId: v }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر المخلص الجمركي (اختياري)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">بدون مخلص جمركي</SelectItem>
+                    {customsBrokers.map((broker) => (
+                      <SelectItem key={broker.id} value={broker.id}>
+                        {broker.name} - {broker.licenseNumber || 'غير محدد'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             
               <div className="md:col-span-2 space-y-2">

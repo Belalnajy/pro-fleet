@@ -1,0 +1,230 @@
+/* Customs Broker Responsive Styles */
+
+/* Global responsive improvements */
+.customs-responsive {
+  /* Ensure proper spacing on all screen sizes */
+}
+
+/* Mobile-first approach for customs broker page */
+@media (max-width: 640px) {
+  /* Tab buttons responsive */
+  .customs-tab-buttons {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  
+  .customs-tab-button {
+    min-width: fit-content;
+    white-space: nowrap;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+  
+  /* Stats cards responsive */
+  .customs-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  /* Invoice cards responsive */
+  .customs-invoice-card {
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .customs-invoice-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .customs-invoice-actions {
+    flex-direction: row;
+    gap: 0.5rem;
+    width: 100%;
+  }
+  
+  .customs-invoice-action-btn {
+    flex: 1;
+    font-size: 0.75rem;
+    padding: 0.5rem;
+  }
+  
+  /* Quick actions responsive */
+  .customs-quick-actions {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .customs-quick-action-btn {
+    height: 4rem;
+    padding: 0.5rem;
+  }
+  
+  .customs-quick-action-icon {
+    width: 1rem;
+    height: 1rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .customs-quick-action-text {
+    font-size: 0.75rem;
+    text-align: center;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  /* Tablet styles */
+  .customs-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .customs-quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  .customs-tab-button {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 769px) {
+  /* Desktop styles */
+  .customs-stats-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+  
+  .customs-quick-actions {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  
+  .customs-invoice-actions {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* Modal responsive styles */
+@media (max-width: 640px) {
+  .customs-modal {
+    max-width: 95vw !important;
+    max-height: 90vh !important;
+    overflow-y: auto;
+    margin: 1rem;
+  }
+  
+  .customs-modal-content {
+    padding: 1rem;
+  }
+  
+  .customs-modal-form {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+  
+  .customs-modal-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .customs-modal-btn {
+    width: 100%;
+  }
+}
+
+/* Form responsive styles */
+.customs-form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (max-width: 640px) {
+  .customs-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 641px) {
+  .customs-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Table responsive styles */
+@media (max-width: 768px) {
+  .customs-table-container {
+    overflow-x: auto;
+  }
+  
+  .customs-table {
+    min-width: 600px;
+  }
+  
+  .customs-table th,
+  .customs-table td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Badge responsive styles */
+@media (max-width: 640px) {
+  .customs-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+/* Button responsive styles */
+@media (max-width: 640px) {
+  .customs-btn-responsive {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .customs-btn-icon {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+}
+
+/* Card responsive styles */
+@media (max-width: 640px) {
+  .customs-card {
+    margin: 0.5rem;
+    padding: 0.75rem;
+  }
+  
+  .customs-card-header {
+    padding-bottom: 0.75rem;
+  }
+  
+  .customs-card-title {
+    font-size: 1rem;
+  }
+  
+  .customs-card-description {
+    font-size: 0.875rem;
+  }
+}
+
+/* Spacing utilities for mobile */
+@media (max-width: 640px) {
+  .customs-spacing-mobile {
+    margin-bottom: 1rem !important;
+  }
+  
+  .customs-gap-mobile {
+    gap: 0.5rem !important;
+  }
+  
+  .customs-padding-mobile {
+    padding: 0.75rem !important;
+  }
+}

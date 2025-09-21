@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
-import { useLanguage } from "@/components/providers/language-provider"
+import { useTranslation } from "@/hooks/useTranslation"
 import { PlusCircle, Edit, Trash2, Search, Settings, Thermometer, Truck } from "lucide-react"
 
 interface VehicleTypeModel {
@@ -38,7 +38,7 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
   const { data: session, status } = useSession()
   const router = useRouter()
   const { locale } = use(params)
-  const { t } = useLanguage()
+  const { t } = useTranslation()
 
   const [items, setItems] = useState<VehicleTypeModel[]>([])
   const [temps, setTemps] = useState<TemperatureSetting[]>([])
@@ -83,7 +83,7 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
       setTemps(Array.isArray(tempsJson) ? tempsJson : [])
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred")
-      toast.error("فشل التحميل", { description: err.message })
+      toast.error(t('loadingFailed'), { description: err.message })
     } finally {
       setLoading(false)
     }
@@ -136,7 +136,7 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
         isActive: formData.isActive,
       }
       if (!payload.name) {
-        setError("الاسم مطلوب")
+        setError(t('fillRequiredFields'))
         return
       }
 
@@ -147,8 +147,8 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
           body: JSON.stringify({ id: editing.id, ...payload }),
         })
         const json = await res.json()
-        if (!res.ok) throw new Error(json?.error || "فشل التحديث")
-        toast.success("تم التحديث بنجاح")
+        if (!res.ok) throw new Error(json?.error || t('errorUpdating'))
+        toast.success(t('vehicleTypeUpdated'))
       } else {
         const res = await fetch("/api/admin/vehicle-types", {
           method: "POST",
@@ -156,14 +156,14 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
           body: JSON.stringify(payload),
         })
         const json = await res.json()
-        if (!res.ok) throw new Error(json?.error || "فشل الإنشاء")
-        toast.success("تمت الإضافة بنجاح")
+        if (!res.ok) throw new Error(json?.error || t('errorCreating'))
+        toast.success(t('vehicleTypeCreated'))
       }
       setIsDialogOpen(false)
       await fetchData()
     } catch (err: any) {
-      setError(err.message || "حدث خطأ غير متوقع")
-      toast.error("خطأ", { description: err.message })
+      setError(err.message || "An unexpected error occurred")
+      toast.error(t('error'), { description: err.message })
     }
   }
 
@@ -175,11 +175,11 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
         body: JSON.stringify({ id }),
       })
       const json = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(json?.error || "فشل الحذف")
-      toast.success("تم الحذف")
+      if (!res.ok) throw new Error(json?.error || t('errorDeleting'))
+      toast.success(t('vehicleTypeDeleted'))
       await fetchData()
     } catch (err: any) {
-      toast.error("خطأ في الحذف", { description: err.message })
+      toast.error(t('errorDeleting'), { description: err.message })
     }
   }
 
@@ -187,31 +187,29 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
     <DashboardLayout>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Truck className="h-6 w-6" />
-            إدارة أنواع المركبات (ديناميكي)
-          </h1>
-          <p className="text-muted-foreground">إنشاء وتعديل وحذف أنواع المركبات لاستخدامها عبر النظام</p>
+          <h1 className="text-3xl font-bold">{t('vehicleTypesManagement')}</h1>
+          <p className="text-muted-foreground">{t('vehicleTypesDescription')}</p>
         </div>
         <Button onClick={() => handleOpenDialog(null)}>
-          <PlusCircle className="h-4 w-4 mr-2" /> إضافة نوع
+          <PlusCircle className="h-4 w-4 mr-2" />
+          {t('addVehicleType')}
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>الأنواع</CardTitle>
-          <CardDescription>البحث وإدارة الأنواع</CardDescription>
+          <CardTitle>{t('vehicleTypes')}</CardTitle>
+          <CardDescription>{t('searchAndManageVehicleTypes')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2 mb-4">
             <div className="relative w-full max-w-md">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="ابحث بالاسم أو الوصف أو السعة"
+                placeholder={t('searchVehicleTypes')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10"
+                className="max-w-sm"
               />
             </div>
           </div>
@@ -222,13 +220,13 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>الاسم (EN)</TableHead>
-                  <TableHead>الاسم (AR)</TableHead>
-                  <TableHead>السعة</TableHead>
-                  <TableHead>تبريد</TableHead>
-                  <TableHead>الحرارة الافتراضية</TableHead>
-                  <TableHead>الحالة</TableHead>
-                  <TableHead className="text-right">إجراءات</TableHead>
+                  <TableHead>{t('nameEn')}</TableHead>
+                  <TableHead>{t('nameAr')}</TableHead>
+                  <TableHead>{t('capacity')}</TableHead>
+                  <TableHead>{t('refrigerated')}</TableHead>
+                  <TableHead>{t('defaultTemperature')}</TableHead>
+                  <TableHead>{t('status')}</TableHead>
+                  <TableHead className="text-right">{t('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -240,7 +238,7 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
                       <TableCell>{it.capacity || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={it.isRefrigerated ? "default" : "secondary"}>
-                          {it.isRefrigerated ? "نعم" : "لا"}
+                          {it.isRefrigerated ? t('yes') : t('no')}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -252,7 +250,7 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
                       </TableCell>
                       <TableCell>
                         <Badge variant={it.isActive ? "default" : "secondary"}>
-                          {it.isActive ? "نشط" : "غير نشط"}
+                          {it.isActive ? t('active') : t('inactive')}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right space-x-2 rtl:space-x-reverse">
@@ -268,7 +266,7 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
                 ) : (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center h-24">
-                      لا توجد نتائج مطابقة.
+                      {t('noVehicleTypesFound')}
                     </TableCell>
                   </TableRow>
                 )}
@@ -281,49 +279,49 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[560px]">
           <DialogHeader>
-            <DialogTitle>{editing ? "تعديل نوع" : "إضافة نوع"}</DialogTitle>
+            <DialogTitle>{editing ? t('editVehicleType') : t('addVehicleType')}</DialogTitle>
             <DialogDescription>
-              {editing ? "قم بتحديث بيانات النوع" : "أضف نوع مركبة جديد"}
+              {editing ? t('editVehicleTypeDialog') : t('addVehicleTypeDialog')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">الاسم (EN)</Label>
+              <Label htmlFor="name" className="text-right">{t('nameEn')}</Label>
               <Input id="name" value={formData.name} onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="nameAr" className="text-right">الاسم (AR)</Label>
+              <Label htmlFor="nameAr" className="text-right">{t('nameAr')}</Label>
               <Input id="nameAr" value={formData.nameAr} onChange={(e) => setFormData((p) => ({ ...p, nameAr: e.target.value }))} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="capacity" className="text-right">السعة</Label>
+              <Label htmlFor="capacity" className="text-right">{t('capacity')}</Label>
               <Input id="capacity" value={formData.capacity} onChange={(e) => setFormData((p) => ({ ...p, capacity: e.target.value }))} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">الوصف</Label>
+              <Label htmlFor="description" className="text-right">{t('description')}</Label>
               <Textarea id="description" value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="isRefrigerated" className="text-right">تبريد</Label>
+              <Label htmlFor="isRefrigerated" className="text-right">{t('refrigerated')}</Label>
               <Select value={formData.isRefrigerated ? "yes" : "no"} onValueChange={(v) => setFormData((p) => ({ ...p, isRefrigerated: v === "yes" }))}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="yes">نعم</SelectItem>
-                  <SelectItem value="no">لا</SelectItem>
+                  <SelectItem value="yes">{t('yes')}</SelectItem>
+                  <SelectItem value="no">{t('no')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="defaultTemperatureId" className="text-right">الحرارة الافتراضية</Label>
+              <Label htmlFor="defaultTemperatureId" className="text-right">{t('defaultTemperature')}</Label>
               <Select value={formData.defaultTemperatureId} onValueChange={(v) => setFormData((p) => ({ ...p, defaultTemperatureId: v === "__none__" ? "" : v }))}>
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="اختر حرارة" />
+                  <SelectValue placeholder={t('selectTemperature')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">بدون</SelectItem>
+                  <SelectItem value="__none__">{t('none')}</SelectItem>
                   {temps.filter((t) => t.isActive).map((t) => (
                     <SelectItem key={t.id} value={t.id}>{t.option} ({t.value}{t.unit})</SelectItem>
                   ))}
@@ -331,14 +329,14 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="isActive" className="text-right">الحالة</Label>
+              <Label htmlFor="isActive" className="text-right">{t('status')}</Label>
               <Select value={formData.isActive ? "active" : "inactive"} onValueChange={(v) => setFormData((p) => ({ ...p, isActive: v === "active" }))}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">نشط</SelectItem>
-                  <SelectItem value="inactive">غير نشط</SelectItem>
+                  <SelectItem value="active">{t('active')}</SelectItem>
+                  <SelectItem value="inactive">{t('inactive')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -351,8 +349,8 @@ export default function VehicleTypesManagement({ params }: { params: Promise<{ l
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={handleCloseDialog}>إلغاء</Button>
-            <Button onClick={handleSubmit}>{editing ? "تحديث" : "إنشاء"}</Button>
+            <Button variant="outline" onClick={handleCloseDialog}>{t('cancel')}</Button>
+            <Button onClick={handleSubmit}>{editing ? t('update') : t('create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

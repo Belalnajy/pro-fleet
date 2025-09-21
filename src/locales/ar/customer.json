@@ -128,7 +128,7 @@
   "refresh": "تحديث",
   "searchTripNumberCity": "البحث برقم الرحلة أو المدينة...",
   "noTripsToShow": "لا توجد رحلات للعرض",
-  "bookNewTrip": "احجز رحلة جديدة",
+  "bookNewTripButton": "احجز رحلة جديدة",
   "active": "نشط",
   "trackingPoints": "نقطة تتبع",
   "updated": "تم التحديث",
@@ -204,5 +204,9 @@
   "orSelectFromSavedAddresses": "أو اختر من العناوين المحفوظة",
   "selectFromSavedAddresses": "اختر من العناوين المحفوظة",
   "cannotCancelTrip": "لا يمكن إلغاء هذه الرحلة",
-  "onlyPendingTripsCanBeCancelled": "يمكن إلغاء الرحلات المعلقة فقط"
+  "onlyPendingTripsCanBeCancelled": "يمكن إلغاء الرحلات المعلقة فقط",
+  "customsBroker": "المخلص الجمركي",
+  "selectCustomsBroker": "اختر المخلص الجمركي",
+  "noCustomsBroker": "بدون مخلص جمركي",
+  "customsBrokerOptional": "اختيار المخلص الجمركي اختياري - يمكن تعيينه لاحقاً"
 }

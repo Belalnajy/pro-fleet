@@ -22,6 +22,8 @@ import {
   Activity,
   AlertCircle,
   CheckCircle,
+  MapPin,
+  Receipt,
 } from "lucide-react"
 
 export default function AdminDashboard({ params }: { params: Promise<{ locale: string }> }) {
@@ -30,7 +32,6 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
   const router = useRouter()
   const { t, language } = useLanguage()
   const [loading, setLoading] = useState(true)
-  const [seedLoading, setSeedLoading] = useState(false)
   const [stats, setStats] = useState({
     totalTrips: 0,
     activeTrips: 0,
@@ -68,25 +69,6 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
     }
   }
 
-  const handleSeedDemoData = async () => {
-    setSeedLoading(true)
-    try {
-      const response = await fetch("/api/seed", {
-        method: "POST",
-      })
-      if (response.ok) {
-        alert("Demo data seeded successfully!")
-        window.location.reload()
-      } else {
-        alert("Failed to seed demo data")
-      }
-    } catch (error) {
-      alert("Error seeding demo data")
-    } finally {
-      setSeedLoading(false)
-    }
-  }
-
   if (status === "loading" || loading) {
     return (
       <DashboardLayout>
@@ -99,7 +81,6 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
     return null
   }
 
-  // Use real stats data
   const kpis = {
     totalUsers: stats.totalUsers,
     totalVehicles: stats.totalVehicles,
@@ -163,12 +144,20 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
       bgColor: "bg-indigo-50",
     },
     {
-      title: t("subscriptionPlans"),
-      description: t("subscriptionPlansDesc"),
-      icon: Settings,
-      href: "/admin/subscriptions",
+      title: t("liveTracking"),
+      description: t("liveTrackingDesc"),
+      icon: MapPin,
+      href: "/admin/live-tracking",
       color: "text-pink-600",
       bgColor: "bg-pink-50",
+    },
+    {
+      title: t("customsTariffs"),
+      description: t("customsTariffsDesc"),
+      icon: Receipt,
+      href: "/admin/customs-tariffs",
+      color: "text-teal-600",
+      bgColor: "bg-teal-50",
     },
     {
       title: t("systemSettings"),
@@ -180,47 +169,8 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
     },
   ]
 
-  const recentActivities = [
-    {
-      id: 1,
-      type: "user_created",
-      message: t("newDriverCreated"),
-      time: `2 ${t("minutesAgo")}`,
-      status: "success",
-    },
-    {
-      id: 2,
-      type: "trip_completed",
-      message: t("tripCompleted"),
-      time: `1 ${t("hourAgo")}`,
-      status: "success",
-    },
-    {
-      id: 3,
-      type: "invoice_generated",
-      message: t("invoiceGenerated"),
-      time: `3 ${t("hoursAgo")}`,
-      status: "info",
-    },
-    {
-      id: 4,
-      type: "system_alert",
-      message: t("maintenanceDue"),
-      time: `5 ${t("hoursAgo")}`,
-      status: "warning",
-    },
-  ]
-
   return (
-    <DashboardLayout
-      title={t("dashboard")}
-      subtitle={t("reportsAnalyticsDesc")}
-      actions={
-        <Button onClick={handleSeedDemoData} disabled={seedLoading}>
-          {seedLoading ? t("seeding") : t("seedDemoData")}
-        </Button>
-      }
-    >
+    <DashboardLayout title={t("dashboard")} subtitle={t("reportsAnalyticsDesc")}>
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <Card>
@@ -371,43 +321,8 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
         </div>
       </div>
 
-      {/* Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("recentActivities")}</CardTitle>
-            <CardDescription>{t("recentActivitiesDesc")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-2 h-2 rounded-full ${
-                      activity.status === "success" ? "bg-green-500" :
-                      activity.status === "warning" ? "bg-yellow-500" :
-                      activity.status === "error" ? "bg-red-500" : "bg-blue-500"
-                    }`} />
-                    <div>
-                      <p className="font-medium text-sm">{activity.message}</p>
-                      <p className="text-xs text-muted-foreground">{activity.time}</p>
-                    </div>
-                  </div>
-                  <Badge variant={
-                    activity.status === "success" ? "default" :
-                    activity.status === "warning" ? "secondary" :
-                    activity.status === "error" ? "destructive" : "outline"
-                  }>
-                    {activity.status === "success" ? t("success") :
-                     activity.status === "warning" ? t("warning") :
-                     activity.status === "error" ? t("error") : t("info")}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
+      {/* Quick Stats - Single Card */}
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>{t("quickStats")}</CardTitle>
@@ -418,23 +333,23 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm">{t("completedTrips")}</span>
+                  <span className="text-sm">{t("totalTrips")}</span>
                 </div>
-                <span className="font-semibold">142</span>
+                <span className="font-semibold">{kpis.totalTrips}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Activity className="h-4 w-4 text-blue-500" />
-                  <span className="text-sm">{t("inProgress")}</span>
+                  <span className="text-sm">{t("activeTrips")}</span>
                 </div>
-                <span className="font-semibold">6</span>
+                <span className="font-semibold">{kpis.activeTrips}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <AlertCircle className="h-4 w-4 text-yellow-500" />
-                  <span className="text-sm">{t("pendingTrips")}</span>
+                  <Truck className="h-4 w-4 text-green-500" />
+                  <span className="text-sm">{t("totalVehicles")}</span>
                 </div>
-                <span className="font-semibold">8</span>
+                <span className="font-semibold">{kpis.totalVehicles}</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">

@@ -62,7 +62,7 @@ export function Navigation({ className }: NavigationProps) {
           { href: `/${language}/admin/vehicles`, label: t("vehicles"), icon: Truck },
           { href: `/${language}/admin/pricing`, label: t("pricing"), icon: Calculator },
           { href: `/${language}/admin/trips`, label: t("trips"), icon: FileText },
-          { href: `/${language}/admin/tracking`, label: t("tracking"), icon: MapPin },
+          { href: `/${language}/admin/live-tracking`, label: t("tracking"), icon: NavigationIcon },
           { href: `/${language}/admin/invoices`, label: t("invoices"), icon: FileText },
           { href: `/${language}/admin/reports`, label: t("reports"), icon: FileText },
           { href: `/${language}/admin/settings`, label: t("settings"), icon: Settings },
@@ -72,7 +72,7 @@ export function Navigation({ className }: NavigationProps) {
         return [
           ...baseItems,
           { href: `/${language}/driver/trips`, label: t("trips"), icon: FileText },
-          { href: `/${language}/driver/tracking`, label: t("tracking"), icon: NavigationIcon },
+          { href: `/${language}/driver/live-tracking`, label: t("tracking"), icon: MapPin },
           { href: `/${language}/profile`, label: t("profile"), icon: User },
         ]
       case "CUSTOMER":
@@ -96,9 +96,9 @@ export function Navigation({ className }: NavigationProps) {
       case "CUSTOMS_BROKER":
         return [
           ...baseItems,
-          { href: `/${language}/customs-broker/shipments`, label: t("trips"), icon: FileText },
-          { href: `/${language}/customs-broker/fees`, label: t("pricing"), icon: Calculator },
-
+          { href: `/${language}/customs-broker/clearances`, label: t("clearanceManagement"), icon: Shield },
+          { href: `/${language}/customs-broker/documents`, label: t("documentsManagement"), icon: FileText },
+          { href: `/${language}/customs-broker/calculator`, label: t("feeCalculator"), icon: Calculator },
         ]
       default:
         return baseItems

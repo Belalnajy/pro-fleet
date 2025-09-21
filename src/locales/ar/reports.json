@@ -39,5 +39,11 @@
   "loading": "جارٍ التحميل...",
   "tripStatistics": "إحصائيات الرحلات",
   "revenue": "الإيرادات",
-  "trips": "الرحلات"
+  "trips": "الرحلات",
+  "monthlyExpenses": "المصروفات الشهرية",
+  "expensesOverTime": "تطور المصروفات بمرور الوقت",
+  "profitLossAnalysis": "تحليل الأرباح والخسائر",
+  "monthlyProfitLoss": "الأرباح والخسائر الشهرية",
+  "expenses": "المصروفات",
+  "profit": "الأرباح"
 }

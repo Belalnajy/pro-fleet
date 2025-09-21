@@ -39,5 +39,11 @@
   "loading": "لوڈ ہو رہا ہے...",
   "tripStatistics": "سفر کی اعداد و شمار",
   "revenue": "آمدنی",
-  "trips": "سفر"
+  "trips": "سفر",
+  "monthlyExpenses": "ماہانہ اخراجات",
+  "expensesOverTime": "وقت کے ساتھ اخراجات",
+  "profitLossAnalysis": "نفع نقصان کا تجزیہ",
+  "monthlyProfitLoss": "ماہانہ نفع نقصان",
+  "expenses": "اخراجات",
+  "profit": "نفع"
 }

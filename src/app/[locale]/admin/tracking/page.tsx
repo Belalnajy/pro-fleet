@@ -102,8 +102,8 @@ export default function AdminTrackingPage({ params }: { params: Promise<{ locale
     }
     fetchActiveTrips();
     
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchActiveTrips, 30000);
+    // Auto-refresh every 10 seconds for live tracking
+    const interval = setInterval(fetchActiveTrips, 10000);
     return () => clearInterval(interval);
   }, [session, status, router]);
 
@@ -367,9 +367,9 @@ export default function AdminTrackingPage({ params }: { params: Promise<{ locale
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">30</div>
+              <div className="text-2xl font-bold">10</div>
               <p className="text-xs text-muted-foreground">
-                {t("secondsBetweenUpdates")}
+                ثوانِ بين التحديثات
               </p>
             </CardContent>
           </Card>
@@ -688,7 +688,7 @@ export default function AdminTrackingPage({ params }: { params: Promise<{ locale
                       {/* Tracking History */}
                       {realData.trackingLogs.length > 0 && (
                         <div className="space-y-2">
-                          <h4 className="font-medium">{t("trackingHistory")} ({realData.trackingLogs.length} {t("points")})</h4>
+                          <h4 className="font-medium">تاريخ التتبع ({realData.trackingLogs.length} نقطة)</h4>
                           <div className="max-h-32 overflow-y-auto space-y-1">
                             {realData.trackingLogs.slice(0, 5).map((log, index) => (
                               <div key={log.id} className="flex items-center justify-between text-sm p-2 bg-background rounded border">

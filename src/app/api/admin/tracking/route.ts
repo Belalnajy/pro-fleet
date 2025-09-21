@@ -52,6 +52,14 @@ export async function GET(req: NextRequest) {
         status: trip.status,
         fromCity: trip.fromCity.name,
         toCity: trip.toCity.name,
+        fromCityCoords: {
+          lat: trip.fromCity.latitude || 24.7136,
+          lng: trip.fromCity.longitude || 46.6753
+        },
+        toCityCoords: {
+          lat: trip.toCity.latitude || 24.7136,
+          lng: trip.toCity.longitude || 46.6753
+        },
         vehicle: `${trip.vehicle.vehicleType?.name || trip.vehicle.vehicleTypeId} - ${trip.vehicle.capacity}`,
         scheduledDate: trip.scheduledDate,
         actualStartDate: trip.actualStartDate

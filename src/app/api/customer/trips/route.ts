@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
       price,
       notes,
       vehicleId,
+      customsBrokerId,
     } = body
 
     console.log('Received trip data:', body)

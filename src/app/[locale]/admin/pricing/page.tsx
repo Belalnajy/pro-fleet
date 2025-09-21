@@ -299,11 +299,11 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
           <input ref={importInputRef} type="file" accept=".csv" className="hidden" onChange={handleImportFileChange} />
           <Button className="w-auto" variant="outline" onClick={handleImportClick}>
             <Upload className="h-4 w-4 mr-2" />
-            Import Excel
+            {translate('importExcelButton')}
           </Button>
           <Button variant="outline" onClick={handleExportClick}>
             <Download className="h-4 w-4 mr-2" />
-            Export Excel
+            {translate('exportExcelButton')}
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
             setIsAddDialogOpen(open)
@@ -315,29 +315,29 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
             <DialogTrigger asChild>
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                Add Pricing
+                {translate('addPricingButton')}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>
-                  {editingPricing ? "Edit Pricing" : "Add New Pricing"}
+                  {editingPricing ? translate('editPricingDialog') : translate('addNewPricingDialog')}
                 </DialogTitle>
                 <DialogDescription>
-                  {editingPricing ? "Update pricing information" : "Add new route pricing"}
+                  {editingPricing ? translate('updatePricingInfo') : translate('addNewRoutePricing')}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="fromCity" className="text-right">
-                    From
+                    {translate('from')}
                   </Label>
                   <Select
                     value={formData.fromCityId}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, fromCityId: value }))}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select origin city" />
+                      <SelectValue placeholder={translate('selectOriginCity')} />
                     </SelectTrigger>
                     <SelectContent>
                       {cities.map((city) => (
@@ -350,14 +350,14 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="toCity" className="text-right">
-                    To
+                    {translate('to')}
                   </Label>
                   <Select
                     value={formData.toCityId}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, toCityId: value }))}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select destination city" />
+                      <SelectValue placeholder={translate('selectDestinationCity')} />
                     </SelectTrigger>
                     <SelectContent>
                       {cities.map((city) => (
@@ -370,14 +370,14 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="vehicle" className="text-right">
-                    Vehicle
+                    {translate('vehicle')}
                   </Label>
                   <Select
                     value={formData.vehicleId}
                     onValueChange={(value) => setFormData(prev => ({ ...prev, vehicleId: value }))}
                   >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select vehicle type" />
+                      <SelectValue placeholder={translate('selectVehicleType')} />
                     </SelectTrigger>
                     <SelectContent>
                       {vehicles.map((vehicle) => (
@@ -390,7 +390,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="quantity" className="text-right">
-                    Quantity
+                    {translate('quantity')}
                   </Label>
                   <Input
                     id="quantity"
@@ -403,7 +403,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="price" className="text-right">
-                    Price
+                    {translate('price')}
                   </Label>
                   <Input
                     id="price"
@@ -418,7 +418,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="currency" className="text-right">
-                    Currency
+                    {translate('currency')}
                   </Label>
                   <Select
                     value={formData.currency}
@@ -442,10 +442,10 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
               )}
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancel
+                  {translate('cancel')}
                 </Button>
                 <Button onClick={handleSubmit}>
-                  {editingPricing ? "Update" : "Create"}
+                  {editingPricing ? translate('update') : translate('create')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -457,7 +457,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Routes</CardTitle>
+            <CardTitle className="text-sm font-medium">{translate('totalRoutes')}</CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -466,7 +466,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cities</CardTitle>
+            <CardTitle className="text-sm font-medium">{translate('cities')}</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -475,7 +475,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Vehicles</CardTitle>
+            <CardTitle className="text-sm font-medium">{translate('vehicles')}</CardTitle>
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -484,7 +484,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Price</CardTitle>
+            <CardTitle className="text-sm font-medium">{translate('avgPrice')}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -501,14 +501,14 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
       {/* Search and Filter */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
+          <CardTitle>{translate('searchAndFilter')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-4">
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search routes..."
+                placeholder={translate('searchRoutesPlaceholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -521,9 +521,9 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
       {/* Pricing Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Route Pricing</CardTitle>
+          <CardTitle>{translate('routePricing')}</CardTitle>
           <CardDescription>
-            Manage pricing for different routes and vehicle types
+            {translate('managePricingForRoutes')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -535,13 +535,13 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Route</TableHead>
-                  <TableHead>Vehicle</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Currency</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{translate('route')}</TableHead>
+                  <TableHead>{translate('vehicle')}</TableHead>
+                  <TableHead>{translate('quantity')}</TableHead>
+                  <TableHead>{translate('price')}</TableHead>
+                  <TableHead>{translate('currency')}</TableHead>
+                  <TableHead>{translate('created')}</TableHead>
+                  <TableHead className="text-right">{translate('actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -565,7 +565,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline">
-                        {item.quantity} {item.quantity === 1 ? "trip" : "trips"}
+                        {item.quantity} {item.quantity === 1 ? translate('trip') : translate('trips')}
                       </Badge>
                     </TableCell>
                     <TableCell>

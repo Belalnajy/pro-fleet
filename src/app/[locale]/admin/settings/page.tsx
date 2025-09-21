@@ -1,13 +1,14 @@
 "use client"
 
 import { use } from "react"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Save, RefreshCw, Settings, MapPin, Thermometer } from "lucide-react"
+import { Save, RefreshCw, Settings, MapPin, Thermometer, Truck, Receipt } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/hooks/useTranslation"
 import { useSystemSettings } from "@/hooks/useSystemSettings"
@@ -67,12 +68,10 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6" dir="rtl">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">{t('systemSettings')}</h1>
-          <p className="text-muted-foreground">{t('configureSystemSettings')}</p>
-        </div>
+    <DashboardLayout
+      title={t('systemSettings')}
+      subtitle={t('configureSystemSettings')}
+      actions={
         <Button onClick={handleSaveSettings} disabled={saving}>
           {saving ? (
             <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -81,68 +80,136 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
           )}
           {saving ? t('saving') : t('saveSettings')}
         </Button>
-      </div>
+      }
+    >
+      <div className="space-y-6" dir="rtl">
+        {/* Welcome Section */}
+        <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-6 rounded-xl border border-primary/20">
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-full bg-primary/10">
+              <Settings className="w-6 h-6 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">{t('welcomeToSettings')}</h2>
+              <p className="text-sm text-muted-foreground">{t('customizeProFleetSettings')}</p>
+            </div>
+          </div>
+        </div>
 
-      <Tabs defaultValue="business" className="space-y-4 mb-6 ">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-2 ">
-          <TabsTrigger value="business">{t('business')}</TabsTrigger>
-          <TabsTrigger value="financial">{t('financial')}</TabsTrigger>
-          <TabsTrigger value="operations">{t('operations')}</TabsTrigger>
-          <TabsTrigger value="locations">{t('locations')}</TabsTrigger>
- 
-        </TabsList>
+        <Tabs defaultValue="business" className="w-full">
+          {/* Responsive Grid Tabs - No Overflow */}
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 gap-2 h-auto p-2 bg-muted/50 rounded-xl">
+            <TabsTrigger 
+              value="business" 
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm hover:bg-background/50"
+            >
+              <div className="p-1.5 rounded-md bg-primary/10">
+                <Settings className="w-4 h-4 text-primary" />
+              </div>
+              <span className="text-center leading-tight">{t('business')}</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="financial" 
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm hover:bg-background/50"
+            >
+              <div className="p-1.5 rounded-md bg-green-500/10">
+                <Save className="w-4 h-4 text-green-600" />
+              </div>
+              <span className="text-center leading-tight">{t('financial')}</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="operations" 
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm hover:bg-background/50"
+            >
+              <div className="p-1.5 rounded-md bg-orange-500/10">
+                <RefreshCw className="w-4 h-4 text-orange-600" />
+              </div>
+              <span className="text-center leading-tight">{t('operations')}</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="locations" 
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm hover:bg-background/50"
+            >
+              <div className="p-1.5 rounded-md bg-purple-500/10">
+                <MapPin className="w-4 h-4 text-purple-600" />
+              </div>
+              <span className="text-center leading-tight">{t('locations')}</span>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="customs" 
+              className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm hover:bg-background/50"
+            >
+              <div className="p-1.5 rounded-md bg-teal-500/10">
+                <Receipt className="w-4 h-4 text-teal-600" />
+              </div>
+              <span className="text-center leading-tight">{t('customs')}</span>
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="business" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('companyInfo')}</CardTitle>
-              <CardDescription>{t('updateCompanyDetails')}</CardDescription>
+        <TabsContent value="business" className="space-y-6 mt-6">
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Settings className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{t('companyInfo')}</CardTitle>
+                  <CardDescription className="text-sm">{t('updateCompanyDetails')}</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="companyName">{t('companyName')}</Label>
-                <Input
-                  id="companyName"
-                  value={settings.business.companyName}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      business: { ...settings.business, companyName: e.target.value },
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName" className="text-sm font-medium">{t('companyName')}</Label>
+                  <Input
+                    id="companyName"
+                    className="h-11"
+                    value={settings.business.companyName}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        business: { ...settings.business, companyName: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="companyEmail" className="text-sm font-medium">{t('companyEmail')}</Label>
+                  <Input
+                    id="companyEmail"
+                    type="email"
+                    className="h-11"
+                    value={settings.business.companyEmail}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        business: { ...settings.business, companyEmail: e.target.value },
                     })
                   }
                 />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="companyPhone" className="text-sm font-medium">{t('companyPhone')}</Label>
+                  <Input
+                    id="companyPhone"
+                    className="h-11"
+                    value={settings.business.companyPhone}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        business: { ...settings.business, companyPhone: e.target.value },
+                      })
+                    }
+                  />
+                </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyEmail">{t('companyEmail')}</Label>
-                <Input
-                  id="companyEmail"
-                  type="email"
-                  value={settings.business.companyEmail}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      business: { ...settings.business, companyEmail: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyPhone">{t('companyPhone')}</Label>
-                <Input
-                  id="companyPhone"
-                  value={settings.business.companyPhone}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      business: { ...settings.business, companyPhone: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyAddress">{t('companyAddress')}</Label>
+                <Label htmlFor="companyAddress" className="text-sm font-medium">{t('companyAddress')}</Label>
                 <Input
                   id="companyAddress"
+                  className="h-11"
                   value={settings.business.companyAddress}
                   onChange={(e) =>
                     setSettings({
@@ -156,46 +223,59 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
           </Card>
         </TabsContent>
 
-        <TabsContent value="financial" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('taxSettings')}</CardTitle>
-              <CardDescription>{t('configureTaxVAT')}</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="defaultTaxRate">{t('defaultTaxRate')}</Label>
-                <Input
-                  id="defaultTaxRate"
-                  type="number"
-                  value={settings.financial.defaultTaxRate}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      financial: { ...settings.financial, defaultTaxRate: parseFloat(e.target.value) || 0 },
-                    })
-                  }
-                />
+        <TabsContent value="financial" className="space-y-6 mt-6">
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <Save className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{t('taxSettings')}</CardTitle>
+                  <CardDescription className="text-sm">{t('configureTaxVAT')}</CardDescription>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="enableVAT"
-                  checked={settings.financial.enableVAT}
-                  onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      financial: { ...settings.financial, enableVAT: checked },
-                    })
-                  }
-                />
-                <Label htmlFor="enableVAT">{t('enableVAT')}</Label>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="defaultTaxRate" className="text-sm font-medium">{t('defaultTaxRate')}</Label>
+                  <Input
+                    id="defaultTaxRate"
+                    type="number"
+                    className="h-11"
+                    placeholder="15"
+                    value={settings.financial.defaultTaxRate}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        financial: { ...settings.financial, defaultTaxRate: parseFloat(e.target.value) || 0 },
+                      })
+                    }
+                  />
+                </div>
+                <div className="flex items-center space-x-2 h-11">
+                  <Switch
+                    id="enableVAT"
+                    checked={settings.financial.enableVAT}
+                    onCheckedChange={(checked) =>
+                      setSettings({
+                        ...settings,
+                        financial: { ...settings.financial, enableVAT: checked },
+                      })
+                    }
+                  />
+                  <Label htmlFor="enableVAT" className="text-sm font-medium">{t('enableVAT')}</Label>
+                </div>
               </div>
               {settings.financial.enableVAT && (
                 <div className="space-y-2">
-                  <Label htmlFor="vatRate">{t('vatRate')}</Label>
+                  <Label htmlFor="vatRate" className="text-sm font-medium">{t('vatRate')}</Label>
                   <Input
                     id="vatRate"
                     type="number"
+                    className="h-11"
+                    placeholder="15"
                     value={settings.financial.vatRate}
                     onChange={(e) =>
                       setSettings({
@@ -209,49 +289,67 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                {t('currencySettings')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="defaultCurrency">{t('defaultCurrency')}</Label>
-                <Input
-                  id="defaultCurrency"
-                  value={settings.financial.defaultCurrency}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      financial: { ...settings.financial, defaultCurrency: e.target.value },
-                    })
-                  }
-                />
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Settings className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{t('currencySettings')}</CardTitle>
+                  <CardDescription className="text-sm">{t('currencySymbolsSettings')}</CardDescription>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="currencySymbol">{t('currencySymbol')}</Label>
-                <Input
-                  id="currencySymbol"
-                  value={settings.financial.currencySymbol}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      financial: { ...settings.financial, currencySymbol: e.target.value },
-                    })
-                  }
-                />
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="defaultCurrency" className="text-sm font-medium">{t('defaultCurrency')}</Label>
+                  <Input
+                    id="defaultCurrency"
+                    className="h-11"
+                    placeholder="SAR"
+                    value={settings.financial.defaultCurrency}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        financial: { ...settings.financial, defaultCurrency: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="currencySymbol" className="text-sm font-medium">{t('currencySymbol')}</Label>
+                  <Input
+                    id="currencySymbol"
+                    className="h-11"
+                    placeholder={t('sarPlaceholder')}
+                    value={settings.financial.currencySymbol}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        financial: { ...settings.financial, currencySymbol: e.target.value },
+                      })
+                    }
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="operations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('cancellationPolicy')}</CardTitle>
-              <CardDescription>{t('configureCancellationRules')}</CardDescription>
+        <TabsContent value="operations" className="space-y-6 mt-6">
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <RefreshCw className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{t('cancellationPolicy')}</CardTitle>
+                  <CardDescription className="text-sm">{t('configureCancellationRules')}</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -310,8 +408,8 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
                       </Label>
                       <p className="text-sm text-muted-foreground">
                         {settings.tracking.enableRealTimeTracking 
-                          ? "العملاء يمكنهم رؤية موقع شحناتهم في الوقت الفعلي" 
-                          : "العملاء لا يمكنهم الوصول لصفحة التتبع"}
+                          ? t('customersCanSeeRealTimeTracking')
+                          : t('customersCannotAccessTracking')}
                       </p>
                     </div>
                   </div>
@@ -320,7 +418,7 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
                       ? "bg-green-100 text-green-800" 
                       : "bg-red-100 text-red-800"
                   }`}>
-                    {settings.tracking.enableRealTimeTracking ? "مفعل" : "معطل"}
+                    {settings.tracking.enableRealTimeTracking ? t('enabled') : t('disabled')}
                   </div>
                 </div>
                 
@@ -328,11 +426,11 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <MapPin className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-medium text-blue-800">معلومات مهمة</span>
+                      <span className="text-sm font-medium text-blue-800">{t('importantInfo')}</span>
                     </div>
                     <p className="text-sm text-blue-700">
-                      عند تفعيل التتبع، سيتمكن العملاء من رؤية موقع شحناتهم المباشر والوصول لصفحة التتبع.
-                      عند إلغاء التفعيل، ستظهر للعملاء رسالة بأن الخدمة غير متاحة مؤقتاً.
+                      {t('trackingEnabledDescription')}<br/>
+                      {t('trackingDisabledDescription')}
                     </p>
                   </div>
                 )}
@@ -355,34 +453,101 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
           </Card>
         </TabsContent>
 
-        <TabsContent value="locations" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                {t('locationManagement')}
-              </CardTitle>
-              <CardDescription>{t('manageCitiesTemperature')}</CardDescription>
+        <TabsContent value="locations" className="space-y-6 mt-6">
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <MapPin className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{t('locationManagement')}</CardTitle>
+                  <CardDescription className="text-sm">{t('manageCitiesTemperature')}</CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-4 justify-center flex-wrap">
-                <Link href={`/${locale}/admin/cities`}>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    {t('manageCities')}
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Link href={`/${locale}/admin/cities`} className="block">
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 group"
+                  >
+                    <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                      <MapPin className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-medium">{t('manageCities')}</span>
                   </Button>
                 </Link>
-                <Link href={`/${locale}/admin/temperatures`}>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Thermometer className="h-4 w-4" />
-                    {t('manageTemperatureSettings')}
+                <Link href={`/${locale}/admin/temperatures`} className="block">
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-green-50 hover:border-green-200 transition-all duration-200 group"
+                  >
+                    <div className="p-2 rounded-lg bg-green-500/10 group-hover:bg-green-500/20 transition-colors">
+                      <Thermometer className="h-5 w-5 text-green-600" />
+                    </div>
+                    <span className="text-sm font-medium">{t('manageTemperatureSettings')}</span>
+                  </Button>
+                </Link>
+                <Link href={`/${locale}/admin/vehicle-types`} className="block">
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 hover:border-purple-200 transition-all duration-200 group"
+                  >
+                    <div className="p-2 rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                      <Truck className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <span className="text-sm font-medium">{t('manageVehicleTypes')}</span>
                   </Button>
                 </Link>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="customs" className="space-y-6 mt-6">
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-teal-500/10">
+                  <Receipt className="w-5 h-5 text-teal-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{t('customsTariffsManagement')}</CardTitle>
+                  <CardDescription className="text-sm">{t('manageCustomsTariffs')}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-6 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30 rounded-xl border border-teal-200/50 dark:border-teal-800/50">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-teal-500/10">
+                    <Receipt className="w-6 h-6 text-teal-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-teal-900 dark:text-teal-100 mb-2">
+                      {t('customsTariffsManagement')}
+                    </h3>
+                    <p className="text-teal-700 dark:text-teal-300 text-sm mb-4">
+                      {t('customsTariffsDescription')}
+                    </p>
+                    <Link href={`/${locale}/admin/customs-tariffs`}>
+                      <Button className="bg-teal-600 hover:bg-teal-700 text-white">
+                        <div className="flex items-center gap-2">
+                          <Receipt className="w-4 h-4" />
+                        </div>
+                        <span className="text-sm font-medium">{t('openCustomsTariffs')}</span>
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </DashboardLayout>
   )
 }

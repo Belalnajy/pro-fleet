@@ -23,6 +23,7 @@ model User {
   driverProfile        Driver?
   subscriptions        Subscription[]
   customerTrips        Trip[]         @relation("CustomerTrips")
+  customsClearances    CustomsClearance[]
 
   @@map("users")
 }
@@ -214,6 +215,7 @@ model Invoice {
   updatedAt       DateTime       @updatedAt
   customsBroker   CustomsBroker? @relation(fields: [customsBrokerId], references: [id])
   trip            Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  customsClearances CustomsClearance[]
 
   @@map("invoices")
 }
@@ -333,6 +335,61 @@ model SavedAddress {
   @@map("saved_addresses")
 }
 
+model CustomsClearance {
+  id                      String            @id @default(cuid())
+  clearanceNumber         String            @unique
+  invoiceId               String
+  customsBrokerId         String
+  status                  ClearanceStatus   @default(PENDING)
+  customsFee              Float             @default(0)
+  additionalFees          Float             @default(0)
+  totalFees               Float             @default(0)
+  estimatedCompletionDate DateTime?
+  actualCompletionDate    DateTime?
+  notes                   String?
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+  invoice                 Invoice           @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  customsBroker           User              @relation(fields: [customsBrokerId], references: [id], onDelete: Restrict)
+  documents               CustomsDocument[]
+
+  @@map("customs_clearances")
+}
+
+model CustomsDocument {
+  id           String           @id @default(cuid())
+  clearanceId  String
+  documentType DocumentType
+  documentName String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  status       DocumentStatus   @default(PENDING)
+  uploadedAt   DateTime         @default(now())
+  reviewedAt   DateTime?
+  reviewedBy   String?
+  notes        String?
+  clearance    CustomsClearance @relation(fields: [clearanceId], references: [id], onDelete: Cascade)
+
+  @@map("customs_documents")
+}
+
+model CustomsTariff {
+  id            String   @id @default(cuid())
+  hsCode        String   @unique
+  description   String
+  descriptionAr String
+  category      String?  @default("other")
+  dutyRate      Float
+  vatRate       Float
+  additionalFees Float   @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("customs_tariffs")
+}
+
 enum UserRole {
   ADMIN
   DRIVER
@@ -367,4 +424,31 @@ enum PaymentStatus {
   PAID
   OVERDUE
   CANCELLED
+}
+
+enum ClearanceStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum DocumentStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum DocumentType {
+  BILL_OF_LADING
+  COMMERCIAL_INVOICE
+  PACKING_LIST
+  CERTIFICATE_OF_ORIGIN
+  IMPORT_LICENSE
+  CUSTOMS_DECLARATION
+  INSURANCE_CERTIFICATE
+  OTHER
 }

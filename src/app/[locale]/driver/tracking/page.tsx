@@ -231,20 +231,27 @@ export default function DriverTrackingPage({ params }: { params: Promise<{ local
     if (!currentTrip) return;
 
     try {
-      const response = await fetch("/api/tracking", {
+      const response = await fetch("/api/driver/tracking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tripId: currentTrip.id,
-          ...locationData,
+          latitude: locationData.latitude,
+          longitude: locationData.longitude,
+          speed: locationData.speed || 0,
+          heading: locationData.heading || 0,
         }),
       });
 
-      if (!response.ok) {
-        console.error("Failed to send location update");
+      if (response.ok) {
+        const result = await response.json();
+        console.log("GPS location sent successfully:", result);
+        setLastUpdateTime(new Date());
+      } else {
+        console.error("Failed to send GPS location:", response.status);
       }
     } catch (err) {
-      console.error("Error sending location update:", err);
+      console.error("Error sending GPS location:", err);
     }
   };
 

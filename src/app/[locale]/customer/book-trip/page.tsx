@@ -78,6 +78,7 @@ export default function BookTrip({ params }: BookTripProps) {
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([])
   const [vehicles, setVehicles] = useState<any[]>([])
   const [temperatures, setTemperatures] = useState<any[]>([])
+  const [customsBrokers, setCustomsBrokers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState(1)
@@ -97,6 +98,7 @@ export default function BookTrip({ params }: BookTripProps) {
     scheduledPickupDate: "",
     estimatedDeliveryDate: "",
     vehicleTypeId: "",
+    customsBrokerId: "none",
     originLocation: null as LocationData | null,
     destinationLocation: null as LocationData | null
   })
@@ -110,6 +112,7 @@ export default function BookTrip({ params }: BookTripProps) {
       fetchVehicleTypes()
       fetchVehicles()
       fetchTemperatures()
+      fetchCustomsBrokers()
     }
   }, [session, status, router])
 
@@ -175,6 +178,19 @@ export default function BookTrip({ params }: BookTripProps) {
       }
     } catch (error) {
       console.error("Error fetching temperatures:", error)
+    }
+  }
+
+  const fetchCustomsBrokers = async () => {
+    try {
+      const response = await fetch("/api/customer/customs-brokers")
+      if (response.ok) {
+        const data = await response.json()
+        setCustomsBrokers(data.brokers)
+        console.log("Customs brokers loaded:", data.brokers)
+      }
+    } catch (error) {
+      console.error("Error fetching customs brokers:", error)
     }
   }
 
@@ -384,7 +400,7 @@ export default function BookTrip({ params }: BookTripProps) {
         temperatureId: temperatureId,
         vehicleId: vehicleId,
         price: estimatedPrice || 500,
-        notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress || (tripForm.originLocation?.address || 'Custom Location')}, Delivery: ${tripForm.deliveryAddress || (tripForm.destinationLocation?.address || 'Custom Location')}. Special Instructions: ${tripForm.specialInstructions}${tripForm.originLocation ? ` Origin: ${tripForm.originLocation.lat}, ${tripForm.originLocation.lng}` : ''}${tripForm.destinationLocation ? ` Destination: ${tripForm.destinationLocation.lat}, ${tripForm.destinationLocation.lng}` : ''}`
+        notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress || (tripForm.originLocation?.address || 'Custom Location')}, Delivery: ${tripForm.deliveryAddress || (tripForm.destinationLocation?.address || 'Custom Location')}. Special Instructions: ${tripForm.specialInstructions}${tripForm.originLocation ? ` Origin: ${tripForm.originLocation.lat}, ${tripForm.originLocation.lng}` : ''}${tripForm.destinationLocation ? ` Destination: ${tripForm.destinationLocation.lat}, ${tripForm.destinationLocation.lng}` : ''}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}`
       }
 
       console.log('🚛 Creating trip:', {
@@ -520,6 +536,7 @@ export default function BookTrip({ params }: BookTripProps) {
                     scheduledPickupDate: "",
                     estimatedDeliveryDate: "",
                     vehicleTypeId: "",
+                    customsBrokerId: "none",
                     originLocation: null,
                     destinationLocation: null
                   })
@@ -892,6 +909,30 @@ export default function BookTrip({ params }: BookTripProps) {
                   </div>
                 </div>
                 
+                {/* Customs Broker Selection */}
+                <div>
+                  <Label htmlFor="customsBroker">{translate("customsBroker")}</Label>
+                  <Select
+                    value={tripForm.customsBrokerId}
+                    onValueChange={(value) => setTripForm({...tripForm, customsBrokerId: value})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={translate("selectCustomsBroker")} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">{translate("noCustomsBroker")}</SelectItem>
+                      {customsBrokers.map((broker) => (
+                        <SelectItem key={broker.id} value={broker.id}>
+                          {broker.name} - {broker.licenseNumber || 'غير محدد'}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {translate("customsBrokerOptional")}
+                  </p>
+                </div>
+                
                 {/* Summary */}
                 <div className="bg-muted p-6 rounded-lg space-y-4">
                   <h3 className="font-semibold">{translate("tripSummary")}</h3>
@@ -916,6 +957,15 @@ export default function BookTrip({ params }: BookTripProps) {
                       <span className="text-muted-foreground">{translate("estimatedPrice")}:</span>
                       <p className="font-medium text-primary">
                         {(estimatedPrice || 0).toFixed(2)} {translate("currency")}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">{translate("customsBroker")}:</span>
+                      <p className="font-medium">
+                        {tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? 
+                          customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 
+                          translate("noCustomsBroker")
+                        }
                       </p>
                     </div>
                   </div>

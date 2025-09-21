@@ -61,12 +61,16 @@ export async function GET(request: NextRequest) {
         },
         fromCity: {
           select: {
-            name: true
+            name: true,
+            latitude: true,
+            longitude: true
           }
         },
         toCity: {
           select: {
-            name: true
+            name: true,
+            latitude: true,
+            longitude: true
           }
         },
         temperature: {
@@ -141,7 +145,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (action === "accept") {
-      // Assign trip to driver
+      // Assign trip to driver and enable tracking
       const updatedTrip = await db.trip.update({
         where: { id: tripId },
         data: {
@@ -158,21 +162,35 @@ export async function PATCH(request: NextRequest) {
           },
           fromCity: {
             select: {
-              name: true
+              name: true,
+              latitude: true,
+              longitude: true
             }
           },
           toCity: {
             select: {
-              name: true
+              name: true,
+              latitude: true,
+              longitude: true
             }
           }
         }
       })
 
-      console.log(`Trip ${tripId} accepted by driver ${driverProfile.id}`)
+      // تفعيل التتبع للسائق تلقائياً عند قبول الرحلة
+      await db.driver.update({
+        where: { id: driverProfile.id },
+        data: {
+          trackingEnabled: true,
+          isAvailable: false // السائق غير متاح للرحلات الأخرى
+        }
+      })
+
+      console.log(`Trip ${tripId} accepted by driver ${driverProfile.id} - Tracking enabled`)
       return NextResponse.json({ 
-        message: "Trip accepted successfully",
-        trip: updatedTrip
+        message: "Trip accepted successfully - GPS tracking enabled",
+        trip: updatedTrip,
+        trackingEnabled: true
       })
 
     } else if (action === "decline") {

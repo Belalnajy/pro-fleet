@@ -1,0 +1,123 @@
+{
+  "title": "کسٹم فیس کیلکولیٹر",
+  "description": "اشیاء کے لیے مطلوبہ کسٹم فیس کا حساب لگائیں",
+  "categories": {
+    "all": "تمام اقسام",
+    "automotive": "گاڑیاں اور واہن",
+    "electronics": "الیکٹرانکس",
+    "textiles": "کپڑے",
+    "food": "غذائی اجناس",
+    "machinery": "مشینری اور آلات",
+    "chemicals": "کیمیکلز",
+    "metals": "دھاتیں",
+    "other": "دیگر"
+  },
+  "filters": {
+    "advancedFilters": "ایڈوانس فلٹرز",
+    "category": "اشیاء کی قسم",
+    "selectCategory": "قسم منتخب کریں",
+    "minDutyRate": "کم سے کم ڈیوٹی ریٹ (%)",
+    "maxDutyRate": "زیادہ سے زیادہ ڈیوٹی ریٹ (%)",
+    "minVatRate": "کم سے کم ویٹ ریٹ (%)",
+    "maxVatRate": "زیادہ سے زیادہ ویٹ ریٹ (%)",
+    "clearFilters": "فلٹرز صاف کریں"
+  },
+  "table": {
+    "hsCode": "ایچ ایس کوڈ",
+    "description": "تفصیل",
+    "dutyRate": "ڈیوٹی ریٹ (%)",
+    "vatRate": "ویٹ ریٹ (%)",
+    "additionalFees": "اضافی فیس",
+    "actions": "اعمال",
+    "noAdditionalFees": "کوئی نہیں"
+  },
+  "comparison": {
+    "title": "ٹیرف موازنہ",
+    "dutyFees": "ڈیوٹی فیس:",
+    "vatTax": "ویٹ ٹیکس:",
+    "additionalFees": "اضافی فیس:",
+    "currency": "ریال",
+    "hsCode": "ایچ ایس کوڈ",
+    "selectUpTo3": "آپ صرف 3 ٹیرف منتخب کر سکتے ہیں"
+  },
+  "pagination": {
+    "showing": "دکھایا جا رہا",
+    "to": "سے",
+    "of": "کا",
+    "tariff": "ٹیرف",
+    "previous": "پچھلا",
+    "next": "اگلا"
+  },
+  "calculator": {
+    "hsCode": "ایچ ایس کوڈ",
+    "hsCodeLabel": "ایچ ایس کوڈ",
+    "hsCodePlaceholder": "مثال: 8703.21.10",
+    "invoiceValue": "انوائس ویلیو (ریال)",
+    "invoiceValueLabel": "انوائس ویلیو (ریال)",
+    "invoiceValuePlaceholder": "0.00",
+    "weight": "وزن (کلو) - اختیاری",
+    "weightLabel": "وزن (کلو) - اختیاری",
+    "weightPlaceholder": "0.00",
+    "calculating": "حساب لگایا جا رہا ہے...",
+    "calculate": "کسٹم فیس کا حساب لگائیں",
+    "description": "اشیاء کے لیے مطلوبہ کسٹم فیس کا حساب لگائیں"
+  },
+  "results": {
+    "title": "حساب کے نتائج",
+    "hsCode": "ایچ ایس کوڈ:",
+    "invoiceValue": "انوائس ویلیو:",
+    "dutyRate": "ڈیوٹی ریٹ:",
+    "vatRate": "ویٹ ریٹ:",
+    "dutyAmount": "کسٹم ڈیوٹی:",
+    "vatAmount": "ویلیو ایڈڈ ٹیکس:",
+    "additionalFees": "اضافی فیس:",
+    "totalFees": "کل فیس:",
+    "goodsDescription": "اشیاء کی تفصیل:",
+    "currency": "ریال"
+  },
+  "messages": {
+    "fetchError": "کسٹم ٹیرف لوڈ کرنے میں ناکامی",
+    "exportSuccess": "ٹیرف کامیابی سے ایکسپورٹ ہو گئے",
+    "noTariffs": "کوئی کسٹم ٹیرف دستیاب نہیں",
+    "noResults": "تلاش کے معیار سے میل کھانے والے ٹیرف نہیں ملے",
+    "noDataLoaded": "کوئی کسٹم ٹیرف لوڈ نہیں ہوئے",
+    "noMatchingTariffs": "تلاش کے معیار سے میل کھانے والے ٹیرف نہیں ملے",
+    "noTariffsLoaded": "کوئی کسٹم ٹیرف لوڈ نہیں ہوئے"
+  },
+  "buttons": {
+    "export": "ایکسپورٹ",
+    "clearFilters": "فلٹرز صاف کریں",
+    "calculate": "کسٹم فیس کا حساب لگائیں"
+  },
+  "fillAllRequiredFields": "براہ کرم تمام ضروری فیلڈز بھریں",
+  "feesCalculatedSuccessfully": "فیس کامیابی سے شمار ہو گئی",
+  "failedToCalculateFees": "فیس شمار کرنے میں ناکامی",
+  "errorCalculatingFees": "فیس شمار کرنے میں خرابی",
+  "canOnlyCompareThreeTariffs": "آپ ایک وقت میں صرف 3 ٹیرف کا موازنہ کر سکتے ہیں",
+  "searchCustomsTariffs": "کسٹم ٹیرف تلاش کریں",
+  "of": "کا",
+  "tariff": "ٹیرف",
+  "forComparison": "موازنے کے لیے",
+  "searchAppropriateCustomsTariff": "اپنے اشیاء کے لیے مناسب کسٹم ٹیرف تلاش کریں",
+  "searchByHSCodeOrDescription": "ایچ ایس کوڈ یا اشیاء کی تفصیل سے تلاش کریں...",
+  "advancedFilters": "ایڈوانس فلٹرز",
+  "invoiceValue": "انوائس کی قیمت (ریال)",
+
+  "dutyRate": "ڈیوٹی کی شرح:",
+  "vatAmount": "ویلیو ایڈڈ ٹیکس:",
+
+  "dutyAmount": "کسٹم ڈیوٹی:",
+  "weight": "وزن (کلو) - اختیاری",
+  "goodsDescription": "سامان کی تفصیل:",
+  "minVatRate": "کم از کم ویلیو ایڈڈ ٹیکس کی شرح",
+  "maxDutyRate": "زیادہ سے زیادہ ڈیوٹی کی شرح",
+  "minDutyRate": "کم از کم ڈیوٹی کی شرح",
+  "category": "قسم",
+  "selectUpTo3": "زیادہ سے زیادہ 3 منتخب کریں",
+  "hsCodePlaceholder": "ایچ ایس کوڈ درج کریں",
+  "weightPlaceholder": "وزن کلوگرام میں درج کریں",
+  "calculating": "حساب جاری ہے...",
+  "dutyFees": "ڈیوٹی فیس",
+  "vatTax": "ویلیو ایڈڈ ٹیکس",
+  "invoiceValuePlaceholder": "انوائس کی قیمت درج کریں"
+}

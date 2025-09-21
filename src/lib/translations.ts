@@ -18,6 +18,9 @@ import enCustomer from '@/locales/en/customer.json'
 import enDriver from '@/locales/en/driver.json'
 import enAccountant from '@/locales/en/accountant.json'
 import enAccInvoices from '@/locales/en/acc-invoices.json'
+import enVehicleTypes from '@/locales/en/vehicle-types.json'
+import enCustomsBroker from '@/locales/en/customs-broker.json'
+import enFeeCalculator from '@/locales/en/fee-calculator.json'
 
 // Import Arabic translations
 import arCommon from '@/locales/ar/common.json'
@@ -39,6 +42,9 @@ import arCustomer from '@/locales/ar/customer.json'
 import arDriver from '@/locales/ar/driver.json'
 import arAccountant from '@/locales/ar/accountant.json'
 import arAccInvoices from '@/locales/ar/acc-invoices.json'
+import arVehicleTypes from '@/locales/ar/vehicle-types.json'
+import arCustomsBroker from '@/locales/ar/customs-broker.json'
+import arFeeCalculator from '@/locales/ar/fee-calculator.json'
 
 // Import Urdu translations
 import urCommon from '@/locales/ur/common.json'
@@ -60,6 +66,9 @@ import urCustomer from '@/locales/ur/customer.json'
 import urDriver from '@/locales/ur/driver.json'
 import urAccountant from '@/locales/ur/accountant.json'
 import urAccInvoices from '@/locales/ur/acc-invoices.json'
+import urVehicleTypes from '@/locales/ur/vehicle-types.json'
+import urCustomsBroker from '@/locales/ur/customs-broker.json'
+import urFeeCalculator from '@/locales/ur/fee-calculator.json'
 
 export const languages = {
   en: {
@@ -103,6 +112,9 @@ export const translations = {
     ...enDriver,
     ...enAccountant,
     ...enAccInvoices,
+    ...enVehicleTypes,
+    ...enCustomsBroker,
+    ...enFeeCalculator,
   },
   ar: {
     ...arCommon,
@@ -124,6 +136,9 @@ export const translations = {
     ...arDriver,
     ...arAccountant,
     ...arAccInvoices,
+    ...arVehicleTypes,
+    ...arCustomsBroker,
+    ...arFeeCalculator,
   },
   ur: {
     ...urCommon,
@@ -145,10 +160,22 @@ export const translations = {
     ...urDriver,
     ...urAccountant,
     ...urAccInvoices,
+    ...urVehicleTypes,
+    ...urCustomsBroker,
+    ...urFeeCalculator,
   },
 } as const
 
-export type TranslationKey = keyof typeof translations.en
+// Extract all possible translation keys
+type FlattenKeys<T, K extends keyof T = keyof T> = K extends string
+  ? T[K] extends Record<string, any>
+    ? T[K] extends any[]
+      ? K
+      : `${K}.${FlattenKeys<T[K]>}` | K
+    : K
+  : never
+
+export type TranslationKey = FlattenKeys<typeof translations.en>
 
 // Utility functions for i18n
 export function getLanguageDirection(lang: Language): 'ltr' | 'rtl' {

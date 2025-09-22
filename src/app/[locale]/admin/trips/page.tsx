@@ -77,11 +77,12 @@ interface Trip {
     }
   }
   vehicle: {
-    capacity: string
+    vehicleNumber: string
     vehicleTypeId: string
     vehicleType: {
       name: string
       nameAr: string
+      capacity: string
     }
   }
   fromCity: {
@@ -108,7 +109,15 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
   const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+
+  // Function to get city name based on current language
+  const getCityName = (city: { name: string; nameAr?: string | null }): string => {
+    if (language === 'ar' && city.nameAr) {
+      return city.nameAr;
+    }
+    return city.name; // Default to English name
+  };
   const { toast } = useToast()
   // const { t: t } = useTranslation()
   const [trips, setTrips] = useState<Trip[]>([])
@@ -536,8 +545,20 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
     switch (status) {
       case TripStatus.PENDING:
         return "bg-yellow-100 text-yellow-800"
-      case TripStatus.IN_PROGRESS:
+      case TripStatus.ASSIGNED:
         return "bg-blue-100 text-blue-800"
+      case TripStatus.IN_PROGRESS:
+        return "bg-orange-100 text-orange-800"
+      case TripStatus.EN_ROUTE_PICKUP:
+        return "bg-yellow-100 text-yellow-800"
+      case TripStatus.AT_PICKUP:
+        return "bg-purple-100 text-purple-800"
+      case TripStatus.PICKED_UP:
+        return "bg-green-100 text-green-800"
+      case TripStatus.IN_TRANSIT:
+        return "bg-blue-100 text-blue-800"
+      case TripStatus.AT_DESTINATION:
+        return "bg-indigo-100 text-indigo-800"
       case TripStatus.DELIVERED:
         return "bg-green-100 text-green-800"
       case TripStatus.CANCELLED:
@@ -551,8 +572,20 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
     switch (status) {
       case TripStatus.PENDING:
         return <Clock className="h-4 w-4" />
+      case TripStatus.ASSIGNED:
+        return <User className="h-4 w-4" />
       case TripStatus.IN_PROGRESS:
         return <Truck className="h-4 w-4" />
+      case TripStatus.EN_ROUTE_PICKUP:
+        return <Navigation className="h-4 w-4" />
+      case TripStatus.AT_PICKUP:
+        return <MapPin className="h-4 w-4" />
+      case TripStatus.PICKED_UP:
+        return <Package className="h-4 w-4" />
+      case TripStatus.IN_TRANSIT:
+        return <Truck className="h-4 w-4" />
+      case TripStatus.AT_DESTINATION:
+        return <MapPin className="h-4 w-4" />
       case TripStatus.DELIVERED:
         return <CheckCircle className="h-4 w-4" />
       case TripStatus.CANCELLED:
@@ -565,7 +598,10 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
   const stats = {
     total: trips.length,
     pending: trips.filter(t => t.status === TripStatus.PENDING).length,
-    inProgress: trips.filter(t => t.status === TripStatus.IN_PROGRESS).length,
+    inProgress: trips.filter(t => {
+      const activeStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+      return activeStatuses.includes(t.status as string);
+    }).length,
     delivered: trips.filter(t => t.status === TripStatus.DELIVERED).length,
     cancelled: trips.filter(t => t.status === TripStatus.CANCELLED).length,
     totalRevenue: trips.reduce((sum, trip) => sum + trip.price, 0),
@@ -718,7 +754,7 @@ return (
                     <div className="flex items-center space-x-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">
-                        {trip.fromCity.name} → {trip.toCity.name}
+                        {getCityName(trip.fromCity)} → {getCityName(trip.toCity)}
                       </span>
                     </div>
                   </TableCell>
@@ -743,7 +779,7 @@ return (
                       <Truck className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <div className="text-sm font-medium">{trip.vehicle.vehicleType?.name || 'Unknown Type'}</div>
-                        <div className="text-xs text-muted-foreground">{trip.vehicle.capacity}</div>
+                        <div className="text-xs text-muted-foreground">{trip.vehicle.vehicleType?.capacity || 'N/A'}</div>
                       </div>
                     </div>
                   </TableCell>
@@ -879,7 +915,7 @@ return (
                   </SelectTrigger>
                   <SelectContent>
                     {vehicles.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>{v.capacity}</SelectItem>
+                      <SelectItem key={v.id} value={v.id}>{v.vehicleType?.capacity || v.vehicleNumber || v.id}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -963,7 +999,7 @@ return (
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{getCityName(c)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -985,7 +1021,7 @@ return (
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{getCityName(c)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1162,10 +1198,10 @@ return (
                   <Label className="text-sm font-medium text-gray-600">المسار</Label>
                   <div className="flex items-center space-x-2">
                     <MapPin className="h-4 w-4 text-green-600" />
-                    <span>{trip.fromCity.name}</span>
+                    <span>{getCityName(trip.fromCity)}</span>
                     <span>→</span>
                     <MapPin className="h-4 w-4 text-red-600" />
-                    <span>{trip.toCity.name}</span>
+                    <span>{getCityName(trip.toCity)}</span>
                   </div>
                 </div>
                 <div>
@@ -1174,7 +1210,7 @@ return (
                     <Truck className="h-4 w-4" />
                     <div>
                       <p className="text-sm font-medium">{trip.vehicle.vehicleType?.name || 'نوع غير محدد'}</p>
-                      <p className="text-xs text-gray-500">{trip.vehicle.capacity}</p>
+                      <p className="text-xs text-gray-500">{trip.vehicle.vehicleType?.capacity || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -1289,7 +1325,7 @@ return (
                 </SelectTrigger>
                 <SelectContent>
                   {vehicles.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>{v.capacity}</SelectItem>
+                    <SelectItem key={v.id} value={v.id}>{v.vehicleType?.capacity || v.vehicleNumber || v.id}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1311,7 +1347,7 @@ return (
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{getCityName(c)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1324,7 +1360,7 @@ return (
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>{getCityName(c)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

@@ -151,8 +151,17 @@ export async function POST(request: NextRequest) {
         price,
         currency: "SAR",
         status: TripStatus.PENDING,
-        notes: notes ? `${notes}${originLocation && destinationLocation ? '\n\nLocation Data: ' + JSON.stringify({origin: originLocation, destination: destinationLocation}) : ''}` : (originLocation && destinationLocation ? `Location Data: ${JSON.stringify({origin: originLocation, destination: destinationLocation})}` : null)
-      },
+        notes: notes || null,
+        // Save custom coordinates if provided
+        ...(originLocation && {
+          originLat: originLocation.lat,
+          originLng: originLocation.lng
+        }),
+        ...(destinationLocation && {
+          destinationLat: destinationLocation.lat,
+          destinationLng: destinationLocation.lng
+        })
+      } as any,
       include: {
         customer: true,
         driver: true,

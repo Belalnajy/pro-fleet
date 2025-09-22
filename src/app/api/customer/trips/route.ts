@@ -28,11 +28,12 @@ export async function GET(request: NextRequest) {
         },
         vehicle: {
           select: {
-            capacity: true,
+            vehicleNumber: true,
             vehicleType: {
               select: {
                 name: true,
-                nameAr: true
+                nameAr: true,
+                capacity: true
               }
             }
           }
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest) {
       price,
       notes,
       vehicleId,
+      vehicleTypeId,
       customsBrokerId,
     } = body
 
@@ -118,13 +120,45 @@ export async function POST(request: NextRequest) {
     }
 
     let finalVehicleId = vehicleId
+    let targetVehicleTypeId = vehicleTypeId
+    
     if (!finalVehicleId) {
-      const defaultVehicle = await db.vehicle.findFirst({
-        where: {
-          isActive: true
+      // If vehicleTypeId is provided, use it; otherwise get first available
+      if (!targetVehicleTypeId) {
+        const defaultVehicleType = await db.vehicleTypeModel.findFirst({
+          where: { isActive: true }
+        })
+        targetVehicleTypeId = defaultVehicleType?.id
+      }
+      
+      if (targetVehicleTypeId) {
+        // Find or create a vehicle for this vehicle type
+        let vehicle = await db.vehicle.findFirst({
+          where: {
+            vehicleTypeId: targetVehicleTypeId,
+            isActive: true
+          }
+        })
+        
+        if (!vehicle) {
+          // Get vehicle type details for creating vehicle
+          const vehicleType = await db.vehicleTypeModel.findUnique({
+            where: { id: targetVehicleTypeId }
+          })
+          
+          if (vehicleType) {
+            vehicle = await db.vehicle.create({
+              data: {
+                vehicleTypeId: targetVehicleTypeId,
+                vehicleNumber: `AUTO-${Date.now()}`,
+                isActive: true
+              }
+            })
+          }
         }
-      })
-      finalVehicleId = defaultVehicle?.id || null
+        
+        finalVehicleId = vehicle?.id || null
+      }
     }
 
     const finalPrice = price || 500 // Use provided price or default

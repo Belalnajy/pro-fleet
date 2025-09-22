@@ -44,6 +44,7 @@ interface LocationData {
 interface City {
   id: string
   name: string
+  nameAr?: string | null
   latitude?: number
   longitude?: number
 }
@@ -72,6 +73,14 @@ export default function BookTrip({ params }: BookTripProps) {
       }
     }
     return t(key as any) || key;
+  };
+
+  // Function to get city name based on current language
+  const getCityName = (city: City): string => {
+    if (language === 'ar' && city.nameAr) {
+      return city.nameAr;
+    }
+    return city.name; // Default to English name
   };
   
   const [cities, setCities] = useState<City[]>([])
@@ -135,20 +144,20 @@ export default function BookTrip({ params }: BookTripProps) {
 
   const fetchVehicleTypes = async () => {
     try {
-      const response = await fetch("/api/customer/vehicles")
+      const response = await fetch("/api/customer/vehicle-types")
       if (response.ok) {
         const data = await response.json()
         // Transform data to match expected interface
-        const transformedData = data.map((vehicle: any) => ({
-          id: vehicle.id,
-          name: vehicle.vehicleType?.name || vehicle.vehicleTypeId,
-          capacity: vehicle.capacity,
+        const transformedData = data.map((vehicleType: any) => ({
+          id: vehicleType.id,
+          name: vehicleType.name,
+          capacity: vehicleType.capacity || "متوسط",
           pricePerKm: 0 // Default value
         }))
         setVehicleTypes(transformedData)
-        console.log("Vehicles loaded:", transformedData)
+        console.log("Vehicle types loaded:", transformedData)
       } else {
-        console.error("Failed to fetch vehicles:", response.status)
+        console.error("Failed to fetch vehicle types:", response.status)
       }
     } catch (error) {
       console.error("Error fetching vehicle types:", error)
@@ -290,10 +299,10 @@ export default function BookTrip({ params }: BookTripProps) {
         temperatureId = selectedTemp?.id || null
       }
 
-      // Get the selected vehicle ID (use first available if not specified)
-      let vehicleId = null
-      if (vehicles.length > 0) {
-        vehicleId = vehicles[0].id // Use first available vehicle
+      // Get the selected vehicle type ID (use first available if not specified)
+      let vehicleTypeId = tripForm.vehicleTypeId
+      if (!vehicleTypeId && vehicleTypes.length > 0) {
+        vehicleTypeId = vehicleTypes[0].id // Use first available vehicle type
       }
 
       // Validate required fields before submission
@@ -398,7 +407,7 @@ export default function BookTrip({ params }: BookTripProps) {
         toCityId: finalToCityId,
         scheduledDate: tripForm.scheduledPickupDate,
         temperatureId: temperatureId,
-        vehicleId: vehicleId,
+        vehicleTypeId: vehicleTypeId, // Send vehicle type ID instead of vehicle ID
         price: estimatedPrice || 500,
         notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress || (tripForm.originLocation?.address || 'Custom Location')}, Delivery: ${tripForm.deliveryAddress || (tripForm.destinationLocation?.address || 'Custom Location')}. Special Instructions: ${tripForm.specialInstructions}${tripForm.originLocation ? ` Origin: ${tripForm.originLocation.lat}, ${tripForm.originLocation.lng}` : ''}${tripForm.destinationLocation ? ` Destination: ${tripForm.destinationLocation.lat}, ${tripForm.destinationLocation.lng}` : ''}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}`
       }
@@ -745,7 +754,7 @@ export default function BookTrip({ params }: BookTripProps) {
                         <SelectContent>
                           {cities.map((city) => (
                             <SelectItem key={city.id} value={city.id}>
-                              {city.name}
+                              {getCityName(city)}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -781,7 +790,7 @@ export default function BookTrip({ params }: BookTripProps) {
                         <SelectContent>
                           {cities.map((city) => (
                             <SelectItem key={city.id} value={city.id}>
-                              {city.name}
+                              {getCityName(city)}
                             </SelectItem>
                           ))}
                         </SelectContent>

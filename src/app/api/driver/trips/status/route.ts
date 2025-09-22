@@ -114,8 +114,14 @@ export async function PATCH(request: NextRequest) {
         },
         vehicle: {
           select: {
-            type: true,
-            capacity: true
+            vehicleNumber: true,
+            vehicleType: {
+              select: {
+                name: true,
+                nameAr: true,
+                capacity: true
+              }
+            }
           }
         },
         temperature: {

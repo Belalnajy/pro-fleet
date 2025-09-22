@@ -233,7 +233,10 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
   const stats = {
     total: trips.length,
     pending: trips.filter(t => t.status === TripStatus.PENDING).length,
-    inProgress: trips.filter(t => t.status === TripStatus.IN_PROGRESS).length,
+    inProgress: trips.filter(t => {
+      const activeStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+      return activeStatuses.includes(t.status as string);
+    }).length,
     delivered: trips.filter(t => t.status === TripStatus.DELIVERED).length,
     cancelled: trips.filter(t => t.status === TripStatus.CANCELLED).length,
   }

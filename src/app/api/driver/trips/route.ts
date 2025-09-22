@@ -50,11 +50,12 @@ export async function GET(request: NextRequest) {
         },
         vehicle: {
           select: {
-            capacity: true,
+            vehicleNumber: true,
             vehicleType: {
               select: {
                 name: true,
-                nameAr: true
+                nameAr: true,
+                capacity: true
               }
             }
           }

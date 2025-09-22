@@ -24,6 +24,8 @@ import {
   Wifi,
   WifiOff
 } from "lucide-react";
+import { getCityCoordinates } from "@/lib/city-coordinates";
+import { TripStatusControls } from "@/components/driver/trip-status-controls";
 
 interface DriverTrip {
   id: string;
@@ -120,9 +122,11 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
           ? data.find((trip: DriverTrip) => trip.id === tripId)
           : (data.id === tripId ? data : null);
       } else {
+        // البحث عن أي رحلة نشطة (ليست مُسلمة أو ملغية)
+        const activeStatuses = ["PENDING", "ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
         selectedTrip = Array.isArray(data) 
-          ? data.find((trip: DriverTrip) => trip.status === "IN_PROGRESS")
-          : data;
+          ? data.find((trip: DriverTrip) => activeStatuses.includes(trip.status))
+          : (activeStatuses.includes(data?.status) ? data : null);
       }
       
       setCurrentTrip(selectedTrip || null);
@@ -287,10 +291,23 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
     }
   };
 
+  const handleStatusUpdate = (newStatus: string) => {
+    if (currentTrip) {
+      setCurrentTrip(prev => prev ? { ...prev, status: newStatus } : null);
+      fetchCurrentTrip(); // Refresh data
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "PENDING": return "bg-yellow-100 text-yellow-800";
-      case "IN_PROGRESS": return "bg-blue-100 text-blue-800";
+      case "ASSIGNED": return "bg-blue-100 text-blue-800";
+      case "IN_PROGRESS": return "bg-orange-100 text-orange-800";
+      case "EN_ROUTE_PICKUP": return "bg-yellow-100 text-yellow-800";
+      case "AT_PICKUP": return "bg-purple-100 text-purple-800";
+      case "PICKED_UP": return "bg-green-100 text-green-800";
+      case "IN_TRANSIT": return "bg-blue-100 text-blue-800";
+      case "AT_DESTINATION": return "bg-indigo-100 text-indigo-800";
       case "DELIVERED": return "bg-green-100 text-green-800";
       case "CANCELLED": return "bg-red-100 text-red-800";
       default: return "bg-gray-100 text-gray-800";
@@ -300,7 +317,13 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
   const getStatusText = (status: string) => {
     switch (status) {
       case "PENDING": return "في الانتظار";
+      case "ASSIGNED": return "تم التعيين";
       case "IN_PROGRESS": return "قيد التنفيذ";
+      case "EN_ROUTE_PICKUP": return "في الطريق للاستلام";
+      case "AT_PICKUP": return "وصل لنقطة الاستلام";
+      case "PICKED_UP": return "تم الاستلام";
+      case "IN_TRANSIT": return "في الطريق للوجهة";
+      case "AT_DESTINATION": return "وصل للوجهة";
       case "DELIVERED": return "تم التسليم";
       case "CANCELLED": return "ملغية";
       default: return status;
@@ -317,33 +340,7 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
     });
   };
 
-  // Get city coordinates for mapping
-  const getCityCoordinates = (cityName: string): [number, number] => {
-    const cityCoords: { [key: string]: [number, number] } = {
-      'الرياض': [24.7136, 46.6753],
-      'جدة': [21.4858, 39.1925],
-      'الدمام': [26.4207, 50.0888],
-      'مكة المكرمة': [21.3891, 39.8579],
-      'المدينة المنورة': [24.5247, 39.5692],
-      'الطائف': [21.2703, 40.4178],
-      'تبوك': [28.3998, 36.5700],
-      'بريدة': [26.3260, 43.9750],
-      'خميس مشيط': [18.3059, 42.7278],
-      'حائل': [27.5114, 41.6900],
-      'الجبيل': [27.0174, 49.6251],
-      'ينبع': [24.0896, 38.0618],
-      'الخبر': [26.2172, 50.1971],
-      'القطيف': [26.5205, 50.0089],
-      'الأحساء': [25.4295, 49.5906],
-      'نجران': [17.4924, 44.1277],
-      'جازان': [16.9014, 42.5511],
-      'عرعر': [30.9753, 41.0381],
-      'سكاكا': [29.9697, 40.2064],
-      'الباحة': [20.0129, 41.4687]
-    };
-    
-    return cityCoords[cityName] || [24.7136, 46.6753]; // Default to Riyadh
-  };
+
 
   if (status === "loading" || loading) {
     return (
@@ -470,6 +467,14 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                 </CardContent>
               </Card>
 
+              {/* Trip Status Controls */}
+              <TripStatusControls 
+                tripId={currentTrip.id}
+                currentStatus={currentTrip.status}
+                onStatusUpdate={handleStatusUpdate}
+                currentLocation={currentLocation}
+              />
+
               {/* Tracking Controls */}
               <Card>
                 <CardHeader>
@@ -481,7 +486,7 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                       <Button 
                         onClick={startTracking}
                         className="w-full bg-green-600 hover:bg-green-700"
-                        disabled={currentTrip.status !== "IN_PROGRESS"}
+                        disabled={["DELIVERED", "CANCELLED"].includes(currentTrip.status)}
                       >
                         <Play className="h-4 w-4 mr-2" />
                         بدء التتبع المباشر
@@ -497,7 +502,7 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                       </Button>
                     )}
                     
-                    {currentTrip.status === "IN_PROGRESS" && (
+                    {!["DELIVERED", "CANCELLED"].includes(currentTrip.status) && (
                       <Button
                         onClick={() => updateTripStatus("DELIVERED")}
                         className="w-full bg-blue-600 hover:bg-blue-700"
@@ -596,12 +601,12 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                       heading: currentLocation.heading
                     } : null}
                     start={currentTrip ? {
-                      lat: currentTrip.fromCity.latitude || 24.7136,
-                      lng: currentTrip.fromCity.longitude || 46.6753
+                      lat: (currentTrip as any).originLat || currentTrip.fromCity.latitude || getCityCoordinates(currentTrip.fromCity.name).lat,
+                      lng: (currentTrip as any).originLng || currentTrip.fromCity.longitude || getCityCoordinates(currentTrip.fromCity.name).lng
                     } : undefined}
                     destination={currentTrip ? {
-                      lat: currentTrip.toCity.latitude || 24.7136,
-                      lng: currentTrip.toCity.longitude || 46.6753
+                      lat: (currentTrip as any).destinationLat || currentTrip.toCity.latitude || getCityCoordinates(currentTrip.toCity.name).lat,
+                      lng: (currentTrip as any).destinationLng || currentTrip.toCity.longitude || getCityCoordinates(currentTrip.toCity.name).lng
                     } : undefined}
                     height="400px"
                     initialZoom={12}

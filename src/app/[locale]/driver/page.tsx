@@ -125,8 +125,11 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
     trackingEnabled: session.user.driverProfile?.trackingEnabled ?? false,
   }
 
-  // Get current trip (in progress)
-  const currentTrip = trips.find(trip => trip.status === "IN_PROGRESS" && trip.driverId)
+  // Get current trip (active)
+  const currentTrip = trips.find(trip => {
+    const activeStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+    return activeStatuses.includes(trip.status) && trip.driverId;
+  })
   
   // Get available trips (pending or assigned to this driver)
   const availableTrips = trips.filter(trip => 

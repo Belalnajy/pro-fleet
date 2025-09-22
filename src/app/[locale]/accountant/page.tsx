@@ -427,9 +427,9 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
                         </div>
                       </Badge>
                     </div>
-                    <Button variant="outline" size="sm" >
+                    {/* <Button variant="outline" size="sm" >
                       <Eye className="h-3 w-3" />
-                    </Button>
+                    </Button> */}
                   </div>
                 </div>
               ))}

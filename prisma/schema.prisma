@@ -202,7 +202,7 @@ model Trip {
 model Invoice {
   id              String         @id @default(cuid())
   invoiceNumber   String         @unique
-  tripId          String         @unique
+  tripId          String?        @unique
   customsBrokerId String?
   customsFee      Float          @default(0)
   taxRate         Float          @default(0.15)
@@ -217,7 +217,7 @@ model Invoice {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   customsBroker   CustomsBroker? @relation(fields: [customsBrokerId], references: [id])
-  trip            Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  trip            Trip?          @relation(fields: [tripId], references: [id], onDelete: Cascade)
   customsClearances CustomsClearance[]
 
   @@map("invoices")

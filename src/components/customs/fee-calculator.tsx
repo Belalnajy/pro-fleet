@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { useLanguage } from "@/components/providers/language-provider"
+import * as XLSX from 'xlsx'
 import {
   Calculator,
   Search,
@@ -251,23 +252,38 @@ export function FeeCalculator({ onCalculationComplete }: FeeCalculatorProps) {
   }
   
   const exportTariffs = () => {
-    const csvContent = [
-      ['HS Code', 'Description (AR)', 'Description (EN)', 'Duty Rate (%)', 'VAT Rate (%)', 'Additional Fees'],
-      ...filteredTariffs.map(tariff => [
-        tariff.hsCode,
-        tariff.descriptionAr,
-        tariff.description,
-        tariff.dutyRate,
-        tariff.vatRate,
-        tariff.additionalFees || 0
-      ])
-    ].map(row => row.join(',')).join('\n')
+    const headers = ['رمز HS', 'الوصف (عربي)', 'الوصف (إنجليزي)', 'معدل الرسوم (%)', 'معدل ضريبة القيمة المضافة (%)', 'رسوم إضافية']
+    const rows = filteredTariffs.map(tariff => [
+      tariff.hsCode,
+      tariff.descriptionAr,
+      tariff.description,
+      tariff.dutyRate,
+      tariff.vatRate,
+      tariff.additionalFees || 0
+    ])
     
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `customs-tariffs-${new Date().toISOString().split('T')[0]}.csv`
-    link.click()
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new()
+    const worksheetData = [headers, ...rows]
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+    
+    // Set column widths
+    const columnWidths = [
+      { wch: 12 }, // رمز HS
+      { wch: 30 }, // الوصف (عربي)
+      { wch: 30 }, // الوصف (إنجليزي)
+      { wch: 15 }, // معدل الرسوم
+      { wch: 20 }, // معدل ضريبة القيمة المضافة
+      { wch: 15 }  // رسوم إضافية
+    ]
+    worksheet['!cols'] = columnWidths
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "حاسبة الرسوم")
+    
+    // Generate and download file
+    XLSX.writeFile(workbook, `customs-tariffs-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
     toast.success(t('exportSuccess'))
   }
   

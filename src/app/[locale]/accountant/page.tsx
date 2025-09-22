@@ -391,9 +391,9 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
                 <CardTitle>{t("recentTransactions")}</CardTitle>
                 <CardDescription>{t("latestFinancialActivities")}</CardDescription>
               </div>
-              <Button variant="outline" size="sm">
+              {/* <Button variant="outline" size="sm">
                 {t("viewAll")}
-              </Button>
+              </Button> */}
             </div>
           </CardHeader>
           <CardContent>

@@ -651,7 +651,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                               <Download className="h-4 w-4" />
                             )}
                           </Button>
-                          {invoice.paymentStatus === 'PENDING' && (
+                          {/* {invoice.paymentStatus === 'PENDING' && (
                             <Button 
                               variant="outline" 
                               size="sm"
@@ -665,7 +665,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                                 <Mail className="h-4 w-4" />
                               )}
                             </Button>
-                          )}
+                          )} */}
                           
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>

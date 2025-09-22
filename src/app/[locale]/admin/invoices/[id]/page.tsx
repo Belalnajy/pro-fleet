@@ -399,7 +399,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
                   تحميل PDF
                 </Button>
                 
-                {invoice.paymentStatus === "PENDING" && (
+                {/* {invoice.paymentStatus === "PENDING" && (
                   <Button
                     onClick={handleSendEmail}
                     disabled={actionLoading === "email"}
@@ -411,7 +411,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
                     )}
                     إرسال بالبريد
                   </Button>
-                )}
+                )} */}
               </>
             )}
           </div>

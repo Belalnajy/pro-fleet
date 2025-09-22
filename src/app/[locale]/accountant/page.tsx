@@ -328,7 +328,7 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1  gap-6">
         {/* Recent Invoices */}
         <Card>
           <CardHeader>
@@ -384,16 +384,16 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
         </Card>
 
         {/* Recent Transactions */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>{t("recentTransactions")}</CardTitle>
                 <CardDescription>{t("latestFinancialActivities")}</CardDescription>
               </div>
-              {/* <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm">
                 {t("viewAll")}
-              </Button> */}
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
@@ -427,15 +427,15 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
                         </div>
                       </Badge>
                     </div>
-                    {/* <Button variant="outline" size="sm" >
+                    <Button variant="outline" size="sm" >
                       <Eye className="h-3 w-3" />
-                    </Button> */}
+                    </Button>
                   </div>
                 </div>
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Quick Actions */}

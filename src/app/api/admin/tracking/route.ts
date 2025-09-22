@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { UserRole } from "@prisma/client"
+import { getCityCoordinates } from "@/lib/city-coordinates"
 
 // GET - Get all active tracking (Admin only)
 export async function GET(req: NextRequest) {
@@ -19,7 +20,9 @@ export async function GET(req: NextRequest) {
     // Get all active trips with their latest tracking
     const activeTrips = await db.trip.findMany({
       where: activeOnly ? {
-        status: "IN_PROGRESS",
+        status: {
+          in: ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"] as any
+        },
         driverId: { not: null }
       } : {},
       include: {
@@ -53,14 +56,14 @@ export async function GET(req: NextRequest) {
         fromCity: trip.fromCity.name,
         toCity: trip.toCity.name,
         fromCityCoords: {
-          lat: trip.fromCity.latitude || 24.7136,
-          lng: trip.fromCity.longitude || 46.6753
+          lat: (trip as any).originLat || trip.fromCity.latitude || getCityCoordinates(trip.fromCity.name).lat,
+          lng: (trip as any).originLng || trip.fromCity.longitude || getCityCoordinates(trip.fromCity.name).lng
         },
         toCityCoords: {
-          lat: trip.toCity.latitude || 24.7136,
-          lng: trip.toCity.longitude || 46.6753
+          lat: (trip as any).destinationLat || trip.toCity.latitude || getCityCoordinates(trip.toCity.name).lat,
+          lng: (trip as any).destinationLng || trip.toCity.longitude || getCityCoordinates(trip.toCity.name).lng
         },
-        vehicle: `${trip.vehicle.vehicleType?.name || trip.vehicle.vehicleTypeId} - ${trip.vehicle.capacity}`,
+        vehicle: `${trip.vehicle.vehicleType?.name || trip.vehicle.vehicleTypeId} - ${trip.vehicle.vehicleType?.capacity || 'غير محدد'}`,
         scheduledDate: trip.scheduledDate,
         actualStartDate: trip.actualStartDate
       },

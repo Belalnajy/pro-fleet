@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { PageLoading } from "@/components/ui/loading"
 import { useLanguage } from "@/components/providers/language-provider"
 import { toast } from "sonner"
+import * as XLSX from 'xlsx'
 import {
   Dialog,
   DialogContent,
@@ -230,27 +231,43 @@ export default function CustomsTariffsManagement({ params }: { params: Promise<{
   }
 
   const exportTariffs = () => {
-    const csvContent = [
-      ["HS Code", "Description", "Description (AR)", "Category", "Duty Rate (%)", "VAT Rate (%)", "Additional Fees", "Status"],
-      ...filteredTariffs.map(tariff => [
-        tariff.hsCode,
-        tariff.description,
-        tariff.descriptionAr,
-        tariff.category,
-        tariff.dutyRate.toString(),
-        tariff.vatRate.toString(),
-        tariff.additionalFees.toString(),
-        tariff.isActive ? "Active" : "Inactive"
-      ])
-    ].map(row => row.join(",")).join("\n")
+    const headers = ["رمز HS", "الوصف", "الوصف (عربي)", "الفئة", "معدل الرسوم (%)", "معدل ضريبة القيمة المضافة (%)", "رسوم إضافية", "الحالة"]
+    const rows = filteredTariffs.map(tariff => [
+      tariff.hsCode,
+      tariff.description,
+      tariff.descriptionAr,
+      tariff.category,
+      tariff.dutyRate.toString(),
+      tariff.vatRate.toString(),
+      tariff.additionalFees.toString(),
+      tariff.isActive ? "نشط" : "غير نشط"
+    ])
 
-    const blob = new Blob([csvContent], { type: "text/csv" })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = "customs-tariffs.csv"
-    a.click()
-    window.URL.revokeObjectURL(url)
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new()
+    const worksheetData = [headers, ...rows]
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+    
+    // Set column widths
+    const columnWidths = [
+      { wch: 12 }, // رمز HS
+      { wch: 30 }, // الوصف
+      { wch: 30 }, // الوصف (عربي)
+      { wch: 15 }, // الفئة
+      { wch: 15 }, // معدل الرسوم
+      { wch: 20 }, // معدل ضريبة القيمة المضافة
+      { wch: 15 }, // رسوم إضافية
+      { wch: 12 }  // الحالة
+    ]
+    worksheet['!cols'] = columnWidths
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "الرسوم الجمركية")
+    
+    // Generate and download file
+    XLSX.writeFile(workbook, `customs-tariffs-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    toast.success("تم التصدير بنجاح", { description: "تم تصدير الرسوم الجمركية إلى ملف Excel" })
   }
 
   if (loading && tariffs.length === 0) {

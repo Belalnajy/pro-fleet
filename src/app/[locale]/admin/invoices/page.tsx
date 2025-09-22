@@ -45,6 +45,7 @@ import {
   Plus
 } from "lucide-react"
 import { CreateInvoiceModal } from "@/components/invoices/create-invoice-modal"
+import * as XLSX from 'xlsx'
 
 interface Invoice {
   id: string
@@ -350,8 +351,8 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
   const handleExportInvoices = async () => {
     setExportLoading(true)
     try {
-      // Create CSV content
-      const csvHeaders = [
+      // Create XLSX content
+      const headers = [
         'رقم الفاتورة',
         'اسم العميل',
         'رقم الرحلة',
@@ -364,12 +365,12 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         'رسوم الجمارك',
         'العملة',
         'ملاحظات'
-      ].join(',')
+      ]
       
-      const csvRows = invoices.map(invoice => [
-        `"${invoice.invoiceNumber}"`,
-        `"${invoice.customerName || 'غير محدد'}"`,
-        `"${invoice.tripNumber || 'غير محدد'}"`,
+      const rows = invoices.map(invoice => [
+        invoice.invoiceNumber,
+        invoice.customerName || 'غير محدد',
+        invoice.tripNumber || 'غير محدد',
         invoice.totalAmount,
         getStatusText(invoice.paymentStatus),
         new Date(invoice.createdAt).toLocaleDateString('ar-SA'),
@@ -378,25 +379,40 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         invoice.taxAmount,
         invoice.customsFees,
         invoice.currency,
-        `"${invoice.notes || ''}"`
-      ].join(','))
+        invoice.notes || ''
+      ])
       
-      const csvContent = [csvHeaders, ...csvRows].join('\n')
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new()
+      const worksheetData = [headers, ...rows]
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
       
-      // Create and download file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-      const link = document.createElement('a')
-      const url = URL.createObjectURL(blob)
-      link.setAttribute('href', url)
-      link.setAttribute('download', `invoices-${new Date().toISOString().split('T')[0]}.csv`)
-      link.style.visibility = 'hidden'
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      // Set column widths
+      const columnWidths = [
+        { wch: 15 }, // رقم الفاتورة
+        { wch: 25 }, // اسم العميل
+        { wch: 15 }, // رقم الرحلة
+        { wch: 15 }, // المبلغ الإجمالي
+        { wch: 15 }, // حالة الدفع
+        { wch: 15 }, // تاريخ الإنشاء
+        { wch: 15 }, // تاريخ الاستحقاق
+        { wch: 15 }, // تاريخ الدفع
+        { wch: 12 }, // الضريبة
+        { wch: 15 }, // رسوم الجمارك
+        { wch: 10 }, // العملة
+        { wch: 30 }  // ملاحظات
+      ]
+      worksheet['!cols'] = columnWidths
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "الفواتير")
+      
+      // Generate and download file
+      XLSX.writeFile(workbook, `invoices-${new Date().toISOString().split('T')[0]}.xlsx`)
       
       toast({
         title: "تم التصدير بنجاح",
-        description: "تم تصدير الفواتير إلى ملف CSV",
+        description: "تم تصدير الفواتير إلى ملف Excel",
       })
     } catch (error) {
       console.error('Export error:', error)

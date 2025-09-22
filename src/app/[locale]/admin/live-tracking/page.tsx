@@ -233,7 +233,10 @@ export default function AdminLiveTrackingPage({ params }: { params: Promise<{ lo
   // Statistics
   const stats = {
     total: trackingData.length,
-    active: trackingData.filter(item => item.trip.status === "IN_PROGRESS").length,
+    active: trackingData.filter(item => {
+      const activeStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+      return activeStatuses.includes(item.trip.status);
+    }).length,
     tracking: trackingData.filter(item => item.trackingEnabled && item.lastLocation).length,
     offline: trackingData.filter(item => !item.trackingEnabled || !item.lastLocation).length
   };

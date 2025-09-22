@@ -1,5 +1,4 @@
 "use client"
-
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, use } from "react"
@@ -26,6 +25,8 @@ import {
   Receipt,
 } from "lucide-react"
 
+
+
 export default function AdminDashboard({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = use(params)
   const { data: session, status } = useSession()
@@ -44,6 +45,8 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
     totalVehicles: 0,
     pendingInvoices: 0,
   })
+
+
 
   useEffect(() => {
     if (status === "loading") return
@@ -68,6 +71,8 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
       setLoading(false)
     }
   }
+
+
 
   if (status === "loading" || loading) {
     return (

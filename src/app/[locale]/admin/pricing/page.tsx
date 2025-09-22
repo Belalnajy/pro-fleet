@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useLanguage } from "@/components/providers/language-provider"
 import { useTranslation } from "@/hooks/useTranslation"
+import * as XLSX from 'xlsx'
 import {
   DollarSign,
   Plus,
@@ -39,12 +40,18 @@ interface City {
   isActive: boolean
 }
 
+interface VehicleType {
+  id: string
+  name: string
+  nameAr?: string
+}
+
 interface Vehicle {
   id: string
-  type: string
-  capacity: string
-  description?: string
+  vehicleTypeId: string
+  vehicleNumber?: string
   isActive: boolean
+  vehicleType?: VehicleType
 }
 
 interface Pricing {
@@ -65,8 +72,24 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
   const { locale } = use(params)
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const { t: translate } = useTranslation()
+
+  // Function to get city name based on current language
+  const getCityName = (city: City): string => {
+    if (language === 'ar' && city.nameAr) {
+      return city.nameAr;
+    }
+    return city.name; // Default to English name
+  };
+
+  // Function to get vehicle type name based on current language
+  const getVehicleTypeName = (vehicle: Vehicle): string => {
+    if (language === 'ar' && vehicle.vehicleType?.nameAr) {
+      return vehicle.vehicleType.nameAr;
+    }
+    return vehicle.vehicleType?.name || vehicle.vehicleTypeId || 'Unknown';
+  };
   const [pricing, setPricing] = useState<Pricing[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
@@ -165,25 +188,39 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
   };
 
   const handleExportClick = () => {
-    const headers = ["from_city","to_city","vehicle_type","quantity","price","currency"]
+    const headers = ["من مدينة", "إلى مدينة", "نوع المركبة", "الكمية", "السعر", "العملة"]
     const rows = pricing.map(p => [
       p.fromCity.name,
       p.toCity.name,
-      p.vehicle.vehicleType?.name || p.vehicle.vehicleTypeId,
+      getVehicleTypeName(p.vehicle),
       String(p.quantity),
       String(p.price),
       p.currency,
     ])
-    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `pricing-export.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new()
+    const worksheetData = [headers, ...rows]
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+    
+    // Set column widths
+    const columnWidths = [
+      { wch: 15 }, // من مدينة
+      { wch: 15 }, // إلى مدينة
+      { wch: 20 }, // نوع المركبة
+      { wch: 10 }, // الكمية
+      { wch: 12 }, // السعر
+      { wch: 10 }  // العملة
+    ]
+    worksheet['!cols'] = columnWidths
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "التسعير")
+    
+    // Generate and download file
+    XLSX.writeFile(workbook, `pricing-export-${new Date().toISOString().split('T')[0]}.xlsx`)
+    
+    toast.success("تم التصدير بنجاح", { description: "تم تصدير التسعير إلى ملف Excel" })
   }
 
   const handleDeleteClick = (pricing: Pricing) => {
@@ -275,7 +312,8 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
     item.fromCity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.toCity.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (item.vehicle.vehicleType?.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.vehicle.capacity.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.vehicle.vehicleType?.nameAr || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.vehicle.vehicleNumber || "").toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (status === "loading") {
@@ -342,7 +380,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                     <SelectContent>
                       {cities.map((city) => (
                         <SelectItem key={city.id} value={city.id}>
-                          {city.name}
+                          {getCityName(city)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -362,7 +400,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                     <SelectContent>
                       {cities.map((city) => (
                         <SelectItem key={city.id} value={city.id}>
-                          {city.name}
+                          {getCityName(city)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -382,7 +420,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                     <SelectContent>
                       {vehicles.map((vehicle) => (
                         <SelectItem key={vehicle.id} value={vehicle.id}>
-                          {vehicle.capacity} - {(vehicle.vehicleType?.name || vehicle.vehicleTypeId)}
+                          {vehicle.vehicleNumber || vehicle.id} - {getVehicleTypeName(vehicle)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -551,7 +589,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                       <div className="flex items-center space-x-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          {item.fromCity.name} → {item.toCity.name}
+                          {getCityName(item.fromCity)} → {getCityName(item.toCity)}
                         </span>
                       </div>
                     </TableCell>
@@ -559,7 +597,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                       <div className="flex items-center space-x-2">
                         <Truck className="h-4 w-4 text-muted-foreground" />
                         <span>
-                          {item.vehicle.capacity}
+                          {getVehicleTypeName(item.vehicle)}
                         </span>
                       </div>
                     </TableCell>
@@ -609,7 +647,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Pricing</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete pricing from <strong>{deletePricing?.fromCity?.name}</strong> to <strong>{deletePricing?.toCity?.name}</strong> for vehicle <strong>{deletePricing?.vehicle?.capacity}</strong>?
+              Are you sure you want to delete pricing from <strong>{deletePricing?.fromCity?.name}</strong> to <strong>{deletePricing?.toCity?.name}</strong> for vehicle <strong>{deletePricing?.vehicle ? getVehicleTypeName(deletePricing.vehicle) : 'Unknown'}</strong>?
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -440,11 +440,16 @@ export async function GET(
         '--no-first-run',
         '--no-zygote',
         '--single-process',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
       ],
-      executablePath: process.env.NODE_ENV === 'production' 
-        ? process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
-        : undefined
+      // For Vercel/serverless, don't specify executablePath to use bundled Chromium
+      ...(process.env.VERCEL ? {} : {
+        executablePath: process.env.NODE_ENV === 'production' 
+          ? process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+          : undefined
+      })
     });
 
     const page = await browser.newPage();

@@ -65,14 +65,18 @@ export async function GET(
         "--disable-accelerated-2d-canvas",
         "--no-first-run",
         "--no-zygote",
-        "--single-process", // <- this one doesn't work in Windows
-        "--disable-gpu"
+        "--single-process",
+        "--disable-gpu",
+        "--disable-web-security",
+        "--disable-features=VizDisplayCompositor"
       ],
-      executablePath:
-        process.env.NODE_ENV === "production"
+      // For Vercel/serverless, don't specify executablePath to use bundled Chromium
+      ...(process.env.VERCEL ? {} : {
+        executablePath: process.env.NODE_ENV === "production"
           ? process.env.PUPPETEER_EXECUTABLE_PATH ||
             "/usr/bin/google-chrome-stable"
           : undefined
+      })
     });
 
     const page = await browser.newPage();

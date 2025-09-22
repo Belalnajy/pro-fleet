@@ -28,7 +28,8 @@ export async function GET() {
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor'
       ],
-      executablePath
+      // For Vercel/serverless, don't specify executablePath to use bundled Chromium
+      ...(process.env.VERCEL ? {} : { executablePath })
     })
     
     console.log("Browser launched successfully")

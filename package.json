@@ -12,7 +12,12 @@
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "db:seed": "tsx scripts/seed.ts",
-    "db:deduplicate-vehicles": "tsx scripts/deduplicate-vehicles.ts"
+    "db:deduplicate-vehicles": "tsx scripts/deduplicate-vehicles.ts",
+    "db:cleanup-cities": "node scripts/cleanup-cities.js",
+    "db:seed-pricing": "node scripts/seed-pricing.js",
+    "db:fresh-start": "npm run db:cleanup-cities && npm run db:seed-pricing",
+    "db:comprehensive-seed": "node scripts/comprehensive-seed.js",
+    "db:full-reset": "npm run db:reset && npm run db:comprehensive-seed"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -56,6 +61,7 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/leaflet": "^1.9.20",
     "@types/puppeteer": "^5.4.7",
+    "@types/xlsx": "^0.0.35",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
@@ -92,6 +98,7 @@
     "tsx": "^4.20.3",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
+    "xlsx": "^0.18.5",
     "z-ai-web-dev-sdk": "^0.0.10",
     "zod": "^4.0.2",
     "zustand": "^5.0.6"

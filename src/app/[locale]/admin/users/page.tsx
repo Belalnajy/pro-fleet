@@ -87,7 +87,8 @@ export default function UsersManagement({ params }: { params: Promise<{ locale: 
       const response = await fetch("/api/admin/users")
       if (response.ok) {
         const data = await response.json()
-        setUsers(data)
+        // Extract users array from the response object
+        setUsers(data.users || [])
       } else {
         setError("Failed to fetch users")
       }

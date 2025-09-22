@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import puppeteer from "puppeteer";
 import chromium from "@sparticuz/chromium";
+import fs from "fs";
+import path from "path";
 
 export async function GET(
   request: NextRequest,
@@ -138,6 +140,28 @@ export async function GET(
 }
 
 // Generate HTML content for PDF
+// Helper function to get logo as base64
+function getLogoBase64(): string {
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'Website-Logo.png');
+    if (fs.existsSync(logoPath)) {
+      const logoBuffer = fs.readFileSync(logoPath);
+      return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+    }
+  } catch (error) {
+    console.log('Logo not found, using placeholder');
+  }
+  // Fallback: simple SVG logo
+  return 'data:image/svg+xml;base64,' + Buffer.from(`
+    <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#3b82f6" rx="10"/>
+      <text x="50" y="35" font-family="Arial" font-size="12" fill="white" text-anchor="middle">PRO</text>
+      <text x="50" y="55" font-family="Arial" font-size="12" fill="white" text-anchor="middle">FLEET</text>
+      <text x="50" y="75" font-family="Arial" font-size="8" fill="white" text-anchor="middle">LOGISTICS</text>
+    </svg>
+  `).toString('base64');
+}
+
 function generateInvoiceHTML(invoice: any) {
   const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString("en-US");
@@ -171,7 +195,7 @@ function generateInvoiceHTML(invoice: any) {
     </head>
     <body>
         <div class="header">
-            <div class="company">Pro Fleet Transport</div>
+            <img src="${getLogoBase64()}" alt="Logo" style="width: 100px; height: 100px;">
             <div>Transportation & Logistics Services</div>
             <div>Saudi Arabia | Phone: +966 11 123 4567 | Email: info@profleet.com</div>
         </div>

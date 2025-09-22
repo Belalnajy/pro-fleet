@@ -2,8 +2,32 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import puppeteer from "puppeteer"
+import puppeteer from "puppeteer";
 import chromium from "@sparticuz/chromium";
+import fs from "fs";
+import path from "path";
+
+// Helper function to get logo as base64
+function getLogoBase64(): string {
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'Website-Logo.png');
+    if (fs.existsSync(logoPath)) {
+      const logoBuffer = fs.readFileSync(logoPath);
+      return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+    }
+  } catch (error) {
+    console.log('Logo not found, using placeholder');
+  }
+  // Fallback: simple SVG logo
+  return 'data:image/svg+xml;base64,' + Buffer.from(`
+    <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+      <rect width="100" height="100" fill="#3b82f6" rx="10"/>
+      <text x="50" y="35" font-family="Arial" font-size="12" fill="white" text-anchor="middle">PRO</text>
+      <text x="50" y="55" font-family="Arial" font-size="12" fill="white" text-anchor="middle">FLEET</text>
+      <text x="50" y="75" font-family="Arial" font-size="8" fill="white" text-anchor="middle">LOGISTICS</text>
+    </svg>
+  `).toString('base64');
+}
 
 // GET /api/admin/invoices/[id]/pdf - Generate PDF for invoice
 export async function GET(
@@ -73,6 +97,7 @@ export async function GET(
     </head>
     <body>
         <div class="header">
+            <img src="${getLogoBase64()}" alt="Logo" style="width: 100px; height: 100px; margin-bottom: 10px;">
             <div class="company">Pro Fleet Transport</div>
             <div>Transportation & Logistics Services</div>
             <div>Saudi Arabia | Phone: +966 11 123 4567 | Email: info@profleet.com</div>

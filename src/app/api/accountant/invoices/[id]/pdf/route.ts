@@ -116,8 +116,8 @@ export async function GET(
 
     // Check if it's a Puppeteer-specific error
     if (
-      error.message?.includes("Protocol error") ||
-      error.message?.includes("Target closed")
+      (error as Error).message?.includes("Protocol error") ||
+      (error as Error).message?.includes("Target closed")
     ) {
       console.error(
         "Puppeteer browser error - likely Chrome/Chromium not available"
@@ -128,7 +128,9 @@ export async function GET(
       {
         error: "Failed to generate PDF",
         details:
-          process.env.NODE_ENV === "development" ? error.message : undefined
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined
       },
       { status: 500 }
     );

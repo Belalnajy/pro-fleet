@@ -277,15 +277,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Create invoice
+    // Create invoice with conditional include
+    const includeOptions: any = {}
+    if (tripId) {
+      includeOptions.trip = {
+        include: {
+          customer: true
+        }
+      }
+    }
+    
     const invoice = await db.invoice.create({
       data: invoiceData,
-      include: {
-        trip: tripId ? {
-          include: {
-            customer: true
-          }
-        } : undefined
-      }
+      include: includeOptions
     })
     
     // 🎉 DETAILED LOG: Invoice created successfully (Accountant)

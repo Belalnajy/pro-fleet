@@ -252,14 +252,20 @@ export function CreateInvoiceModal({
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create invoice')
+        console.error('❌ [FRONTEND] Invoice creation failed:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorData,
+          sentData: invoiceData
+        })
+        throw new Error(errorData.details || errorData.error || 'Failed to create invoice')
       }
 
       const result = await response.json()
       
       toast({
         title: t('successTitle'),
-        description: t('invoiceCreatedWithNumber' as TranslationKey, { invoiceNumber: result.invoiceNumber }),
+        description: `Invoice ${result.invoiceNumber} created successfully`,
       })
 
       setFormData({

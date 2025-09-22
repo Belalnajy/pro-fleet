@@ -327,7 +327,12 @@ export async function POST(request: NextRequest) {
       notes: invoice.notes
     })
   } catch (error) {
-    console.error("Error creating invoice:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("❌ [ACCOUNTANT INVOICE] Error creating invoice:", error)
+    console.error("❌ [ACCOUNTANT INVOICE] Error stack:", error instanceof Error ? error.stack : 'No stack trace')
+    return NextResponse.json({ 
+      error: "Internal server error", 
+      details: error instanceof Error ? error.message : 'Unknown error',
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
   }
 }

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { vehicleTypeId, capacity, description, isActive } = body
+    const { vehicleTypeId, vehicleNumber, isActive } = body
 
     if (!vehicleTypeId) {
       return NextResponse.json({ error: "vehicleTypeId is required" }, { status: 400 })
@@ -45,8 +45,7 @@ export async function POST(req: NextRequest) {
     const vehicle = await db.vehicle.create({
       data: {
         vehicleTypeId,
-        capacity,
-        description,
+        vehicleNumber,
         isActive: isActive ?? true,
       },
       include: { vehicleType: true },
@@ -74,7 +73,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { id, vehicleTypeId, capacity, description, isActive } = body
+    const { id, vehicleTypeId, vehicleNumber, isActive } = body
 
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 })
@@ -84,8 +83,7 @@ export async function PUT(req: NextRequest) {
       where: { id },
       data: {
         ...(vehicleTypeId ? { vehicleTypeId } : {}),
-        ...(capacity !== undefined ? { capacity } : {}),
-        ...(description !== undefined ? { description } : {}),
+        ...(vehicleNumber !== undefined ? { vehicleNumber } : {}),
         ...(isActive !== undefined ? { isActive } : {}),
       },
       include: { vehicleType: true },

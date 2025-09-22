@@ -1,0 +1,11 @@
+vehicleType,vehicleNumber,isActive
+سيارة,ABC-001,true
+سيارة,ABC-002,true
+شاحنة,TRK-001,true
+شاحنة,TRK-002,false
+مبردة,REF-001,true
+مبردة,REF-002,true
+حافلة,BUS-001,true
+دراجة نارية,BIKE-001,true
+فان,VAN-001,true
+فان,VAN-002,true

@@ -9,7 +9,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "file is required" }, { status: 400 });
 
     const { headers, rows } = parseCSV(text);
-    const required = ["vehicleType", "capacity", "description", "isActive"];
+    const required = ["vehicleType", "vehicleNumber", "isActive"];
     for (const h of required)
       if (!headers.includes(h)) {
         return NextResponse.json(
@@ -19,8 +19,7 @@ export async function POST(req: Request) {
       }
 
     const vehicleTypeIdx = headers.indexOf("vehicleType");
-    const capacityIdx = headers.indexOf("capacity");
-    const descriptionIdx = headers.indexOf("description");
+    const vehicleNumberIdx = headers.indexOf("vehicleNumber");
     const isActiveIdx = headers.indexOf("isActive");
 
     const created: any[] = [];
@@ -30,8 +29,7 @@ export async function POST(req: Request) {
       try {
         if (!r[vehicleTypeIdx]) continue;
         const vehicleTypeName = r[vehicleTypeIdx] as string;
-        const capacity = r[capacityIdx];
-        const description = r[descriptionIdx] || null;
+        const vehicleNumber = r[vehicleNumberIdx] || null;
         const isActive = (r[isActiveIdx] ?? "true").toLowerCase() === "true";
 
         const result = await db.$transaction(async (tx) => {
@@ -54,16 +52,15 @@ export async function POST(req: Request) {
 
           const v = await tx.vehicle.upsert({
             where: { 
-              type_capacity: { 
+              type_vehicle_number: { 
                 vehicleTypeId: vehicleType.id, 
-                capacity: capacity 
+                vehicleNumber: vehicleNumber 
               } 
             },
-            update: { description, isActive },
+            update: { isActive },
             create: { 
               vehicleTypeId: vehicleType.id, 
-              capacity, 
-              description, 
+              vehicleNumber, 
               isActive 
             }
           });

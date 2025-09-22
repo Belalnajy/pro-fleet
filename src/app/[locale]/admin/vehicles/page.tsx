@@ -12,11 +12,13 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useLanguage } from "@/components/providers/language-provider"
+import * as XLSX from 'xlsx'
 import {
   Truck,
   Edit,
@@ -28,6 +30,8 @@ import {
   PlusCircle,
   Trash2,
   Package,
+  Thermometer,
+  Plus,
 } from "lucide-react"
 // Vehicle types are now dynamic via VehicleTypeModel
 
@@ -37,11 +41,31 @@ interface VehicleTypeModelRef {
   nameAr?: string | null
 }
 
+interface VehicleTypeModel {
+  id: string
+  name: string
+  nameAr?: string | null
+  capacity?: string | null
+  description?: string | null
+  isRefrigerated: boolean
+  defaultTemperatureId?: string | null
+  isActive: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+interface TemperatureSetting {
+  id: string
+  option: string
+  value: number
+  unit: string
+  isActive: boolean
+}
+
 interface Vehicle {
   id: string
   vehicleTypeId: string
-  capacity: string
-  description?: string | null
+  vehicleNumber?: string | null
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -53,6 +77,10 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
   const { data: session, status } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
+  // Tab management
+  const [activeTab, setActiveTab] = useState("vehicles")
+  
+  // Vehicles state
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
   const [vehicleTypes, setVehicleTypes] = useState<VehicleTypeModelRef[]>([])
   const [loading, setLoading] = useState(true)
@@ -62,11 +90,26 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
   const [deleteVehicle, setDeleteVehicle] = useState<Vehicle | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
+  
+  // Vehicle Types state
+  const [fullVehicleTypes, setFullVehicleTypes] = useState<VehicleTypeModel[]>([])
+  const [temperatures, setTemperatures] = useState<TemperatureSetting[]>([])
+  const [vehicleTypesLoading, setVehicleTypesLoading] = useState(false)
+  const [isVehicleTypeDialogOpen, setIsVehicleTypeDialogOpen] = useState(false)
+  const [editingVehicleType, setEditingVehicleType] = useState<VehicleTypeModel | null>(null)
+  const [vehicleTypeForm, setVehicleTypeForm] = useState({
+    name: "",
+    nameAr: "",
+    capacity: "",
+    description: "",
+    isRefrigerated: false,
+    defaultTemperatureId: "",
+    isActive: true,
+  })
 
   const [formData, setFormData] = useState({
     vehicleTypeId: "",
-    capacity: "",
-    description: "",
+    vehicleNumber: "",
     isActive: true,
   })
 
@@ -107,6 +150,133 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
     }
   }
 
+  // Vehicle Types Functions
+  const fetchFullVehicleTypes = async () => {
+    try {
+      setVehicleTypesLoading(true)
+      const response = await fetch("/api/admin/vehicle-types")
+      if (response.ok) {
+        const data = await response.json()
+        setFullVehicleTypes(data)
+      }
+    } catch (error) {
+      console.error("Error fetching vehicle types:", error)
+      toast.error("Failed to fetch vehicle types")
+    } finally {
+      setVehicleTypesLoading(false)
+    }
+  }
+
+  const fetchTemperatures = async () => {
+    try {
+      const response = await fetch("/api/admin/temperatures")
+      if (response.ok) {
+        const data = await response.json()
+        setTemperatures(data)
+      }
+    } catch (error) {
+      console.error("Error fetching temperatures:", error)
+    }
+  }
+
+  const handleAddVehicleType = () => {
+    setEditingVehicleType(null)
+    setVehicleTypeForm({
+      name: "",
+      nameAr: "",
+      capacity: "",
+      description: "",
+      isRefrigerated: false,
+      defaultTemperatureId: "",
+      isActive: true,
+    })
+    setIsVehicleTypeDialogOpen(true)
+  }
+
+  const handleEditVehicleType = (vehicleType: VehicleTypeModel) => {
+    setEditingVehicleType(vehicleType)
+    setVehicleTypeForm({
+      name: vehicleType.name,
+      nameAr: vehicleType.nameAr || "",
+      capacity: vehicleType.capacity || "",
+      description: vehicleType.description || "",
+      isRefrigerated: vehicleType.isRefrigerated,
+      defaultTemperatureId: vehicleType.defaultTemperatureId || "",
+      isActive: vehicleType.isActive,
+    })
+    setIsVehicleTypeDialogOpen(true)
+  }
+
+  const handleSaveVehicleType = async () => {
+    try {
+      const method = editingVehicleType ? "PATCH" : "POST"
+      const url = "/api/admin/vehicle-types"
+      
+      const body = editingVehicleType 
+        ? { ...vehicleTypeForm, id: editingVehicleType.id }
+        : vehicleTypeForm
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      })
+
+      if (response.ok) {
+        toast.success(editingVehicleType ? t("vehicleTypeUpdated") : t("vehicleTypeCreated"))
+        setIsVehicleTypeDialogOpen(false)
+        setEditingVehicleType(null)
+        setVehicleTypeForm({
+          name: "",
+          nameAr: "",
+          capacity: "",
+          description: "",
+          isRefrigerated: false,
+          defaultTemperatureId: "",
+          isActive: true,
+        })
+        fetchFullVehicleTypes()
+        fetchData() // Refresh vehicles list too
+      } else {
+        toast.error("Failed to save vehicle type")
+      }
+    } catch (error) {
+      console.error("Error saving vehicle type:", error)
+      toast.error("Failed to save vehicle type")
+    }
+  }
+
+  const handleDeleteVehicleType = async (id: string) => {
+    if (!confirm(t("confirmDeleteVehicleType"))) return
+
+    try {
+      const response = await fetch("/api/admin/vehicle-types", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      })
+
+      if (response.ok) {
+        toast.success(t("vehicleTypeDeleted"))
+        fetchFullVehicleTypes()
+        fetchData() // Refresh vehicles list too
+      } else {
+        toast.error("Failed to delete vehicle type")
+      }
+    } catch (error) {
+      console.error("Error deleting vehicle type:", error)
+      toast.error("Failed to delete vehicle type")
+    }
+  }
+
+  // Load vehicle types data when switching to vehicle types tab
+  useEffect(() => {
+    if (activeTab === "vehicle-types" && fullVehicleTypes.length === 0) {
+      fetchFullVehicleTypes()
+      fetchTemperatures()
+    }
+  }, [activeTab])
+
   const handleImportClick = () => {
     importInputRef.current?.click()
   }
@@ -143,34 +313,43 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
 
   const handleExportClick = () => {
     if (filteredVehicles.length === 0) {
-      toast.info("No Data", { description: "There is no data to export." });
+      toast.info("لا توجد بيانات", { description: "لا توجد بيانات للتصدير." });
       return;
     }
-    const headers = ["vehicleType", "capacity", "description", "isActive"];
+    
+    const headers = ["نوع المركبة", "رقم المركبة", "نشط"];
     const rows = filteredVehicles.map(v => [
       v.vehicleType?.name || v.vehicleTypeId,
-      v.capacity,
-      v.description || "",
-      String(v.isActive),
+      v.vehicleNumber || "",
+      v.isActive ? "نعم" : "لا",
     ]);
-    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `vehicles-export-${new Date().toISOString().split('T')[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Export Successful");
+    
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheetData = [headers, ...rows];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    
+    // Set column widths
+    const columnWidths = [
+      { wch: 20 }, // نوع المركبة
+      { wch: 15 }, // رقم المركبة
+      { wch: 10 }  // نشط
+    ];
+    worksheet['!cols'] = columnWidths;
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, worksheet, "المركبات");
+    
+    // Generate and download file
+    XLSX.writeFile(workbook, `vehicles-export-${new Date().toISOString().split('T')[0]}.xlsx`);
+    
+    toast.success("تم التصدير بنجاح", { description: "تم تصدير المركبات إلى ملف Excel" });
   };
 
   const resetForm = () => {
     setFormData({
       vehicleTypeId: "",
-      capacity: "",
-      description: "",
+      vehicleNumber: "",
       isActive: true,
     })
     setError(null)
@@ -181,8 +360,7 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
     if (vehicle) {
       setFormData({
         vehicleTypeId: vehicle.vehicleTypeId,
-        capacity: vehicle.capacity,
-        description: vehicle.description || "",
+        vehicleNumber: vehicle.vehicleNumber || "",
         isActive: vehicle.isActive,
       })
     } else {
@@ -259,8 +437,18 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
     )
   )
 
+  // Filter vehicle types based on search term
+  const filteredVehicleTypes = fullVehicleTypes.filter(vehicleType =>
+    vehicleType.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (vehicleType.nameAr && vehicleType.nameAr.toLowerCase().includes(searchTerm.toLowerCase()))
+  )
+
   const getVehicleTypeLabel = (v: Vehicle) => {
-    return v.vehicleType?.nameAr || v.vehicleType?.name || "Unknown"
+    if (locale === 'ar') {
+      return v.vehicleType?.nameAr || v.vehicleType?.name || t("unknownType")
+    } else {
+      return v.vehicleType?.name || v.vehicleType?.nameAr || t("unknownType")
+    }
   }
 
   const getVehicleTypeIcon = () => {
@@ -294,10 +482,17 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
             <Download className="h-4 w-4 mr-2" />
             {t("export")}
           </Button>
-          <Button size="sm" onClick={() => handleOpenDialog(null)}>
-            <PlusCircle className="h-4 w-4 mr-2" />
-            {t("addVehicle")}
-          </Button>
+          {activeTab === "vehicles" ? (
+            <Button size="sm" onClick={() => handleOpenDialog(null)}>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              {t("addVehicle")}
+            </Button>
+          ) : (
+            <Button size="sm" onClick={handleAddVehicleType}>
+              <Plus className="h-4 w-4 mr-2" />
+              {t("addVehicleType")}
+            </Button>
+          )}
         </div>
       }
     >
@@ -331,25 +526,32 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>{t("fleet")}</CardTitle>
-              <CardDescription>{t("fleetDesc")}</CardDescription>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder={t("searchVehicles")}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 sm:w-[300px]"
-              />
-            </div>
-          </div>
-        </CardHeader>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="vehicles">{t("manageVehicles")}</TabsTrigger>
+          <TabsTrigger value="vehicle-types">{t("vehicleTypes")}</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="vehicles" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>{t("fleet")}</CardTitle>
+                  <CardDescription>{t("fleetDesc")}</CardDescription>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder={t("searchVehicles")}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 sm:w-[300px]"
+                  />
+                </div>
+              </div>
+            </CardHeader>
         <CardContent>
           {loading ? (
             <div className="text-center py-10">{t("loading")}</div>
@@ -358,7 +560,7 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
               <TableHeader>
                 <TableRow>
                   <TableHead>{t("vehicleType")}</TableHead>
-                  <TableHead>{t("capacity")}</TableHead>
+                  <TableHead>{t("vehicleNumber")}</TableHead>
                   <TableHead>{t("status")}</TableHead>
                   <TableHead>{t("created")}</TableHead>
                   <TableHead className="text-right">{t("actions")}</TableHead>
@@ -374,7 +576,7 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
                           <span className="font-medium">{getVehicleTypeLabel(vehicle)}</span>
                         </div>
                       </TableCell>
-                      <TableCell>{vehicle.capacity}</TableCell>
+                      <TableCell>{vehicle.vehicleNumber || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={vehicle.isActive ? "default" : "secondary"}>
                           {vehicle.isActive ? t("active") : t("inactive")}
@@ -402,7 +604,103 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
             </Table>
           )}
         </CardContent>
-      </Card>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="vehicle-types" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>{t("vehicleTypes")}</CardTitle>
+                  <CardDescription>{t("manageVehicleTypesAvailable")}</CardDescription>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder={t("searchVehicles")}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-8 sm:w-[300px]"
+                  />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {vehicleTypesLoading ? (
+                <div className="text-center py-10">{t("loading")}</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t("name")}</TableHead>
+                      <TableHead>{t("nameAr")}</TableHead>
+                      <TableHead>{t("capacity")}</TableHead>
+                      <TableHead>{t("refrigerated")}</TableHead>
+                      <TableHead>{t("status")}</TableHead>
+                      <TableHead className="text-right">{t("actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredVehicleTypes.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          {searchTerm ? t("noVehicleTypesFound") : t("noVehicleTypesFound")}
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredVehicleTypes.map((vehicleType) => (
+                        <TableRow key={vehicleType.id}>
+                          <TableCell className="font-medium">{vehicleType.name}</TableCell>
+                          <TableCell>{vehicleType.nameAr || "-"}</TableCell>
+                          <TableCell>{vehicleType.capacity || "-"}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {vehicleType.isRefrigerated ? (
+                                <>
+                                  <Thermometer className="h-4 w-4 text-blue-500" />
+                                  <span className="text-sm text-blue-600">{t("yes")}</span>
+                                </>
+                              ) : (
+                                <span className="text-sm text-gray-500">{t("no")}</span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={vehicleType.isActive ? "default" : "secondary"}>
+                              {vehicleType.isActive ? t("active") : t("inactive")}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditVehicleType(vehicleType)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteVehicleType(vehicleType.id)}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="sm:max-w-[425px]">
@@ -425,12 +723,14 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
               </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="capacity" className="text-right">{t("capacity")}</Label>
-              <Input id="capacity" placeholder={t("capacityPlaceholder")} value={formData.capacity} onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">{t("description")}</Label>
-              <Textarea id="description" placeholder={t("vehicleDescPlaceholder")} value={formData.description || ''} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} className="col-span-3" />
+              <Label htmlFor="vehicleId" className="text-right">{t("vehicleNumber")}</Label>
+              <Input 
+                id="vehicleId" 
+                placeholder={t("vehicleNumberPlaceholder")} 
+                value={formData.vehicleNumber || ''} 
+                onChange={(e) => setFormData(prev => ({ ...prev, vehicleNumber: e.target.value }))} 
+                className="col-span-3" 
+              />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="isActive" className="text-right">{t("status")}</Label>
@@ -465,7 +765,7 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
           <AlertDialogHeader>
             <AlertDialogTitle>{t("deleteVehicle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {t("confirmDeleteVehicle")} <strong>{deleteVehicle?.vehicleType?.name || t("unknownType")} - {deleteVehicle?.capacity}</strong>?
+              {t("confirmDeleteVehicle")} <strong>{deleteVehicle?.vehicleType?.name || t("unknownType")} - {deleteVehicle?.vehicleNumber || t("notSpecified")}</strong>?
               {t("actionCannotBeUndone")}
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -482,6 +782,110 @@ export default function VehiclesManagement({ params }: { params: Promise<{ local
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Vehicle Type Dialog */}
+      <Dialog open={isVehicleTypeDialogOpen} onOpenChange={setIsVehicleTypeDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {editingVehicleType ? t("editVehicleType") : t("addNewVehicleType")}
+            </DialogTitle>
+            <DialogDescription>
+              {editingVehicleType ? t("updateVehicleTypeInfo") : t("addNewVehicleTypeDesc")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">{t("name")} *</Label>
+                <Input
+                  id="name"
+                  value={vehicleTypeForm.name}
+                  onChange={(e) => setVehicleTypeForm({ ...vehicleTypeForm, name: e.target.value })}
+                  placeholder={t("name")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nameAr">{t("nameAr")}</Label>
+                <Input
+                  id="nameAr"
+                  value={vehicleTypeForm.nameAr}
+                  onChange={(e) => setVehicleTypeForm({ ...vehicleTypeForm, nameAr: e.target.value })}
+                  placeholder={t("nameAr")}
+                  dir="rtl"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="capacity">{t("capacity")}</Label>
+              <Input
+                id="capacity"
+                value={vehicleTypeForm.capacity}
+                onChange={(e) => setVehicleTypeForm({ ...vehicleTypeForm, capacity: e.target.value })}
+                placeholder={t("capacity")}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="description">{t("description")}</Label>
+              <Textarea
+                id="description"
+                value={vehicleTypeForm.description}
+                onChange={(e) => setVehicleTypeForm({ ...vehicleTypeForm, description: e.target.value })}
+                placeholder={t("description")}
+                rows={3}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isRefrigerated"
+                checked={vehicleTypeForm.isRefrigerated}
+                onChange={(e) => setVehicleTypeForm({ ...vehicleTypeForm, isRefrigerated: e.target.checked })}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="isRefrigerated">{t("refrigerated")}</Label>
+            </div>
+            {vehicleTypeForm.isRefrigerated && (
+              <div className="space-y-2">
+                <Label htmlFor="defaultTemperatureId">{t("defaultTemperature")}</Label>
+                <Select
+                  value={vehicleTypeForm.defaultTemperatureId}
+                  onValueChange={(value) => setVehicleTypeForm({ ...vehicleTypeForm, defaultTemperatureId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={t("selectTemperature")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {temperatures.map((temp) => (
+                      <SelectItem key={temp.id} value={temp.id}>
+                        {temp.option} ({temp.value}°{temp.unit})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="isActive"
+                checked={vehicleTypeForm.isActive}
+                onChange={(e) => setVehicleTypeForm({ ...vehicleTypeForm, isActive: e.target.checked })}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="isActive">{t("active")}</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsVehicleTypeDialogOpen(false)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={handleSaveVehicleType} disabled={!vehicleTypeForm.name.trim()}>
+              {editingVehicleType ? t("update") : t("create")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   )
 }

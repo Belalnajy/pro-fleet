@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Fetch vehicle types from VehicleTypeModel instead of Vehicle table
+    // Fetch active vehicle types for customers
     const vehicleTypes = await db.vehicleTypeModel.findMany({
       where: { isActive: true },
       select: {
@@ -25,20 +25,7 @@ export async function GET(req: NextRequest) {
       orderBy: { name: "asc" }
     })
 
-    // Transform to match the expected format for backward compatibility
-    const transformedVehicleTypes = vehicleTypes.map(vt => ({
-      id: vt.id,
-      vehicleTypeId: vt.id,
-      capacity: vt.capacity || "متوسط",
-      vehicleType: {
-        name: vt.name,
-        nameAr: vt.nameAr
-      },
-      description: vt.description,
-      isRefrigerated: vt.isRefrigerated
-    }))
-
-    return NextResponse.json(transformedVehicleTypes)
+    return NextResponse.json(vehicleTypes)
   } catch (error) {
     console.error("Error fetching vehicle types:", error)
     return NextResponse.json(

@@ -81,12 +81,18 @@ export async function POST(
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'uploads', 'customs-documents')
+    // Create uploads directory - use /tmp in production, uploads in development
+    const uploadsDir = process.env.NODE_ENV === 'production' 
+      ? join('/tmp', 'customs-documents')
+      : join(process.cwd(), 'uploads', 'customs-documents')
+    
+    console.log('Creating uploads directory:', uploadsDir)
     try {
       await mkdir(uploadsDir, { recursive: true })
+      console.log('Directory created successfully')
     } catch (error) {
-      // Directory might already exist
+      console.error('Error creating directory:', error)
+      // Directory might already exist, continue
     }
 
     // Generate unique filename
@@ -98,15 +104,28 @@ export async function POST(
     // Save file
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
+    
+    console.log('Saving file to:', filePath)
+    try {
+      await writeFile(filePath, buffer)
+      console.log('File saved successfully')
+    } catch (writeError) {
+      console.error('Error saving file:', writeError)
+      throw writeError
+    }
 
     // Save document record to database
+    const relativePath = process.env.NODE_ENV === 'production'
+      ? `tmp/customs-documents/${fileName}`
+      : `uploads/customs-documents/${fileName}`
+    
+    console.log('Saving document record with path:', relativePath)
     const document = await prisma.customsDocument.create({
       data: {
         clearanceId: id,
         documentType: documentType as any,
         documentName,
-        filePath: `uploads/customs-documents/${fileName}`,
+        filePath: relativePath,
         fileSize: file.size,
         mimeType: file.type || 'application/octet-stream'
       }

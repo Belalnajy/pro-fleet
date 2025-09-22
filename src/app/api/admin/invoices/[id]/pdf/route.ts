@@ -481,19 +481,22 @@ export async function GET(
 
     // Check if it's a Puppeteer-specific error
     if (
-      error.message?.includes("Protocol error") ||
-      error.message?.includes("Target closed")
+      (error as Error).message?.includes("Protocol error") ||
+      (error as Error).message?.includes("Target closed") ||
+      (error as Error).message?.includes("No usable sandbox") ||
+      (error as Error).message?.includes("Failed to launch")
     ) {
       console.error(
-        "Puppeteer browser error - likely Chrome/Chromium not available"
+        "Puppeteer browser error - likely Chrome/Chromium not available or misconfigured"
       );
+      console.error("Make sure Chrome is installed and PUPPETEER_EXECUTABLE_PATH is set correctly");
     }
 
     return NextResponse.json(
       {
         error: "Failed to generate PDF",
         details:
-          process.env.NODE_ENV === "development" ? error.message : undefined
+          process.env.NODE_ENV === "development" ? (error as Error).message : undefined
       },
       { status: 500 }
     );

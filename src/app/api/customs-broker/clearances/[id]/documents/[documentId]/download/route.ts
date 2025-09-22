@@ -32,7 +32,20 @@ export async function GET(
     }
 
     try {
-      const filePath = join(process.cwd(), document.filePath)
+      // Handle different file paths for production vs development
+      let filePath: string
+      if (document.filePath.startsWith('tmp/')) {
+        // Production path
+        filePath = join('/', document.filePath)
+      } else if (document.filePath.startsWith('uploads/')) {
+        // Development path
+        filePath = join(process.cwd(), document.filePath)
+      } else {
+        // Legacy path - assume it's relative to project root
+        filePath = join(process.cwd(), document.filePath)
+      }
+      
+      console.log('Attempting to read file from:', filePath)
       const fileBuffer = await readFile(filePath)
 
       const response = new NextResponse(fileBuffer)

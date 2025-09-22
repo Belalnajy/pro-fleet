@@ -178,6 +178,15 @@ export function DocumentsManagement({ clearanceId, clearanceNumber }: DocumentsM
         })
       }, 200)
 
+      console.log('Uploading file:', {
+        fileName: selectedFile.name,
+        fileSize: selectedFile.size,
+        fileType: selectedFile.type,
+        documentType,
+        documentName,
+        clearanceId
+      })
+
       const response = await fetch(`/api/customs-broker/clearances/${clearanceId}/documents`, {
         method: 'POST',
         body: formData,
@@ -188,7 +197,8 @@ export function DocumentsManagement({ clearanceId, clearanceNumber }: DocumentsM
 
       console.log('Upload response status:', response.status)
       console.log('Upload response ok:', response.ok)
-      console.log('Upload response headers:', response.headers)
+      console.log('Upload response statusText:', response.statusText)
+      console.log('Upload response headers:', Object.fromEntries(response.headers.entries()))
 
       if (response.ok) {
         // Try to parse successful response

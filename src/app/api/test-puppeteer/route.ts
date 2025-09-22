@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import puppeteer from "puppeteer"
+import chromium from "@sparticuz/chromium"
 
 export async function GET() {
   try {
@@ -16,20 +17,23 @@ export async function GET() {
     
     const browser = await puppeteer.launch({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor'
-      ],
-      // For Vercel/serverless, don't specify executablePath to use bundled Chromium
-      ...(process.env.VERCEL ? {} : { executablePath })
+      args: process.env.VERCEL 
+        ? [...chromium.args, '--hide-scrollbars', '--disable-web-security']
+        : [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu',
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor'
+          ],
+      executablePath: process.env.VERCEL 
+        ? await chromium.executablePath()
+        : executablePath
     })
     
     console.log("Browser launched successfully")

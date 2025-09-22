@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer"
+import chromium from "@sparticuz/chromium";
 
 export async function GET(
   request: NextRequest,
@@ -58,25 +59,26 @@ export async function GET(
     // Generate actual PDF using puppeteer
     const browser = await puppeteer.launch({
       headless: true,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-accelerated-2d-canvas",
-        "--no-first-run",
-        "--no-zygote",
-        "--single-process",
-        "--disable-gpu",
-        "--disable-web-security",
-        "--disable-features=VizDisplayCompositor"
-      ],
-      // For Vercel/serverless, don't specify executablePath to use bundled Chromium
-      ...(process.env.VERCEL ? {} : {
-        executablePath: process.env.NODE_ENV === "production"
+      args: process.env.VERCEL 
+        ? [...chromium.args, '--hide-scrollbars', '--disable-web-security']
+        : [
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-accelerated-2d-canvas",
+            "--no-first-run",
+            "--no-zygote",
+            "--single-process",
+            "--disable-gpu",
+            "--disable-web-security",
+            "--disable-features=VizDisplayCompositor"
+          ],
+      executablePath: process.env.VERCEL 
+        ? await chromium.executablePath()
+        : process.env.NODE_ENV === "production"
           ? process.env.PUPPETEER_EXECUTABLE_PATH ||
             "/usr/bin/google-chrome-stable"
           : undefined
-      })
     });
 
     const page = await browser.newPage();

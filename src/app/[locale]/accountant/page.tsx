@@ -39,6 +39,7 @@ interface DashboardStats {
 
 interface Invoice {
   id: string
+  invoiceNumber: string
   customer: string
   amount: number
   status: string
@@ -65,6 +66,7 @@ export default function AccountantDashboard({ params }: { params: Promise<{ loca
   const router = useRouter()
   const { t } = useLanguage()
   const { toast } = useToast()
+  const [actionLoading, setActionLoading] = useState<{[key: string]: boolean}>({})
   
   const [dashboardData, setDashboardData] = useState<{
     stats: DashboardStats
@@ -102,6 +104,58 @@ export default function AccountantDashboard({ params }: { params: Promise<{ loca
       setLoading(false)
     }
   }
+  // Handle viewing invoice details
+  const handleViewInvoice = (invoiceId: string) => {
+    router.push(`/${locale}/accountant/invoices/${invoiceId}`)
+  }
+// Handle PDF download
+const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
+  const loadingKey = `pdf-${invoiceId}`
+  try {
+    setActionLoading(prev => ({ ...prev, [loadingKey]: true }))
+    
+    toast({
+      title: "جاري التحميل...",
+      description: "يتم إنشاء ملف PDF للفاتورة"
+    })
+    
+    const response = await fetch(`/api/accountant/invoices/${invoiceId}/pdf`)
+    
+    if (!response.ok) {
+      throw new Error('Failed to generate PDF')
+    }
+    
+    // Create blob from response
+    const blob = await response.blob()
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${invoiceNumber}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+    
+    toast({
+      title: "تم بنجاح",
+      description: `تم تحميل فاتورة ${invoiceNumber} بصيغة PDF`
+    })
+    
+  } catch (error) {
+    console.error('Error downloading PDF:', error)
+    toast({
+      title: "خطأ",
+      description: t("downloadFailed"),
+      variant: "destructive"
+    })
+  } finally {
+    setActionLoading(prev => ({ ...prev, [loadingKey]: false }))
+  }
+}
+
+
 
   if (status === "loading" || loading) {
     return (
@@ -295,7 +349,7 @@ export default function AccountantDashboard({ params }: { params: Promise<{ loca
                   <div className="flex items-center space-x-3">
                     <FileText className="h-8 w-8 text-primary" />
                     <div>
-                      <h3 className="font-semibold">{invoice.id}</h3>
+                      <h3 className="font-semibold">{invoice.invoiceNumber}</h3>
                       <div className="text-sm text-muted-foreground">
                         {invoice.customer} • {t("trip")}: {invoice.tripId}
                       </div>
@@ -315,10 +369,10 @@ export default function AccountantDashboard({ params }: { params: Promise<{ loca
                       </Badge>
                     </div>
                     <div className="flex space-x-1">
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleViewInvoice(invoice.id)}>
                         <Eye className="h-3 w-3" />
                       </Button>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}>
                         <Download className="h-3 w-3" />
                       </Button>
                     </div>
@@ -373,7 +427,7 @@ export default function AccountantDashboard({ params }: { params: Promise<{ loca
                         </div>
                       </Badge>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" >
                       <Eye className="h-3 w-3" />
                     </Button>
                   </div>

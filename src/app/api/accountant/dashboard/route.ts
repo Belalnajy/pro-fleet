@@ -111,7 +111,8 @@ export async function GET(request: NextRequest) {
 
     // Format recent invoices
     const formattedInvoices = recentInvoices.map(invoice => ({
-      id: invoice.invoiceNumber,
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
       customer: invoice.trip?.customer?.name || 'Unknown Customer',
       amount: invoice.total,
       status: invoice.paymentStatus.toLowerCase(),

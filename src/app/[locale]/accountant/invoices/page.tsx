@@ -166,7 +166,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
   const handleViewInvoice = (invoiceId: string) => {
     router.push(`/${locale}/accountant/invoices/${invoiceId}`)
   }
-
+  {console.log(invoices)}
   // Handle PDF download
   const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
     const loadingKey = `pdf-${invoiceId}`

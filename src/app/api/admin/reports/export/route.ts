@@ -2,6 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
+import * as XLSX from 'xlsx'
+
+// Helper function to translate status to Arabic
+function getStatusInArabic(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'في الانتظار',
+    'IN_PROGRESS': 'قيد التنفيذ',
+    'DELIVERED': 'تم التسليم',
+    'CANCELLED': 'ملغية'
+  }
+  return statusMap[status] || status
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -97,45 +109,72 @@ export async function GET(req: NextRequest) {
     })
 
     if (format === "excel") {
-      // Create comprehensive CSV export
+      // Create comprehensive XLSX export
       const headers = [
-        "Trip Number",
-        "Customer",
-        "Driver",
-        "Route",
-        "Vehicle Type",
-        "Vehicle Capacity",
-        "Temperature",
-        "Status",
-        "Price (SAR)",
-        "Scheduled Date",
-        "Start Date",
-        "Delivery Date",
-        "Created Date"
+        "رقم الرحلة",
+        "العميل",
+        "السائق",
+        "المسار",
+        "نوع المركبة",
+        "سعة المركبة",
+        "درجة الحرارة",
+        "الحالة",
+        "السعر (ريال)",
+        "تاريخ الجدولة",
+        "تاريخ البدء",
+        "تاريخ التسليم",
+        "تاريخ الإنشاء"
       ]
       
       const rows = trips.map(trip => [
         trip.tripNumber,
         trip.customer.name,
-        trip.driver?.user?.name || "Unassigned",
-        `${trip.fromCity.name} → ${trip.toCity.name}`,
-        trip.vehicle?.vehicleType?.name || "Unknown",
-        trip.vehicle?.vehicleType?.capacity || "Unknown",
-        `${trip.temperature?.option || "Unknown"} (${trip.temperature?.value || 0}°C)`,
-        trip.status,
+        trip.driver?.user?.name || "غير مخصص",
+        `${trip.fromCity.name} ← ${trip.toCity.name}`,
+        trip.vehicle?.vehicleType?.name || "غير محدد",
+        trip.vehicle?.vehicleType?.capacity || "غير محدد",
+        `${trip.temperature?.option || "غير محدد"} (${trip.temperature?.value || 0}°م)`,
+        getStatusInArabic(trip.status),
         trip.price.toString(),
         trip.scheduledDate.toISOString().split('T')[0],
-        trip.actualStartDate?.toISOString().split('T')[0] || "Not Started",
-        trip.deliveredDate?.toISOString().split('T')[0] || "Not Delivered",
+        trip.actualStartDate?.toISOString().split('T')[0] || "لم يبدأ",
+        trip.deliveredDate?.toISOString().split('T')[0] || "لم يسلم",
         trip.createdAt.toISOString().split('T')[0]
       ])
       
-      const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new()
+      const worksheetData = [headers, ...rows]
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
       
-      return new Response(csv, {
+      // Set column widths
+      const columnWidths = [
+        { wch: 15 }, // رقم الرحلة
+        { wch: 25 }, // العميل
+        { wch: 20 }, // السائق
+        { wch: 30 }, // المسار
+        { wch: 15 }, // نوع المركبة
+        { wch: 12 }, // سعة المركبة
+        { wch: 20 }, // درجة الحرارة
+        { wch: 12 }, // الحالة
+        { wch: 15 }, // السعر
+        { wch: 15 }, // تاريخ الجدولة
+        { wch: 15 }, // تاريخ البدء
+        { wch: 15 }, // تاريخ التسليم
+        { wch: 15 }  // تاريخ الإنشاء
+      ]
+      worksheet['!cols'] = columnWidths
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "تقرير الرحلات")
+      
+      // Generate buffer
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+      
+      return new Response(buffer, {
         headers: {
-          "Content-Type": "text/csv; charset=utf-8",
-          "Content-Disposition": `attachment; filename=profleet-reports-${range}-${new Date().toISOString().split('T')[0]}.csv`,
+          "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename=profleet-reports-${range}-${new Date().toISOString().split('T')[0]}.xlsx`,
         },
       })
     }

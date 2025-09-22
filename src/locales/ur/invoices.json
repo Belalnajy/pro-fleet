@@ -28,7 +28,7 @@
   "cannotUndo": "یہ عمل واپس نہیں کیا جا سکتا۔",
   "deleteInvoice": "انوائس حذف کریں",
   "deleting": "حذف ہو رہا ہے...",
-  
+
   "customer": "کسٹمر",
   "customerRequired": "کسٹمر *",
   "trip": "سفر (اختیاری)",
@@ -58,13 +58,13 @@
   "of": "میں سے",
   "grandTotal": "کل مجموعہ",
   "notesLabel": "نوٹس",
-  
+
   "totalInvoices": "کل انوائس",
   "paidInvoices": "ادا شدہ انوائس",
   "overdueInvoices": "تاخیر شدہ انوائس",
   "totalRevenue": "کل آمدنی",
   "sar": "ریال",
-  
+
   "draft": "مسودہ",
   "sent": "بھیجا گیا",
   "pending": "زیر التواء",
@@ -72,7 +72,7 @@
   "overdue": "تاخیر شدہ",
   "cancelled": "منسوخ شدہ",
   "unspecified": "غیر مخصوص",
-  
+
   "invoiceCreated": "✅ انوائس بن گیا",
   "invoiceCreatedSuccess": "انوائس کامیابی سے بن گیا",
   "invoiceCreateError": "❌ انوائس بنانے میں خرابی",
@@ -106,7 +106,7 @@
   "error": "خرابی",
   "loadInvoicesFailed": "انوائس لوڈ کرنے میں ناکامی",
   "loadInvoicesError": "انوائس لوڈ کرتے وقت خرابی ہوئی",
-  
+
   "invoiceNumberHeader": "انوائس نمبر",
   "customerHeader": "کسٹمر",
   "tripHeader": "سفر",
@@ -115,7 +115,7 @@
   "dueDateHeader": "واجب الادا تاریخ",
   "createdDateHeader": "بنانے کی تاریخ",
   "actionsHeader": "اقدامات",
-  
+
   "taxCustomsDetails": "ٹیکس: {tax} | کسٹمز: {customs}",
 
   "myInvoices": "میرے انوائس",
@@ -149,5 +149,47 @@
   "paymentProcessed": "ادائیگی کامیابی سے مکمل ہوئی",
   "paymentFailed": "ادائیگی میں ناکامی",
   "currency": "ریال",
-  "cancelled": "منسوخ"
+
+  "tripAndCustomerInfo": "سفر اور کسٹمر کی معلومات",
+  "selectTripOrCustomerForInvoice": "انوائس کے لیے سفر یا کسٹمر منتخب کریں",
+  "tripOptional": "سفر (اختیاری)",
+  "financialDetails": "مالی تفصیلات",
+  "enterAmountsAndFees": "رقم اور فیس درج کریں",
+
+  "createNewInvoice": "نیا انوائس بنائیں",
+  "createNewInvoiceForCustomer": "کسٹمر کے لیے نیا انوائس بنائیں",
+  "loadingData": "ڈیٹا لوڈ ہو رہا ہے...",
+  "selectTrip": "سفر منتخب کریں",
+  "selectCompletedTrip": "انوائس بنانے کے لیے مکمل شدہ سفر منتخب کریں",
+  "tripRequired": "سفر *",
+  "selectTripPlaceholder": "سفر منتخب کریں",
+  "taxAmount": "ٹیکس کی رقم",
+  "customsFees": "کسٹمز فیس",
+  "totalAmountLabel": "کل رقم",
+  "additionalNotesTitle": "اضافی نوٹس",
+  "additionalNotesPlaceholder": "انوائس کے لیے کوئی اضافی نوٹس درج کریں...",
+  "cancelButton": "منسوخ",
+  "creatingInvoice": "بنایا جا رہا ہے...",
+  "createInvoiceButton": "انوائس بنائیں",
+  "errorTitle": "خرابی",
+  "dataLoadError": "ڈیٹا لوڈ کرنے میں ناکامی",
+  "selectTripOrCustomer": "سفر یا کسٹمر منتخب کرنا ضروری ہے",
+  "fillRequiredFields": "تمام لازمی فیلڈز بھرنا ضروری ہے",
+  "successTitle": "کامیابی",
+  "invoiceCreatedWithNumber": "انوائس {invoiceNumber} بن گیا",
+  "createInvoiceFailed": "انوائس بنانے میں ناکامی",
+  "noTrip": "کوئی سفر نہیں",
+  "selectCustomer": "کسٹمر منتخب کریں",
+  "customsBrokerOptional": "کسٹمز بروکر (اختیاری)",
+  "selectCustomsBroker": "کسٹمز بروکر منتخب کریں",
+  "noCustomsBroker": "کوئی کسٹمز بروکر نہیں",
+  "taxRate": "ٹیکس کی شرح",
+  "sar": "ریال",
+  "total": "کل",
+  "additionalNotes": "اضافی نوٹس",
+  "enterAdditionalNotes": "اضافی نوٹس درج کریں",
+  "cancel": "منسوخ",
+  "back": "واپس",
+  "next": "اگلا",
+  "createInvoice": "انوائس بنائیں"
 }

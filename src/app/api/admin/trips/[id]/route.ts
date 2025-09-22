@@ -25,6 +25,7 @@ export async function PATCH(
       fromCityId,
       toCityId,
       temperatureId,
+      customsBrokerId,
       scheduledDate,
       price,
       notes
@@ -68,6 +69,7 @@ export async function PATCH(
         fromCityId,
         toCityId,
         temperatureId,
+        customsBrokerId: customsBrokerId && customsBrokerId !== 'none' ? customsBrokerId : null,
         scheduledDate: new Date(scheduledDate),
         price: parseFloat(price),
         notes: notes || null,

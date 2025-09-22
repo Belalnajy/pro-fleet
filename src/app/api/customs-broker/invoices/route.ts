@@ -20,12 +20,25 @@ export async function GET(request: NextRequest) {
 
     // Get the customs broker profile first
     const customsBroker = await prisma.customsBroker.findUnique({
-      where: { userId: session.user.id }
+      where: { userId: session.user.id },
+      include: {
+        user: true
+      }
     })
 
     if (!customsBroker) {
       return NextResponse.json({ error: "Customs broker profile not found" }, { status: 404 })
     }
+    
+    // 🔍 DETAILED LOG: Customs broker fetching invoices
+    console.log('🔍 [CUSTOMS BROKER INVOICES] Fetching invoices for broker:', {
+      brokerId: customsBroker.id,
+      brokerName: customsBroker.user.name,
+      userId: session.user.id,
+      searchQuery: search,
+      page,
+      limit
+    })
 
     // Get invoices assigned to this customs broker
     const invoices = await prisma.invoice.findMany({
@@ -68,6 +81,25 @@ export async function GET(request: NextRequest) {
         }
       }
     })
+    
+    // 📊 DETAILED LOG: Invoices fetched for customs broker
+    console.log('📊 [CUSTOMS BROKER INVOICES] Invoices fetched:', {
+      brokerName: customsBroker.user.name,
+      totalInvoicesFound: totalCount,
+      invoicesInThisPage: invoices.length,
+      page,
+      limit,
+      searchQuery: search
+    })
+    
+    if (invoices.length > 0) {
+      console.log('✅ [CUSTOMS BROKER INVOICES] Sample invoices:')
+      invoices.slice(0, 3).forEach((inv, index) => {
+        console.log(`   ${index + 1}. ${inv.invoiceNumber} - ${inv.trip?.customer?.name} - ${inv.total} SAR`)
+      })
+    } else {
+      console.log('⚠️ [CUSTOMS BROKER INVOICES] No invoices found for this broker')
+    }
 
     // Format invoice data for this customs broker
     const invoicesData: any[] = []

@@ -172,5 +172,6 @@
   "speed": "Speed",
   "kmh": "km/h",
   "noCurrentDriverLocation": "No current location for the driver. Tracking may be disabled or the driver hasn't started the trip yet.",
-  "points": "points"
+  "points": "points",
+  "customsBroker": "Customs Broker"
 }

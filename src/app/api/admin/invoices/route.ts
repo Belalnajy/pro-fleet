@@ -2,7 +2,72 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { extractCustomsBrokerFromNotes } from "@/lib/customs-broker-helper"
+// import { extractCustomsBrokerFromNotes } from "@/lib/customs-broker-helper"
+
+// Inline function to ensure it works
+async function extractCustomsBrokerFromNotes(notes: string | null): Promise<string | null> {
+  console.log('🔍 [INLINE] Starting extraction with notes:', notes)
+  
+  if (!notes) {
+    console.log('🔍 [INLINE] No notes provided')
+    return null
+  }
+
+  try {
+    const patterns = [
+      /Customs Broker:\s*([^.]+)/i,
+      /المخلص الجمركي:\s*([^.]+)/i
+    ]
+
+    let brokerName: string | null = null
+    
+    for (const pattern of patterns) {
+      const match = notes.match(pattern)
+      console.log('🔍 [INLINE] Pattern match:', pattern, '→', match ? match[1] : 'No match')
+      
+      if (match && match[1] && match[1].trim() !== 'غير محدد' && match[1].trim() !== 'None') {
+        brokerName = match[1].trim()
+        console.log('🔍 [INLINE] Found broker name:', brokerName)
+        break
+      }
+    }
+
+    if (!brokerName) {
+      console.log('🔍 [INLINE] No broker name extracted')
+      return null
+    }
+
+    // Find the customs broker by name
+    const customsBrokers = await db.customsBroker.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    })
+    
+    console.log('🔍 [INLINE] Available brokers:', customsBrokers.map(b => b.user.name))
+    
+    const foundBroker = customsBrokers.find(broker => 
+      broker.user.name.toLowerCase() === brokerName.toLowerCase()
+    )
+    
+    if (foundBroker) {
+      console.log('🔍 [INLINE] Found matching broker:', foundBroker.user.name, 'ID:', foundBroker.id)
+      return foundBroker.id
+    } else {
+      console.log('🔍 [INLINE] No matching broker found for:', brokerName)
+      return null
+    }
+
+  } catch (error) {
+    console.error('🔍 [INLINE] Error extracting customs broker:', error)
+    return null
+  }
+}
 
 // GET /api/admin/invoices - Fetch all invoices
 export async function GET(request: NextRequest) {
@@ -111,38 +176,84 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { customerId, tripId, subtotal, taxAmount, customsFees, dueDate, notes } = body
+    const { customerId, tripId, customsBrokerId: manualCustomsBrokerId, subtotal, taxAmount, customsFees, dueDate, notes } = body
 
-    // Validate required fields - tripId is required in the schema
-    if (!tripId || !subtotal || !taxAmount || !dueDate) {
+    // Validate required fields - either tripId or customerId must be provided
+    if (!subtotal || !taxAmount || !dueDate) {
       return NextResponse.json({ 
         error: "Missing required fields", 
-        details: "tripId, subtotal, taxAmount, and dueDate are required" 
+        details: "subtotal, taxAmount, and dueDate are required" 
       }, { status: 400 })
     }
 
-    // Check if trip exists and get customer info
-    const trip = await db.trip.findUnique({
-      where: { id: tripId },
-      include: {
-        customer: true // customer is User directly
-      }
-    })
-
-    if (!trip) {
-      return NextResponse.json({ error: "Trip not found" }, { status: 404 })
+    if (!tripId && !customerId) {
+      return NextResponse.json({ 
+        error: "Missing required fields", 
+        details: "Either tripId or customerId must be provided" 
+      }, { status: 400 })
     }
 
-    // Check if invoice already exists for this trip
-    const existingInvoice = await db.invoice.findUnique({
-      where: { tripId }
-    })
+    let trip: any = null
+    let customer: any = null
+    let customsBrokerId: string | null = null
 
-    if (existingInvoice) {
-      return NextResponse.json({ 
-        error: "Invoice already exists for this trip",
-        invoiceNumber: existingInvoice.invoiceNumber 
-      }, { status: 409 })
+    // If tripId is provided, get trip and customer info
+    if (tripId) {
+      trip = await db.trip.findUnique({
+        where: { id: tripId },
+        include: {
+          customer: true
+        }
+      })
+
+      if (!trip) {
+        return NextResponse.json({ error: "Trip not found" }, { status: 404 })
+      }
+
+      // Check if invoice already exists for this trip
+      const existingInvoice = await db.invoice.findUnique({
+        where: { tripId }
+      })
+
+      if (existingInvoice) {
+        return NextResponse.json({ 
+          error: "Invoice already exists for this trip",
+          invoiceNumber: existingInvoice.invoiceNumber 
+        }, { status: 409 })
+      }
+
+      customer = trip?.customer
+      customsBrokerId = trip?.customsBrokerId
+      
+      // 🔍 DETAILED LOG: Trip data extraction
+      console.log('🔍 [INVOICE CREATION] Trip data extracted:', {
+        tripId: trip?.id,
+        tripNumber: trip?.tripNumber,
+        customsBrokerId: trip?.customsBrokerId,
+        customerName: trip?.customer?.name,
+        tripStatus: trip?.status,
+        hasCustomsBroker: !!trip?.customsBrokerId
+      })
+      
+      if (trip?.customsBrokerId) {
+        console.log('✅ [INVOICE CREATION] Customs broker found in trip:', trip.customsBrokerId)
+      } else {
+        console.log('⚠️ [INVOICE CREATION] No customs broker in trip')
+      }
+    } else {
+      // If only customerId is provided (manual invoice)
+      customer = await db.user.findUnique({
+        where: { id: customerId }
+      })
+
+      if (!customer) {
+        return NextResponse.json({ error: "Customer not found" }, { status: 404 })
+      }
+    }
+
+    // Use manual customsBrokerId if provided, otherwise use the one from trip
+    if (manualCustomsBrokerId) {
+      customsBrokerId = manualCustomsBrokerId
     }
 
     // Generate invoice number
@@ -159,41 +270,84 @@ export async function POST(request: NextRequest) {
     // Calculate total
     const total = subtotal + taxAmount + (customsFees || 0)
 
-    // Extract customs broker ID from trip notes if available
-    const customsBrokerId = await extractCustomsBrokerFromNotes(trip.notes)
+    // Create invoice data
+    const invoiceData: any = {
+      invoiceNumber,
+      customsFee: customsFees || 0,
+      taxRate: taxAmount / subtotal, // Calculate tax rate
+      taxAmount,
+      subtotal,
+      total,
+      currency: 'SAR',
+      paymentStatus: 'PENDING',
+      dueDate: new Date(dueDate),
+      notes: notes || null
+    }
+
+    // Add tripId if provided
+    if (tripId) {
+      invoiceData.tripId = tripId
+    }
+
+    // Add customsBrokerId if available
+    if (customsBrokerId) {
+      invoiceData.customsBrokerId = customsBrokerId
+    }
+    
+    // 💾 DETAILED LOG: Invoice creation data
+    console.log('💾 [INVOICE CREATION] Creating invoice with data:', {
+      invoiceNumber,
+      tripId,
+      customsBrokerId,
+      total,
+      subtotal,
+      taxAmount,
+      customsFees,
+      customerName: customer?.name,
+      willHaveCustomsBroker: !!customsBrokerId
+    })
+    
+    if (customsBrokerId) {
+      console.log('✅ [INVOICE CREATION] Invoice will be linked to customs broker:', customsBrokerId)
+    } else {
+      console.log('⚠️ [INVOICE CREATION] Invoice will NOT have customs broker link')
+    }
 
     // Create invoice
     const invoice = await db.invoice.create({
-      data: {
-        invoiceNumber,
-        tripId, // tripId is required
-        customsFee: customsFees || 0,
-        taxRate: taxAmount / subtotal, // Calculate tax rate
-        taxAmount,
-        subtotal,
-        total,
-        currency: 'SAR',
-        paymentStatus: 'PENDING',
-        dueDate: new Date(dueDate),
-        notes: notes || null,
-        customsBrokerId: customsBrokerId
-      },
+      data: invoiceData,
       include: {
-        trip: {
+        trip: tripId ? {
           include: {
-            customer: true // customer is User directly
+            customer: true
           }
-        }
+        } : undefined
       }
     })
+    
+    // 🎉 DETAILED LOG: Invoice created successfully
+    console.log('🎉 [INVOICE CREATION] Invoice created successfully:', {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      customsBrokerIdInInvoice: invoice.customsBrokerId,
+      tripId: invoice.tripId,
+      total: invoice.total,
+      isLinkedToCustomsBroker: !!invoice.customsBrokerId
+    })
+    
+    if (invoice.customsBrokerId) {
+      console.log('✅ [INVOICE CREATION] SUCCESS: Invoice is linked to customs broker:', invoice.customsBrokerId)
+    } else {
+      console.log('❌ [INVOICE CREATION] WARNING: Invoice is NOT linked to any customs broker')
+    }
 
     return NextResponse.json({
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
-      customerId: trip.customer.id,
-      customerName: trip.customer.name,
+      customerId: customer?.id,
+      customerName: customer?.name,
       tripId: invoice.tripId,
-      tripNumber: trip.tripNumber,
+      tripNumber: trip?.tripNumber || null,
       subtotal: invoice.subtotal,
       taxAmount: invoice.taxAmount,
       customsFees: invoice.customsFee,

@@ -128,3 +128,202 @@ export async function GET(request: NextRequest) {
     )
   }
 }
+
+// POST /api/accountant/invoices - Create new invoice (with or without trip)
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    
+    if (!session || session.user.role !== "ACCOUNTANT") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { customerId, tripId, customsBrokerId: manualCustomsBrokerId, subtotal, taxAmount, customsFees, dueDate, notes } = body
+
+    // Validate required fields - either tripId or customerId must be provided
+    if (!subtotal || !taxAmount || !dueDate) {
+      return NextResponse.json({ 
+        error: "Missing required fields", 
+        details: "subtotal, taxAmount, and dueDate are required" 
+      }, { status: 400 })
+    }
+
+    if (!tripId && !customerId) {
+      return NextResponse.json({ 
+        error: "Missing required fields", 
+        details: "Either tripId or customerId must be provided" 
+      }, { status: 400 })
+    }
+
+    let trip: any = null
+    let customer: any = null
+    let customsBrokerId: string | null = null
+
+    // If tripId is provided, get trip and customer info
+    if (tripId) {
+      trip = await db.trip.findUnique({
+        where: { id: tripId },
+        include: {
+          customer: true
+        }
+      })
+
+      if (!trip) {
+        return NextResponse.json({ error: "Trip not found" }, { status: 404 })
+      }
+
+      // Check if invoice already exists for this trip
+      const existingInvoice = await db.invoice.findUnique({
+        where: { tripId }
+      })
+
+      if (existingInvoice) {
+        return NextResponse.json({ 
+          error: "Invoice already exists for this trip",
+          invoiceNumber: existingInvoice.invoiceNumber 
+        }, { status: 409 })
+      }
+
+      customer = trip?.customer
+      customsBrokerId = trip?.customsBrokerId
+      
+      // 🔍 DETAILED LOG: Trip data extraction (Accountant)
+      console.log('🔍 [ACCOUNTANT INVOICE] Trip data extracted:', {
+        tripId: trip?.id,
+        tripNumber: trip?.tripNumber,
+        customsBrokerId: trip?.customsBrokerId,
+        customerName: trip?.customer?.name,
+        tripStatus: trip?.status,
+        hasCustomsBroker: !!trip?.customsBrokerId
+      })
+      
+      if (trip?.customsBrokerId) {
+        console.log('✅ [ACCOUNTANT INVOICE] Customs broker found in trip:', trip.customsBrokerId)
+      } else {
+        console.log('⚠️ [ACCOUNTANT INVOICE] No customs broker in trip')
+      }
+    } else {
+      // If only customerId is provided (manual invoice)
+      customer = await db.user.findUnique({
+        where: { id: customerId }
+      })
+
+      if (!customer) {
+        return NextResponse.json({ error: "Customer not found" }, { status: 404 })
+      }
+    }
+
+    // Use manual customsBrokerId if provided, otherwise use the one from trip
+    if (manualCustomsBrokerId) {
+      customsBrokerId = manualCustomsBrokerId
+    }
+
+    // Generate invoice number
+    const lastInvoice = await db.invoice.findFirst({
+      orderBy: { createdAt: 'desc' }
+    })
+    
+    let invoiceNumber = "INV-000001"
+    if (lastInvoice) {
+      const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[1])
+      invoiceNumber = `INV-${(lastNumber + 1).toString().padStart(6, '0')}`
+    }
+
+    // Calculate total
+    const total = subtotal + taxAmount + (customsFees || 0)
+
+    // Create invoice data
+    const invoiceData: any = {
+      invoiceNumber,
+      customsFee: customsFees || 0,
+      taxRate: taxAmount / subtotal, // Calculate tax rate
+      taxAmount,
+      subtotal,
+      total,
+      currency: 'SAR',
+      paymentStatus: 'PENDING',
+      dueDate: new Date(dueDate),
+      notes: notes || null
+    }
+
+    // Add tripId if provided
+    if (tripId) {
+      invoiceData.tripId = tripId
+    }
+
+    // Add customsBrokerId if available
+    if (customsBrokerId) {
+      invoiceData.customsBrokerId = customsBrokerId
+    }
+    
+    // 💾 DETAILED LOG: Invoice creation data (Accountant)
+    console.log('💾 [ACCOUNTANT INVOICE] Creating invoice with data:', {
+      invoiceNumber,
+      tripId,
+      customsBrokerId,
+      total,
+      subtotal,
+      taxAmount,
+      customsFees,
+      customerName: customer?.name,
+      willHaveCustomsBroker: !!customsBrokerId
+    })
+    
+    if (customsBrokerId) {
+      console.log('✅ [ACCOUNTANT INVOICE] Invoice will be linked to customs broker:', customsBrokerId)
+    } else {
+      console.log('⚠️ [ACCOUNTANT INVOICE] Invoice will NOT have customs broker link')
+    }
+
+    // Create invoice
+    const invoice = await db.invoice.create({
+      data: invoiceData,
+      include: {
+        trip: tripId ? {
+          include: {
+            customer: true
+          }
+        } : undefined
+      }
+    })
+    
+    // 🎉 DETAILED LOG: Invoice created successfully (Accountant)
+    console.log('🎉 [ACCOUNTANT INVOICE] Invoice created successfully:', {
+      invoiceId: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      customsBrokerIdInInvoice: invoice.customsBrokerId,
+      tripId: invoice.tripId,
+      total: invoice.total,
+      isLinkedToCustomsBroker: !!invoice.customsBrokerId
+    })
+    
+    if (invoice.customsBrokerId) {
+      console.log('✅ [ACCOUNTANT INVOICE] SUCCESS: Invoice is linked to customs broker:', invoice.customsBrokerId)
+    } else {
+      console.log('❌ [ACCOUNTANT INVOICE] WARNING: Invoice is NOT linked to any customs broker')
+    }
+
+    return NextResponse.json({
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      customerId: customer?.id,
+      customerName: customer?.name,
+      tripId: invoice.tripId,
+      tripNumber: trip?.tripNumber || null,
+      subtotal: invoice.subtotal,
+      taxAmount: invoice.taxAmount,
+      customsFees: invoice.customsFee,
+      totalAmount: invoice.total,
+      status: invoice.paymentStatus,
+      dueDate: invoice.dueDate.toISOString(),
+      createdAt: invoice.createdAt.toISOString(),
+      updatedAt: invoice.updatedAt.toISOString(),
+      currency: invoice.currency,
+      notes: invoice.notes
+    })
+  } catch (error) {
+    console.error("Error creating invoice:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}

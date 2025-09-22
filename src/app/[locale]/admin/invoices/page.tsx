@@ -41,8 +41,10 @@ import {
   ChevronRight,
   MoreVertical,
   Edit,
-  Trash2
+  Trash2,
+  Plus
 } from "lucide-react"
+import { CreateInvoiceModal } from "@/components/invoices/create-invoice-modal"
 
 interface Invoice {
   id: string
@@ -88,6 +90,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
   const [currentPage, setCurrentPage] = useState(1)
   const [actionLoading, setActionLoading] = useState<{[key: string]: boolean}>({})
   const [exportLoading, setExportLoading] = useState(false)
+  const [createModalOpen, setCreateModalOpen] = useState(false)
 
   useEffect(() => {
     if (status === "loading") return
@@ -427,19 +430,33 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">{t("title")}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
             <p className="text-gray-600">{t("subtitle")}</p>
           </div>
-          <Button onClick={handleExportInvoices} disabled={exportLoading}>
-            {exportLoading ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4 mr-2" />
-            )}
-            {exportLoading ? t("loading") : t("exportInvoices")}
-          </Button>
+          <div className="flex space-x-3 rtl:space-x-reverse  ">
+            <Button
+              onClick={() => setCreateModalOpen(true)}
+              className="flex items-center space-x-2 rtl:space-x-reverse"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden md:block">{t("createInvoice")}</span>
+            </Button>
+            <Button
+              onClick={handleExportInvoices}
+              disabled={exportLoading}
+              variant="outline"
+              className="flex items-center space-x-2 rtl:space-x-reverse"
+            >
+              {exportLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
+              <span className="hidden md:block">{t("exportInvoices")}</span>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -705,6 +722,14 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
             )}
           </CardContent>
         </Card>
+
+        {/* Create Invoice Modal */}
+        <CreateInvoiceModal
+          open={createModalOpen}
+          onOpenChange={setCreateModalOpen}
+          onSuccess={fetchInvoices}
+          userRole="ADMIN"
+        />
       </div>
     </DashboardLayout>
   )

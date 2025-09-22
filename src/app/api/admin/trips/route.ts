@@ -12,7 +12,24 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url)
+    const status = searchParams.get('status')
+    const hasInvoice = searchParams.get('hasInvoice')
+
+    // Build where clause
+    const where: any = {}
+    
+    if (status) {
+      where.status = status
+    }
+
+    // Filter trips without invoices if requested
+    if (hasInvoice === 'false') {
+      where.invoice = null
+    }
+
     const trips = await db.trip.findMany({
+      where,
       include: {
         customer: {
           select: {
@@ -51,6 +68,16 @@ export async function GET(req: NextRequest) {
             value: true,
             unit: true
           }
+        },
+        customsBroker: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
         }
       },
       orderBy: {
@@ -58,7 +85,9 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    return NextResponse.json(trips);
+    return NextResponse.json({
+      trips: trips
+    });
   } catch (error) {
     console.error("Error fetching trips:", error);
     return NextResponse.json(
@@ -77,6 +106,22 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
+    
+    // 🔍 LOG: Trip creation request data
+    console.log('🔍 [TRIP CREATION] Request data received:', {
+      customerId: body.customerId,
+      driverId: body.driverId,
+      vehicleId: body.vehicleId,
+      fromCityId: body.fromCityId,
+      toCityId: body.toCityId,
+      temperatureId: body.temperatureId,
+      customsBrokerId: body.customsBrokerId,
+      scheduledDate: body.scheduledDate,
+      price: body.price,
+      notes: body.notes,
+      hasCustomsBroker: !!body.customsBrokerId
+    })
+    
     const {
       customerId,
       driverId,
@@ -84,6 +129,7 @@ export async function POST(req: NextRequest) {
       fromCityId,
       toCityId,
       temperatureId,
+      customsBrokerId,
       scheduledDate,
       price,
       notes
@@ -118,21 +164,46 @@ export async function POST(req: NextRequest) {
     const tripCount = await db.trip.count();
     const tripNumber = `TWB:${String(tripCount + 1).padStart(4, "0")}`;
 
+    // 💾 LOG: Trip creation data before saving
+    const tripData = {
+      tripNumber,
+      customerId,
+      driverId: actualDriverId,
+      vehicleId,
+      fromCityId,
+      toCityId,
+      temperatureId,
+      customsBrokerId: customsBrokerId && customsBrokerId !== 'none' ? customsBrokerId : null,
+      scheduledDate: new Date(scheduledDate),
+      price,
+      currency: "SAR",
+      notes,
+    }
+    
+    console.log('💾 [TRIP CREATION] Creating trip with data:', {
+      ...tripData,
+      willHaveCustomsBroker: !!tripData.customsBrokerId,
+      customsBrokerProcessed: customsBrokerId && customsBrokerId !== 'none' ? customsBrokerId : 'null'
+    })
+
     const trip = await db.trip.create({
-      data: {
-        tripNumber,
-        customerId,
-        driverId: actualDriverId,
-        vehicleId,
-        fromCityId,
-        toCityId,
-        temperatureId,
-        scheduledDate: new Date(scheduledDate),
-        price,
-        currency: "SAR",
-        notes,
-      },
+      data: tripData,
     });
+    
+    // 🎉 LOG: Trip created successfully
+    console.log('🎉 [TRIP CREATION] Trip created successfully:', {
+      tripId: trip.id,
+      tripNumber: trip.tripNumber,
+      customsBrokerIdInTrip: (trip as any).customsBrokerId,
+      hasCustomsBroker: !!(trip as any).customsBrokerId,
+      status: trip.status
+    })
+    
+    if ((trip as any).customsBrokerId) {
+      console.log('✅ [TRIP CREATION] SUCCESS: Trip is linked to customs broker:', (trip as any).customsBrokerId)
+    } else {
+      console.log('⚠️ [TRIP CREATION] WARNING: Trip is NOT linked to any customs broker')
+    }
 
     return NextResponse.json({
       message: "Trip created successfully",

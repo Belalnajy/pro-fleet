@@ -299,11 +299,11 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
           <input ref={importInputRef} type="file" accept=".csv" className="hidden" onChange={handleImportFileChange} />
           <Button className="w-auto" variant="outline" onClick={handleImportClick}>
             <Upload className="h-4 w-4 mr-2" />
-            {translate('importExcelButton')}
+            <span className="">{translate('importExcelButton')}</span>
           </Button>
           <Button variant="outline" onClick={handleExportClick}>
             <Download className="h-4 w-4 mr-2" />
-            {translate('exportExcelButton')}
+            <span className="">{translate('exportExcelButton')}</span>
           </Button>
           <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
             setIsAddDialogOpen(open)
@@ -314,8 +314,8 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
           }}>
             <DialogTrigger asChild>
               <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                {translate('addPricingButton')}
+                <Plus className="h-4 w-4" />
+                <span className="hidden md:block">{translate('addPricingButton')}</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">

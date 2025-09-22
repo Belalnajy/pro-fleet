@@ -18,6 +18,7 @@ interface CreateTripRequest {
   fromCityId?: string
   toCityId?: string
   temperatureId: string
+  customsBrokerId?: string
   scheduledDate: string
   price: number
   notes?: string
@@ -40,6 +41,7 @@ export async function POST(request: NextRequest) {
       fromCityId,
       toCityId,
       temperatureId,
+      customsBrokerId,
       scheduledDate,
       price,
       notes,
@@ -144,6 +146,7 @@ export async function POST(request: NextRequest) {
         fromCityId: finalFromCityId!,
         toCityId: finalToCityId!,
         temperatureId,
+        customsBrokerId: customsBrokerId && customsBrokerId !== 'none' ? customsBrokerId : null,
         scheduledDate: new Date(scheduledDate),
         price,
         currency: "SAR",

@@ -12,7 +12,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    const { searchParams } = new URL(req.url)
+    const role = searchParams.get('role')
+
+    // Build where clause
+    const where: any = {}
+    
+    if (role) {
+      where.role = role
+    }
+
     const users = await db.user.findMany({
+      where,
       include: {
         driverProfile: true,
         customerProfile: true,
@@ -24,7 +35,9 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    return NextResponse.json(users)
+    return NextResponse.json({
+      users: users
+    })
   } catch (error) {
     console.error("Error fetching users:", error)
     return NextResponse.json(

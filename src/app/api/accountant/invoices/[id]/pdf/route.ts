@@ -1,21 +1,21 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
-import puppeteer from 'puppeteer'
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import puppeteer from "puppeteer";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ACCOUNTANT') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== "ACCOUNTANT") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: invoiceId } = await params
+    const { id: invoiceId } = await params;
 
     // Get invoice details
     const invoice = await db.invoice.findUnique({
@@ -46,71 +46,106 @@ export async function GET(
           }
         }
       }
-    })
+    });
 
     if (!invoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
     // Generate HTML content for PDF
-    const htmlContent = generateInvoiceHTML(invoice)
-    
+    const htmlContent = generateInvoiceHTML(invoice);
+
     // Generate actual PDF using puppeteer
     const browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
-    
-    const page = await browser.newPage()
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
-    
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-accelerated-2d-canvas",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process", // <- this one doesn't work in Windows
+        "--disable-gpu"
+      ],
+      executablePath:
+        process.env.NODE_ENV === "production"
+          ? process.env.PUPPETEER_EXECUTABLE_PATH ||
+            "/usr/bin/google-chrome-stable"
+          : undefined
+    });
+
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
     const pdfBuffer = await page.pdf({
-      format: 'A4',
+      format: "A4",
       printBackground: true,
       margin: {
-        top: '20px',
-        right: '20px',
-        bottom: '20px',
-        left: '20px'
+        top: "20px",
+        right: "20px",
+        bottom: "20px",
+        left: "20px"
       }
-    })
-    
-    await browser.close()
-    
+    });
+
+    await browser.close();
+
     return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${invoice.invoiceNumber}.pdf"`
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${invoice.invoiceNumber}.pdf"`
       }
-    })
-
+    });
   } catch (error) {
-    console.error('Error generating PDF:', error)
+    console.error("Error generating PDF:", error);
+
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+
+    // Check if it's a Puppeteer-specific error
+    if (
+      error.message?.includes("Protocol error") ||
+      error.message?.includes("Target closed")
+    ) {
+      console.error(
+        "Puppeteer browser error - likely Chrome/Chromium not available"
+      );
+    }
+
     return NextResponse.json(
-      { error: 'Failed to generate PDF' },
+      {
+        error: "Failed to generate PDF",
+        details:
+          process.env.NODE_ENV === "development" ? error.message : undefined
+      },
       { status: 500 }
-    )
+    );
   }
 }
 
 // Generate HTML content for PDF
 function generateInvoiceHTML(invoice: any): string {
   const formatDate = (date: string | Date) => {
-    return new Date(date).toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
+    return new Date(date).toLocaleDateString("ar-SA", {
+      year: "numeric",
+      month: "long",
+      day: "numeric"
+    });
+  };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('ar-SA', {
-      style: 'currency',
-      currency: 'SAR',
+    return new Intl.NumberFormat("ar-SA", {
+      style: "currency",
+      currency: "SAR",
       minimumFractionDigits: 2
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   return `
     <!DOCTYPE html>
@@ -248,28 +283,43 @@ function generateInvoiceHTML(invoice: any): string {
                 <div class="info-block">
                     <div class="info-title">معلومات العميل:</div>
                     <div class="info-content">
-                        <strong>${invoice.trip?.customer?.name || 'غير محدد'}</strong><br>
-                        ${invoice.trip?.customer?.email || ''}<br>
-                        ${invoice.trip?.customer?.phone || ''}
+                        <strong>${
+                          invoice.trip?.customer?.name || "غير محدد"
+                        }</strong><br>
+                        ${invoice.trip?.customer?.email || ""}<br>
+                        ${invoice.trip?.customer?.phone || ""}
                     </div>
                 </div>
                 <div class="info-block">
                     <div class="info-title">تفاصيل الفاتورة:</div>
                     <div class="info-content">
-                        <strong>تاريخ الإصدار:</strong> ${formatDate(invoice.createdAt)}<br>
-                        <strong>تاريخ الاستحقاق:</strong> ${formatDate(invoice.dueDate)}<br>
+                        <strong>تاريخ الإصدار:</strong> ${formatDate(
+                          invoice.createdAt
+                        )}<br>
+                        <strong>تاريخ الاستحقاق:</strong> ${formatDate(
+                          invoice.dueDate
+                        )}<br>
                         <strong>الحالة:</strong> 
                         <span class="status-badge status-${invoice.paymentStatus.toLowerCase()}">
-                            ${invoice.paymentStatus === 'PENDING' ? 'في الانتظار' : 
-                              invoice.paymentStatus === 'PAID' ? 'مدفوعة' :
-                              invoice.paymentStatus === 'OVERDUE' ? 'متأخرة' :
-                              invoice.paymentStatus === 'SENT' ? 'تم الإرسال' : invoice.paymentStatus}
+                            ${
+                              invoice.paymentStatus === "PENDING"
+                                ? "في الانتظار"
+                                : invoice.paymentStatus === "PAID"
+                                ? "مدفوعة"
+                                : invoice.paymentStatus === "OVERDUE"
+                                ? "متأخرة"
+                                : invoice.paymentStatus === "SENT"
+                                ? "تم الإرسال"
+                                : invoice.paymentStatus
+                            }
                         </span>
                     </div>
                 </div>
             </div>
 
-            ${invoice.trip ? `
+            ${
+              invoice.trip
+                ? `
             <table class="details-table">
                 <thead>
                     <tr>
@@ -284,23 +334,45 @@ function generateInvoiceHTML(invoice: any): string {
                     </tr>
                     <tr>
                         <td><strong>المسار</strong></td>
-                        <td>${invoice.trip.fromCity?.nameAr || invoice.trip.fromCity?.name || 'غير محدد'} → ${invoice.trip.toCity?.nameAr || invoice.trip.toCity?.name || 'غير محدد'}</td>
+                        <td>${
+                          invoice.trip.fromCity?.nameAr ||
+                          invoice.trip.fromCity?.name ||
+                          "غير محدد"
+                        } → ${
+                    invoice.trip.toCity?.nameAr ||
+                    invoice.trip.toCity?.name ||
+                    "غير محدد"
+                  }</td>
                     </tr>
-                    ${invoice.trip.driver ? `
+                    ${
+                      invoice.trip.driver
+                        ? `
                     <tr>
                         <td><strong>السائق</strong></td>
-                        <td>${invoice.trip.driver.user?.name || 'غير محدد'}</td>
+                        <td>${invoice.trip.driver.user?.name || "غير محدد"}</td>
                     </tr>
-                    ` : ''}
-                    ${invoice.trip.vehicle ? `
+                    `
+                        : ""
+                    }
+                    ${
+                      invoice.trip.vehicle
+                        ? `
                     <tr>
                         <td><strong>المركبة</strong></td>
-                        <td>${invoice.trip.vehicle.vehicleType?.nameAr || invoice.trip.vehicle.vehicleType?.name || 'غير محدد'}</td>
+                        <td>${
+                          invoice.trip.vehicle.vehicleType?.nameAr ||
+                          invoice.trip.vehicle.vehicleType?.name ||
+                          "غير محدد"
+                        }</td>
                     </tr>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </tbody>
             </table>
-            ` : ''}
+            `
+                : ""
+            }
 
             <div class="amount-section">
                 <div class="amount-row">
@@ -321,12 +393,16 @@ function generateInvoiceHTML(invoice: any): string {
                 </div>
             </div>
 
-            ${invoice.notes ? `
+            ${
+              invoice.notes
+                ? `
             <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 6px;">
                 <div style="font-weight: 600; margin-bottom: 10px; color: #374151;">ملاحظات:</div>
                 <div style="color: #6b7280;">${invoice.notes}</div>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
 
             <div class="footer">
                 <p>شكراً لاختياركم خدماتنا • برو فليت للنقل والخدمات اللوجستية</p>
@@ -335,5 +411,5 @@ function generateInvoiceHTML(invoice: any): string {
         </div>
     </body>
     </html>
-  `
+  `;
 }

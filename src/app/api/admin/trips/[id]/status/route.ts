@@ -7,7 +7,7 @@ import { UserRole, TripStatus } from "@prisma/client";
 // PATCH - Update trip status
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -16,7 +16,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const { status } = body;
 
@@ -139,23 +139,48 @@ export async function PATCH(
           const taxAmount = subtotal * taxRate;
           const total = subtotal + taxAmount;
 
-          // Create invoice
+          // Create invoice with customs broker from trip
+          const invoiceData: any = {
+            invoiceNumber,
+            tripId: id,
+            customsFee: 0,
+            taxRate,
+            taxAmount,
+            subtotal,
+            total,
+            currency: 'SAR', // Default currency
+            paymentStatus: 'PENDING',
+            dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }
+          
+          // Add customsBrokerId from trip if available
+          if ((existingTrip as any).customsBrokerId) {
+            invoiceData.customsBrokerId = (existingTrip as any).customsBrokerId
+            console.log('✅ [AUTO INVOICE] Adding customs broker to invoice:', (existingTrip as any).customsBrokerId)
+          } else {
+            console.log('⚠️ [AUTO INVOICE] No customs broker in trip')
+          }
+          
+          console.log('💾 [AUTO INVOICE] Creating invoice with data:', {
+            invoiceNumber,
+            tripId: id,
+            customsBrokerId: invoiceData.customsBrokerId || null,
+            total,
+            hasCustomsBroker: !!invoiceData.customsBrokerId
+          })
+
           const invoice = await db.invoice.create({
-            data: {
-              invoiceNumber,
-              tripId: id,
-              customsFee: 0,
-              taxRate,
-              taxAmount,
-              subtotal,
-              total,
-              currency: 'SAR', // Default currency
-              paymentStatus: 'PENDING',
-              dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-              createdAt: new Date(),
-              updatedAt: new Date()
-            }
+            data: invoiceData
           });
+          
+          console.log('🎉 [AUTO INVOICE] Invoice created successfully:', {
+            invoiceId: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            customsBrokerIdInInvoice: (invoice as any).customsBrokerId,
+            isLinkedToCustomsBroker: !!(invoice as any).customsBrokerId
+          })
 
           invoiceResult = {
             invoiceGenerated: true,

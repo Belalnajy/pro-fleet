@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
-import puppeteer from "puppeteer"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import puppeteer from "puppeteer";
 
 // GET /api/admin/invoices/[id]/pdf - Generate PDF for invoice
 export async function GET(
@@ -10,11 +10,14 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params
-    const session = await getServerSession(authOptions)
-    
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const { id } = await params;
+    const session = await getServerSession(authOptions);
+
+    if (
+      !session ||
+      (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const invoice = await db.invoice.findUnique({
@@ -38,10 +41,10 @@ export async function GET(
           }
         }
       }
-    })
+    });
 
     if (!invoice) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
     // Generate HTML content for PDF
@@ -247,14 +250,26 @@ export async function GET(
                     </div>
                 </div>
                 <div class="invoice-info">
-                    <div class="invoice-number">فاتورة رقم: ${invoice.invoiceNumber}</div>
-                    <div class="invoice-date">تاريخ الإصدار: ${new Date(invoice.createdAt).toLocaleDateString('ar-SA')}</div>
-                    <div class="invoice-date">تاريخ الاستحقاق: ${new Date(invoice.dueDate).toLocaleDateString('ar-SA')}</div>
+                    <div class="invoice-number">فاتورة رقم: ${
+                      invoice.invoiceNumber
+                    }</div>
+                    <div class="invoice-date">تاريخ الإصدار: ${new Date(
+                      invoice.createdAt
+                    ).toLocaleDateString("ar-SA")}</div>
+                    <div class="invoice-date">تاريخ الاستحقاق: ${new Date(
+                      invoice.dueDate
+                    ).toLocaleDateString("ar-SA")}</div>
                     <div style="margin-top: 10px;">
                         <span class="status-badge status-${invoice.paymentStatus.toLowerCase()}">
-                            ${invoice.paymentStatus === 'PENDING' ? 'في الانتظار' : 
-                              invoice.paymentStatus === 'PAID' ? 'مدفوعة' : 
-                              invoice.paymentStatus === 'OVERDUE' ? 'متأخرة' : 'ملغية'}
+                            ${
+                              invoice.paymentStatus === "PENDING"
+                                ? "في الانتظار"
+                                : invoice.paymentStatus === "PAID"
+                                ? "مدفوعة"
+                                : invoice.paymentStatus === "OVERDUE"
+                                ? "متأخرة"
+                                : "ملغية"
+                            }
                         </span>
                     </div>
                 </div>
@@ -264,9 +279,11 @@ export async function GET(
                 <div class="billing-section">
                     <div class="billing-title">بيانات العميل</div>
                     <div class="billing-details">
-                        <strong>${invoice.trip?.customer?.name || 'عميل غير محدد'}</strong><br>
-                        ${invoice.trip?.customer?.email || ''}<br>
-                        ${invoice.trip?.customer?.phone || ''}
+                        <strong>${
+                          invoice.trip?.customer?.name || "عميل غير محدد"
+                        }</strong><br>
+                        ${invoice.trip?.customer?.email || ""}<br>
+                        ${invoice.trip?.customer?.phone || ""}
                     </div>
                 </div>
                 <div class="billing-section">
@@ -279,29 +296,42 @@ export async function GET(
                 </div>
             </div>
 
-            ${invoice.trip ? `
+            ${
+              invoice.trip
+                ? `
             <div class="trip-details">
                 <div class="trip-title">تفاصيل الرحلة</div>
                 <div class="trip-info">
                     <div class="trip-item">
                         <span class="trip-label">رقم الرحلة:</span>
-                        <span class="trip-value">${invoice.trip.tripNumber}</span>
+                        <span class="trip-value">${
+                          invoice.trip.tripNumber
+                        }</span>
                     </div>
                     <div class="trip-item">
                         <span class="trip-label">المسار:</span>
-                        <span class="trip-value">${invoice.trip.fromCity?.name} → ${invoice.trip.toCity?.name}</span>
+                        <span class="trip-value">${
+                          invoice.trip.fromCity?.name
+                        } → ${invoice.trip.toCity?.name}</span>
                     </div>
                     <div class="trip-item">
                         <span class="trip-label">السائق:</span>
-                        <span class="trip-value">${invoice.trip.driver?.user?.name || 'غير محدد'}</span>
+                        <span class="trip-value">${
+                          invoice.trip.driver?.user?.name || "غير محدد"
+                        }</span>
                     </div>
                     <div class="trip-item">
                         <span class="trip-label">المركبة:</span>
-                        <span class="trip-value">${invoice.trip.vehicle?.vehicleType?.nameAr || 'غير محدد'}</span>
+                        <span class="trip-value">${
+                          invoice.trip.vehicle?.vehicleType?.nameAr ||
+                          "غير محدد"
+                        }</span>
                     </div>
                 </div>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
 
             <table class="items-table">
                 <thead>
@@ -314,49 +344,81 @@ export async function GET(
                 </thead>
                 <tbody>
                     <tr>
-                        <td>خدمة النقل${invoice.trip ? ` - ${invoice.trip.tripNumber}` : ''}</td>
+                        <td>خدمة النقل${
+                          invoice.trip ? ` - ${invoice.trip.tripNumber}` : ""
+                        }</td>
                         <td>1</td>
-                        <td>${invoice.subtotal.toFixed(2)} ${invoice.currency}</td>
-                        <td>${invoice.subtotal.toFixed(2)} ${invoice.currency}</td>
+                        <td>${invoice.subtotal.toFixed(2)} ${
+      invoice.currency
+    }</td>
+                        <td>${invoice.subtotal.toFixed(2)} ${
+      invoice.currency
+    }</td>
                     </tr>
-                    ${invoice.customsFee > 0 ? `
+                    ${
+                      invoice.customsFee > 0
+                        ? `
                     <tr>
                         <td>رسوم جمركية</td>
                         <td>1</td>
-                        <td>${invoice.customsFee.toFixed(2)} ${invoice.currency}</td>
-                        <td>${invoice.customsFee.toFixed(2)} ${invoice.currency}</td>
+                        <td>${invoice.customsFee.toFixed(2)} ${
+                            invoice.currency
+                          }</td>
+                        <td>${invoice.customsFee.toFixed(2)} ${
+                            invoice.currency
+                          }</td>
                     </tr>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                 </tbody>
             </table>
 
             <div class="totals">
                 <div class="total-row">
                     <span class="total-label">المجموع الفرعي:</span>
-                    <span class="total-value">${invoice.subtotal.toFixed(2)} ${invoice.currency}</span>
+                    <span class="total-value">${invoice.subtotal.toFixed(2)} ${
+      invoice.currency
+    }</span>
                 </div>
-                ${invoice.customsFee > 0 ? `
+                ${
+                  invoice.customsFee > 0
+                    ? `
                 <div class="total-row">
                     <span class="total-label">الرسوم الجمركية:</span>
-                    <span class="total-value">${invoice.customsFee.toFixed(2)} ${invoice.currency}</span>
+                    <span class="total-value">${invoice.customsFee.toFixed(
+                      2
+                    )} ${invoice.currency}</span>
                 </div>
-                ` : ''}
+                `
+                    : ""
+                }
                 <div class="total-row">
-                    <span class="total-label">ضريبة القيمة المضافة (${(invoice.taxRate * 100).toFixed(0)}%):</span>
-                    <span class="total-value">${invoice.taxAmount.toFixed(2)} ${invoice.currency}</span>
+                    <span class="total-label">ضريبة القيمة المضافة (${(
+                      invoice.taxRate * 100
+                    ).toFixed(0)}%):</span>
+                    <span class="total-value">${invoice.taxAmount.toFixed(2)} ${
+      invoice.currency
+    }</span>
                 </div>
                 <div class="total-row">
                     <span class="total-label">المجموع الإجمالي:</span>
-                    <span class="total-value">${invoice.total.toFixed(2)} ${invoice.currency}</span>
+                    <span class="total-value">${invoice.total.toFixed(2)} ${
+      invoice.currency
+    }</span>
                 </div>
             </div>
 
-            ${invoice.notes ? `
+            ${
+              invoice.notes
+                ? `
             <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 6px;">
                 <div style="font-weight: 600; margin-bottom: 10px; color: #374151;">ملاحظات:</div>
                 <div style="color: #6b7280;">${invoice.notes}</div>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
 
             <div class="footer">
                 <p>شكراً لاختياركم خدماتنا • برو فليت للنقل والخدمات اللوجستية</p>
@@ -365,39 +427,63 @@ export async function GET(
         </div>
     </body>
     </html>
-    `
+    `;
+      executablePath:
+        process.env.NODE_ENV === "production"
+          ? process.env.PUPPETEER_EXECUTABLE_PATH ||
+            "/usr/bin/google-chrome-stable"
+          : undefined
+    });
 
-    // Generate actual PDF using puppeteer
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    })
-    
-    const page = await browser.newPage()
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' })
-    
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: "networkidle0" });
+
     const pdfBuffer = await page.pdf({
-      format: 'A4',
+      format: "A4",
       printBackground: true,
       margin: {
-        top: '20px',
-        right: '20px',
-        bottom: '20px',
-        left: '20px'
+        top: "20px",
+        right: "20px",
+        bottom: "20px",
+        left: "20px"
       }
-    })
-    
-    await browser.close()
-    
+    });
+
+    await browser.close();
+
     return new NextResponse(pdfBuffer, {
       headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="invoice-${invoice.invoiceNumber}.pdf"`
       }
-    })
-
+    });
   } catch (error) {
-    console.error("Error generating PDF:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("Error generating PDF:", error);
+
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error("Error name:", error.name);
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
+
+    // Check if it's a Puppeteer-specific error
+    if (
+      error.message?.includes("Protocol error") ||
+      error.message?.includes("Target closed")
+    ) {
+      console.error(
+        "Puppeteer browser error - likely Chrome/Chromium not available"
+      );
+    }
+
+    return NextResponse.json(
+      {
+        error: "Failed to generate PDF",
+        details:
+          process.env.NODE_ENV === "development" ? error.message : undefined
+      },
+      { status: 500 }
+    );
   }
 }

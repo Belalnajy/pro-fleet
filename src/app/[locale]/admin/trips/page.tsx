@@ -58,6 +58,7 @@ interface Trip {
   fromCityId: string
   toCityId: string
   temperatureId: string
+  customsBrokerId?: string
   scheduledDate: string
   actualStartDate?: string
   deliveredDate?: string
@@ -93,6 +94,13 @@ interface Trip {
     option: string
     value: number
     unit: string
+  }
+  customsBroker?: {
+    id: string
+    user: {
+      id: string
+      name: string
+    }
   }
 }
 
@@ -237,8 +245,11 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
       
       if (response.ok) {
         const data = await response.json()
-        console.log('Trips data received:', data.length, 'trips')
-        setTrips(data)
+        console.log('Trips data received:', data)
+        // Handle both array and object responses
+        const tripsArray = Array.isArray(data) ? data : (data.trips || [])
+        console.log('Processed trips array:', tripsArray.length, 'trips')
+        setTrips(tripsArray)
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
         console.error('Failed to fetch trips:', response.status, errorData)
@@ -321,9 +332,10 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
           fromCityId: tripForm.fromCityId || null,
           toCityId: tripForm.toCityId || null,
           temperatureId: tripForm.temperatureId,
+          customsBrokerId: tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? tripForm.customsBrokerId : null,
           scheduledDate: tripForm.scheduledDate,
           price: parseFloat(tripForm.price),
-          notes: `${tripForm.notes || 'Admin created trip'}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}`,
+          notes: tripForm.notes || 'Admin created trip',
           originLocation: tripForm.originLocation,
           destinationLocation: tripForm.destinationLocation,
         }),
@@ -410,7 +422,7 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
         scheduledDate: trip.scheduledDate.slice(0, 16), // Format for datetime-local
         price: trip.price.toString(),
         notes: trip.notes || '',
-        customsBrokerId: (trip as any).customsBrokerId || 'none',
+        customsBrokerId: trip.customsBrokerId || 'none',
         originLocation: null,
         destinationLocation: null
       })
@@ -435,9 +447,10 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
           fromCityId: tripForm.fromCityId,
           toCityId: tripForm.toCityId,
           temperatureId: tripForm.temperatureId,
+          customsBrokerId: tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? tripForm.customsBrokerId : null,
           scheduledDate: tripForm.scheduledDate,
           price: parseFloat(tripForm.price),
-          notes: `${tripForm.notes || 'Updated by admin'}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}`
+          notes: tripForm.notes || 'Updated by admin'
         })
       })
       
@@ -688,6 +701,7 @@ return (
                 <TableHead>{t('customer')}</TableHead>
                 <TableHead>{t('driver')}</TableHead>
                 <TableHead>{t('vehicle')}</TableHead>
+                <TableHead>{t('customsBroker')}</TableHead>
                 <TableHead>{t('Status')}</TableHead>
                 <TableHead>{t('price')}</TableHead>
                 <TableHead>{t('scheduled')}</TableHead>
@@ -731,6 +745,11 @@ return (
                         <div className="text-sm font-medium">{trip.vehicle.vehicleType?.name || 'Unknown Type'}</div>
                         <div className="text-xs text-muted-foreground">{trip.vehicle.capacity}</div>
                       </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">
+                      {trip.customsBroker?.user?.name || 'غير محدد'}
                     </div>
                   </TableCell>
                   <TableCell>

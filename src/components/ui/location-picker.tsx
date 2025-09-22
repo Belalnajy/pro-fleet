@@ -1,24 +1,74 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet"
-import { LatLng } from "leaflet"
+import dynamic from "next/dynamic"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { MapPin, Search, Navigation, Check, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import "leaflet/dist/leaflet.css"
 
-// Fix for default markers in react-leaflet
-import L from "leaflet"
-delete (L.Icon.Default.prototype as any)._getIconUrl
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
-})
+// Dynamic import for Leaflet components to prevent SSR issues
+const MapComponent = dynamic(
+  () => {
+    return Promise.all([
+      import("react-leaflet"),
+      import("leaflet")
+    ]).then(([reactLeaflet, leaflet]) => {
+      const { MapContainer, TileLayer, Marker, useMapEvents } = reactLeaflet
+      const L = leaflet.default
+      
+      // Fix for default markers
+      if (typeof window !== "undefined") {
+        delete (L.Icon.Default.prototype as any)._getIconUrl
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+          iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+          shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+        })
+      }
+      
+      function LocationMarker({ position, setPosition }: any) {
+        useMapEvents({
+          click(e: any) {
+            setPosition(e.latlng)
+          },
+        })
+        return position ? <Marker position={position} /> : null
+      }
+      
+      return function DynamicMapComponent({ position, setPosition, mapRef, defaultCenter }: any) {
+        return (
+          <MapContainer
+            center={position ? [position.lat, position.lng] : defaultCenter}
+            zoom={position ? 13 : 6}
+            style={{ height: "100%", width: "100%" }}
+            className="z-10"
+            ref={mapRef}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <LocationMarker position={position} setPosition={setPosition} />
+          </MapContainer>
+        )
+      }
+    })
+  },
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-sm text-gray-600">جاري تحميل الخريطة...</p>
+        </div>
+      </div>
+    )
+  }
+)
 
 interface LocationData {
   lat: number
@@ -36,24 +86,7 @@ interface LocationPickerProps {
   type: "origin" | "destination"
 }
 
-// Map click handler component
-function LocationMarker({ 
-  position, 
-  setPosition 
-}: { 
-  position: LatLng | null
-  setPosition: (pos: LatLng) => void 
-}) {
-  useMapEvents({
-    click(e) {
-      setPosition(e.latlng)
-    },
-  })
 
-  return position === null ? null : (
-    <Marker position={position} />
-  )
-}
 
 export function LocationPicker({
   isOpen,
@@ -63,15 +96,28 @@ export function LocationPicker({
   initialLocation,
   type
 }: LocationPickerProps) {
-  const [position, setPosition] = useState<LatLng | null>(
-    initialLocation ? new LatLng(initialLocation.lat, initialLocation.lng) : null
-  )
+  const [position, setPosition] = useState<any | null>(null)
   const [address, setAddress] = useState(initialLocation?.address || "")
   const [locationName, setLocationName] = useState(initialLocation?.name || "")
   const [isLoading, setIsLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const mapRef = useRef<any>(null)
   const { toast } = useToast()
+
+  // Initialize position when component mounts
+  useEffect(() => {
+    // Import CSS on client side
+    if (typeof window !== "undefined") {
+      import("leaflet/dist/leaflet.css")
+    }
+    
+    if (initialLocation && typeof window !== "undefined") {
+      import("leaflet").then((L) => {
+        const newPos = new L.LatLng(initialLocation.lat, initialLocation.lng)
+        setPosition(newPos)
+      })
+    }
+  }, [initialLocation])
 
   // Default center (Riyadh, Saudi Arabia)
   const defaultCenter: [number, number] = [24.7136, 46.6753]
@@ -96,12 +142,16 @@ export function LocationPicker({
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const newPos = new LatLng(position.coords.latitude, position.coords.longitude)
-          setPosition(newPos)
-          if (mapRef.current) {
-            mapRef.current.flyTo(newPos, 13)
+          if (typeof window !== "undefined") {
+            import("leaflet").then((L) => {
+              const newPos = new L.LatLng(position.coords.latitude, position.coords.longitude)
+              setPosition(newPos)
+              if (mapRef.current) {
+                mapRef.current.flyTo(newPos, 13)
+              }
+              reverseGeocode(newPos)
+            })
           }
-          reverseGeocode(newPos)
           setIsLoading(false)
         },
         (error) => {
@@ -125,7 +175,7 @@ export function LocationPicker({
   }
 
   // Reverse geocoding to get address from coordinates
-  const reverseGeocode = async (latlng: LatLng) => {
+  const reverseGeocode = async (latlng: any) => {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&accept-language=ar`
@@ -152,11 +202,16 @@ export function LocationPicker({
       
       if (data.length > 0) {
         const result = data[0]
-        const newPos = new LatLng(parseFloat(result.lat), parseFloat(result.lon))
-        setPosition(newPos)
-        setAddress(result.display_name)
-        if (mapRef.current) {
-          mapRef.current.flyTo(newPos, 13)
+        if (typeof window !== "undefined") {
+          import("leaflet").then((L) => {
+            const newPos = new L.LatLng(parseFloat(result.lat), parseFloat(result.lon))
+            setPosition(newPos)
+            setLocationName(searchQuery)
+            setAddress(result.display_name)
+            if (mapRef.current) {
+              mapRef.current.flyTo(newPos, 13)
+            }
+          })
         }
       } else {
         toast({
@@ -178,12 +233,16 @@ export function LocationPicker({
 
   // Select predefined location
   const selectPredefinedLocation = (location: typeof predefinedLocations[0]) => {
-    const newPos = new LatLng(location.lat, location.lng)
-    setPosition(newPos)
-    setLocationName(location.name)
-    setAddress(location.name)
-    if (mapRef.current) {
-      mapRef.current.flyTo(newPos, 13)
+    if (typeof window !== "undefined") {
+      import("leaflet").then((L) => {
+        const newPos = new L.LatLng(location.lat, location.lng)
+        setPosition(newPos)
+        setLocationName(location.name)
+        setAddress(`${location.name} - ${location.nameEn}`)
+        if (mapRef.current) {
+          mapRef.current.flyTo(newPos, 13)
+        }
+      })
     }
   }
 
@@ -227,20 +286,13 @@ export function LocationPicker({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[75vh]">
           {/* Map Section */}
           <div className="lg:col-span-2 relative bg-gray-100">
-            <MapContainer
-              center={position ? [position.lat, position.lng] : defaultCenter}
-              zoom={position ? 13 : 6}
-              style={{ height: "100%", width: "100%", borderRadius: "0" }}
-              ref={mapRef}
-              className="z-10"
-            >
-              <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              />
-              <LocationMarker position={position} setPosition={setPosition} />
-            </MapContainer>
-
+            <MapComponent 
+              position={position}
+              setPosition={setPosition}
+              mapRef={mapRef}
+              defaultCenter={defaultCenter}
+            />
+            
             {/* Current Location Button */}
             <Button
               onClick={getCurrentLocation}

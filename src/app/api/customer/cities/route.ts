@@ -18,6 +18,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true,
         name: true,
+        nameAr: true,
         latitude: true,
         longitude: true,
       },

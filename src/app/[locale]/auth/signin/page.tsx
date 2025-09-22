@@ -28,7 +28,7 @@ function SignInInner({ locale }: { locale: string }) {
     driver: { email: "driver@profleet.com", password: "demo123" },
     customer: { email: "customer@profleet.com", password: "demo123" },
     accountant: { email: "accountant@profleet.com", password: "demo123" },
-    broker: { email: "broker@profleet.com", password: "demo123" },
+    broker: { email: "broker@profleet.sa", password: "password123" },
   }
 
   // Helper function to redirect user based on role

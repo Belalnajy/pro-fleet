@@ -86,8 +86,7 @@ model CustomsBroker {
 
 model Vehicle {
   id            String           @id @default(cuid())
-  capacity      String
-  description   String?
+  vehicleNumber String?
   isActive      Boolean          @default(true)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
@@ -96,7 +95,7 @@ model Vehicle {
   trips         Trip[]
   vehicleType   VehicleTypeModel @relation(fields: [vehicleTypeId], references: [id])
 
-  @@unique([vehicleTypeId, capacity], name: "type_capacity")
+  @@unique([vehicleTypeId, vehicleNumber], name: "type_vehicle_number")
   @@map("vehicles")
 }
 
@@ -181,9 +180,22 @@ model Trip {
   actualStartDate DateTime?
   deliveredDate   DateTime?
   status          TripStatus         @default(PENDING)
+  // Trip stage timestamps
+  assignedAt      DateTime?
+  enRoutePickupAt DateTime?
+  arrivedPickupAt DateTime?
+  pickedUpAt      DateTime?
+  inTransitAt     DateTime?
+  arrivedDestAt   DateTime?
+  deliveredAt     DateTime?
   price           Float
   currency        String             @default("SAR")
   notes           String?
+  // Custom coordinates for map-selected locations
+  originLat       Float?
+  originLng       Float?
+  destinationLat  Float?
+  destinationLng  Float?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
   invoice         Invoice?
@@ -291,6 +303,7 @@ model TrackingLog {
   timestamp DateTime @default(now())
   speed     Float?
   heading   Float?
+  notes     String?
   createdAt DateTime @default(now())
   trip      Trip     @relation(fields: [tripId], references: [id])
 
@@ -402,10 +415,16 @@ enum UserRole {
 }
 
 enum TripStatus {
-  PENDING
-  IN_PROGRESS
-  DELIVERED
-  CANCELLED
+  PENDING          // في انتظار البدء
+  ASSIGNED         // تم تعيين السائق
+  IN_PROGRESS      // بدأت الرحلة (للتوافق مع البيانات القديمة)
+  EN_ROUTE_PICKUP  // في الطريق لنقطة الاستلام
+  AT_PICKUP        // وصل لنقطة الاستلام
+  PICKED_UP        // تم الاستلام
+  IN_TRANSIT       // في الطريق للوجهة
+  AT_DESTINATION   // وصل للوجهة
+  DELIVERED        // تم التسليم
+  CANCELLED        // ملغية
 }
 
 enum TemperatureOption {

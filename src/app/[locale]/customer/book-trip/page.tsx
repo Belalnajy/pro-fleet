@@ -88,10 +88,12 @@ export default function BookTrip({ params }: BookTripProps) {
   const [vehicles, setVehicles] = useState<any[]>([])
   const [temperatures, setTemperatures] = useState<any[]>([])
   const [customsBrokers, setCustomsBrokers] = useState<any[]>([])
+  const [availableDrivers, setAvailableDrivers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [step, setStep] = useState(1)
   const [estimatedPrice, setEstimatedPrice] = useState(0)
+  const [loadingDrivers, setLoadingDrivers] = useState(false)
 
   // Form state
   const [tripForm, setTripForm] = useState({
@@ -108,6 +110,7 @@ export default function BookTrip({ params }: BookTripProps) {
     estimatedDeliveryDate: "",
     vehicleTypeId: "",
     customsBrokerId: "none",
+    driverId: null as string | null,
     originLocation: null as LocationData | null,
     destinationLocation: null as LocationData | null
   })
@@ -203,6 +206,53 @@ export default function BookTrip({ params }: BookTripProps) {
     }
   }
 
+  // Fetch available drivers based on selected vehicle type and temperature
+  const fetchAvailableDrivers = async () => {
+    console.log('🔍 Customer fetchAvailableDrivers called with:', {
+      vehicleTypeId: tripForm.vehicleTypeId,
+      temperatureRequirement: tripForm.temperatureRequirement,
+      temperaturesCount: temperatures.length
+    })
+    
+    if (!tripForm.vehicleTypeId) {
+      console.log('❌ No vehicle type ID, clearing drivers list')
+      setAvailableDrivers([])
+      return
+    }
+
+    setLoadingDrivers(true)
+    try {
+      const params = new URLSearchParams()
+      if (tripForm.vehicleTypeId) {
+        params.append('vehicleTypeId', tripForm.vehicleTypeId)
+      }
+      if (tripForm.temperatureRequirement && tripForm.temperatureRequirement !== 'ambient') {
+        // Find temperature ID from temperatureRequirement
+        const tempSetting = temperatures.find(t => 
+          t.option.toLowerCase() === tripForm.temperatureRequirement.toLowerCase()
+        )
+        if (tempSetting) {
+          params.append('temperatureId', tempSetting.id)
+        }
+      }
+
+      const response = await fetch(`/api/admin/drivers/available?${params.toString()}`)
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableDrivers(data.drivers || [])
+        console.log("Available drivers loaded:", data)
+      } else {
+        console.error("Failed to fetch available drivers:", response.status)
+        setAvailableDrivers([])
+      }
+    } catch (error) {
+      console.error("Error fetching available drivers:", error)
+      setAvailableDrivers([])
+    } finally {
+      setLoadingDrivers(false)
+    }
+  }
+
   // Function to calculate distance between two coordinates
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
     const R = 6371 // Radius of the Earth in kilometers
@@ -280,6 +330,13 @@ export default function BookTrip({ params }: BookTripProps) {
       calculateEstimatedPrice()
     }
   }, [tripForm.cargoWeight, tripForm.temperatureRequirement])
+
+  // Fetch available drivers when vehicle type or temperature changes
+  useEffect(() => {
+    if (tripForm.vehicleTypeId) {
+      fetchAvailableDrivers()
+    }
+  }, [tripForm.vehicleTypeId, tripForm.temperatureRequirement, temperatures])
 
   const handleSubmit = async () => {
     console.log('=== FORM STATE BEFORE SUBMISSION ===')
@@ -408,8 +465,9 @@ export default function BookTrip({ params }: BookTripProps) {
         scheduledDate: tripForm.scheduledPickupDate,
         temperatureId: temperatureId,
         vehicleTypeId: vehicleTypeId, // Send vehicle type ID instead of vehicle ID
+        driverId: tripForm.driverId, // Include selected driver ID
         price: estimatedPrice || 500,
-        notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress || (tripForm.originLocation?.address || 'Custom Location')}, Delivery: ${tripForm.deliveryAddress || (tripForm.destinationLocation?.address || 'Custom Location')}. Special Instructions: ${tripForm.specialInstructions}${tripForm.originLocation ? ` Origin: ${tripForm.originLocation.lat}, ${tripForm.originLocation.lng}` : ''}${tripForm.destinationLocation ? ` Destination: ${tripForm.destinationLocation.lat}, ${tripForm.destinationLocation.lng}` : ''}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}`
+        notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress || (tripForm.originLocation?.address || 'Custom Location')}, Delivery: ${tripForm.deliveryAddress || (tripForm.destinationLocation?.address || 'Custom Location')}. Special Instructions: ${tripForm.specialInstructions}${tripForm.originLocation ? ` Origin: ${tripForm.originLocation.lat}, ${tripForm.originLocation.lng}` : ''}${tripForm.destinationLocation ? ` Destination: ${tripForm.destinationLocation.lat}, ${tripForm.destinationLocation.lng}` : ''}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}. Driver: ${tripForm.driverId ? availableDrivers.find(d => d.id === tripForm.driverId)?.user?.name || 'غير محدد' : 'غير محدد'}`
       }
 
       console.log('🚛 Creating trip:', {
@@ -546,6 +604,7 @@ export default function BookTrip({ params }: BookTripProps) {
                     estimatedDeliveryDate: "",
                     vehicleTypeId: "",
                     customsBrokerId: "none",
+                    driverId: null,
                     originLocation: null,
                     destinationLocation: null
                   })
@@ -939,6 +998,58 @@ export default function BookTrip({ params }: BookTripProps) {
                   </Select>
                   <p className="text-xs text-muted-foreground mt-1">
                     {translate("customsBrokerOptional")}
+                  </p>
+                </div>
+
+                {/* Driver Selection */}
+                <div>
+                  <Label htmlFor="driver">{translate("selectDriver")}</Label>
+                  {loadingDrivers ? (
+                    <div className="flex items-center justify-center p-4 border rounded-md">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                      <span className="ml-2 text-sm text-muted-foreground">جاري تحميل السائقين المتاحين...</span>
+                    </div>
+                  ) : availableDrivers.length === 0 ? (
+                    <div className="p-4 border rounded-md bg-yellow-50 border-yellow-200">
+                      <p className="text-sm text-yellow-800">
+                        {tripForm.vehicleTypeId ? 
+                          "لا يوجد سائقين متاحين لنوع المركبة المحدد" : 
+                          "يرجى اختيار نوع المركبة أولاً لعرض السائقين المتاحين"
+                        }
+                      </p>
+                    </div>
+                  ) : (
+                    <Select
+                      value={tripForm.driverId || ''}
+                      onValueChange={(value) => setTripForm({...tripForm, driverId: value || null})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر السائق" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableDrivers.map((driver) => (
+                          <SelectItem key={driver.id} value={driver.id}>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{driver.user?.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {driver.carPlateNumber} • {driver.nationality}
+                                {driver.trips?.length > 0 && (
+                                  <span className="text-orange-600"> • لديه رحلة نشطة</span>
+                                )}
+                              </span>
+                              {driver.vehicleTypes?.length > 0 && (
+                                <span className="text-xs text-blue-600">
+                                  يقود: {driver.vehicleTypes.map(vt => vt.vehicleType?.nameAr || vt.vehicleType?.name).join(', ')}
+                                </span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    يتم عرض السائقين الذين يمكنهم قيادة نوع المركبة المحدد فقط
                   </p>
                 </div>
                 

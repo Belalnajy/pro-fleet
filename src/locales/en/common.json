@@ -129,5 +129,10 @@
   "paymentNumber": "Payment #",
   "invoice": "Invoice",
   "noPaymentsFound": "No payments found",
-  "noPaymentsDescription": "No payments match your current filters"
+  "noPaymentsDescription": "No payments match your current filters",
+  "manageDriverVehicleTypes": "Manage Driver Vehicle Types",
+  "autoAssignVehicleTypes": "Auto-Assign Vehicle Types",
+  "driverManagement": "Driver Management",
+  "manageDriverVehicleAssignments": "Manage driver vehicle type assignments",
+  "systemStatus": "System Status"
 }

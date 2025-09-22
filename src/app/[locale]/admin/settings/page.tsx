@@ -504,6 +504,58 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
               </div>
             </CardContent>
           </Card>
+
+          {/* Driver Management Section */}
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-orange-500/10">
+                  <Settings className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">{t('driverManagement')}</CardTitle>
+                  <CardDescription className="text-sm">{t('manageDriverVehicleAssignments')}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Link href={`/${locale}/admin/system-status`} className="block">
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200 group"
+                  >
+                    <div className="p-2 rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
+                      <Settings className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-medium">{t('systemStatus')}</span>
+                  </Button>
+                </Link>
+                <Link href={`/${locale}/admin/driver-vehicle-types`} className="block">
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-orange-50 hover:border-orange-200 transition-all duration-200 group"
+                  >
+                    <div className="p-2 rounded-lg bg-orange-500/10 group-hover:bg-orange-500/20 transition-colors">
+                      <Settings className="h-5 w-5 text-orange-600" />
+                    </div>
+                    <span className="text-sm font-medium">{t('manageDriverVehicleTypes')}</span>
+                  </Button>
+                </Link>
+                <Link href={`/${locale}/admin/auto-assign`} className="block">
+                  <Button 
+                    variant="outline" 
+                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-yellow-50 hover:border-yellow-200 transition-all duration-200 group"
+                  >
+                    <div className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors">
+                      <RefreshCw className="h-5 w-5 text-yellow-600" />
+                    </div>
+                    <span className="text-sm font-medium">{t('autoAssignVehicleTypes')}</span>
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="customs" className="space-y-6 mt-6">

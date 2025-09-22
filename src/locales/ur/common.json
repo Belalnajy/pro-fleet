@@ -129,5 +129,10 @@
   "paymentNumber": "ادائیگی نمبر",
   "invoice": "انوائس",
   "noPaymentsFound": "کوئی ادائیگی نہیں ملی",
-  "noPaymentsDescription": "آپ کے موجودہ فلٹرز سے کوئی ادائیگی میل نہیں کھاتی"
+  "noPaymentsDescription": "آپ کے موجودہ فلٹرز سے کوئی ادائیگی میل نہیں کھاتی",
+  "manageDriverVehicleTypes": "ڈرائیور گاڑی کی اقسام کا انتظام",
+  "autoAssignVehicleTypes": "گاڑی کی اقسام خودکار تفویض",
+  "driverManagement": "ڈرائیور مینجمنٹ",
+  "manageDriverVehicleAssignments": "ڈرائیورز کے لیے گاڑی کی اقسام کی تفویض",
+  "systemStatus": "سسٹم کی صورتحال"
 }

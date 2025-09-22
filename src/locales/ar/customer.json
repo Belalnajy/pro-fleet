@@ -208,5 +208,6 @@
   "customsBroker": "المخلص الجمركي",
   "selectCustomsBroker": "اختر المخلص الجمركي",
   "noCustomsBroker": "بدون مخلص جمركي",
-  "customsBrokerOptional": "اختيار المخلص الجمركي اختياري - يمكن تعيينه لاحقاً"
+  "customsBrokerOptional": "اختيار المخلص الجمركي اختياري - يمكن تعيينه لاحقاً",
+  "selectDriver": "اختر السائق"
 }

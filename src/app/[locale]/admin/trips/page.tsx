@@ -130,6 +130,8 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
   const [submitting, setSubmitting] = useState(false)
   const [customers, setCustomers] = useState<any[]>([])
   const [drivers, setDrivers] = useState<any[]>([])
+  const [availableDrivers, setAvailableDrivers] = useState<any[]>([])
+  const [loadingDrivers, setLoadingDrivers] = useState(false)
   const [vehicles, setVehicles] = useState<any[]>([])
   const [cities, setCities] = useState<any[]>([])
   const [temperatures, setTemperatures] = useState<any[]>([])
@@ -156,6 +158,43 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
     originLocation: null as LocationData | null,
     destinationLocation: null as LocationData | null
   })
+
+  // Helper function to get driver name
+  const getDriverName = (driverId: string | null): string => {
+    if (!driverId || driverId === 'no-driver') return ''
+    
+    // Try to find in availableDrivers first (API returns name directly)
+    const availableDriver = availableDrivers.find(d => d.id === driverId)
+    if (availableDriver?.name) {
+      console.log('Found in availableDrivers:', availableDriver.name)
+      return availableDriver.name
+    }
+    
+    // Try to find in availableDrivers with user.name structure
+    if (availableDriver?.user?.name) {
+      console.log('Found in availableDrivers (user.name):', availableDriver.user.name)
+      return availableDriver.user.name
+    }
+    
+    // Try to find in all drivers
+    const driver = drivers.find(d => d.id === driverId)
+    if (driver?.user?.name) {
+      console.log('Found in drivers:', driver.user.name)
+      return driver.user.name
+    }
+    
+    // Try to find in current trip being edited
+    if (editTripId) {
+      const trip = trips.find(t => t.id === editTripId)
+      if (trip?.driver?.user?.name) {
+        console.log('Found in trip:', trip.driver.user.name)
+        return trip.driver.user.name
+      }
+    }
+    
+    console.log('Driver not found for ID:', driverId, 'Available drivers:', availableDrivers.map(d => ({ id: d.id, name: d.name || d.user?.name })))
+    return 'سائق محدد'
+  }
 
   useEffect(() => {
     if (status === "loading") return
@@ -231,6 +270,58 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
     }
   }
 
+  // Fetch available drivers based on selected vehicle type and temperature
+  const fetchAvailableDrivers = async () => {
+    console.log('🔍 fetchAvailableDrivers called with tripForm:', {
+      vehicleId: tripForm.vehicleId,
+      temperatureId: tripForm.temperatureId,
+      vehiclesCount: vehicles.length
+    })
+    
+    // For admin, we need vehicleId to find vehicleTypeId
+    let vehicleTypeId = null
+    
+    if (tripForm.vehicleId) {
+      // Find vehicle type from selected vehicle
+      const selectedVehicle = vehicles.find(v => v.id === tripForm.vehicleId)
+      vehicleTypeId = selectedVehicle?.vehicleTypeId
+      console.log('🚗 Selected vehicle:', selectedVehicle)
+      console.log('🏷️ Vehicle type ID:', vehicleTypeId)
+    }
+    
+    if (!vehicleTypeId) {
+      console.log('❌ No vehicle type ID found, clearing drivers list')
+      setAvailableDrivers([])
+      return
+    }
+
+    setLoadingDrivers(true)
+    try {
+      const params = new URLSearchParams()
+      params.append('vehicleTypeId', vehicleTypeId)
+      
+      if (tripForm.temperatureId) {
+        params.append('temperatureId', tripForm.temperatureId)
+      }
+
+      console.log('Fetching available drivers with params:', params.toString())
+      const response = await fetch(`/api/admin/drivers/available?${params.toString()}`)
+      if (response.ok) {
+        const data = await response.json()
+        setAvailableDrivers(data.drivers || [])
+        console.log("Available drivers loaded:", data)
+      } else {
+        console.error("Failed to fetch available drivers:", response.status)
+        setAvailableDrivers([])
+      }
+    } catch (error) {
+      console.error("Error fetching available drivers:", error)
+      setAvailableDrivers([])
+    } finally {
+      setLoadingDrivers(false)
+    }
+  }
+
   // Load data when create dialog opens
   useEffect(() => {
     if (isDialogOpen) {
@@ -244,6 +335,13 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
       loadFormData()
     }
   }, [isEditDialogOpen])
+
+  // Fetch available drivers when vehicle or temperature changes
+  useEffect(() => {
+    if ((isDialogOpen || isEditDialogOpen) && tripForm.vehicleId && vehicles.length > 0) {
+      fetchAvailableDrivers()
+    }
+  }, [tripForm.vehicleId, tripForm.temperatureId, vehicles, isDialogOpen, isEditDialogOpen])
 
   const fetchTrips = async () => {
     try {
@@ -771,7 +869,7 @@ return (
                         <div className="text-sm text-muted-foreground">{trip.driver.carPlateNumber}</div>
                       </div>
                     ) : (
-                      <span className="text-muted-foreground">Unassigned</span>
+                      <span className="text-muted-foreground">غير معين</span>
                     )}
                   </TableCell>
                   <TableCell>
@@ -896,16 +994,56 @@ return (
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium">{t('driver')}</Label>
-                <Select value={tripForm.driverId || ''} onValueChange={(v) => setTripForm(prev => ({ ...prev, driverId: v || null }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Optional" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {drivers.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {loadingDrivers ? (
+                  <div className="flex items-center justify-center p-4 border rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <span className="ml-2 text-sm text-muted-foreground">جاري تحميل السائقين المتاحين...</span>
+                  </div>
+                ) : availableDrivers.length === 0 && tripForm.vehicleId ? (
+                  <div className="p-4 border rounded-md bg-yellow-50 border-yellow-200">
+                    <p className="text-sm text-yellow-800">
+                      لا يوجد سائقين متاحين لنوع المركبة المحدد
+                    </p>
+                  </div>
+                ) : (
+                  <Select value={tripForm.driverId || 'no-driver'} onValueChange={(v) => setTripForm(prev => ({ ...prev, driverId: v === 'no-driver' ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={tripForm.vehicleId ? "اختر السائق" : "يرجى اختيار المركبة أولاً"}>
+                        {tripForm.driverId && tripForm.driverId !== 'no-driver' ? (
+                          <span className="font-medium">
+                            {getDriverName(tripForm.driverId)}
+                          </span>
+                        ) : tripForm.driverId === 'no-driver' ? (
+                          <span className="text-muted-foreground">بدون سائق (اختياري)</span>
+                        ) : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no-driver">بدون سائق (اختياري)</SelectItem>
+                      {availableDrivers.map((driver) => (
+                        <SelectItem key={driver.id} value={driver.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{driver.name || driver.user?.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {driver.carPlateNumber} • {driver.nationality}
+                              {(driver.hasActiveTrip || driver.trips?.length > 0) && (
+                                <span className="text-orange-600"> • لديه رحلة نشطة</span>
+                              )}
+                            </span>
+                            {driver.vehicleTypes?.length > 0 && (
+                              <span className="text-xs text-blue-600">
+                                يقود: {driver.vehicleTypes.map(vt => vt.nameAr || vt.name || vt.vehicleType?.nameAr || vt.vehicleType?.name).join(', ')}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  يتم عرض السائقين الذين يمكنهم قيادة نوع المركبة المحدد فقط
+                </p>
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium">{t('vehicle')} *</Label>
@@ -1297,16 +1435,56 @@ return (
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium">{t('driver')}</Label>
-                <Select value={tripForm.driverId || ''} onValueChange={(v) => setTripForm(prev => ({ ...prev, driverId: v || null }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="اختياري" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {drivers.map((d) => (
-                      <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {loadingDrivers ? (
+                  <div className="flex items-center justify-center p-4 border rounded-md">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    <span className="ml-2 text-sm text-muted-foreground">جاري تحميل السائقين المتاحين...</span>
+                  </div>
+                ) : availableDrivers.length === 0 && tripForm.vehicleId ? (
+                  <div className="p-4 border rounded-md bg-yellow-50 border-yellow-200">
+                    <p className="text-sm text-yellow-800">
+                      لا يوجد سائقين متاحين لنوع المركبة المحدد
+                    </p>
+                  </div>
+                ) : (
+                  <Select value={tripForm.driverId || 'no-driver'} onValueChange={(v) => setTripForm(prev => ({ ...prev, driverId: v === 'no-driver' ? null : v }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={tripForm.vehicleId ? "اختر السائق" : "يرجى اختيار المركبة أولاً"}>
+                        {tripForm.driverId && tripForm.driverId !== 'no-driver' ? (
+                          <span className="font-medium">
+                            {getDriverName(tripForm.driverId)}
+                          </span>
+                        ) : tripForm.driverId === 'no-driver' ? (
+                          <span className="text-muted-foreground">بدون سائق (اختياري)</span>
+                        ) : null}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no-driver">بدون سائق (اختياري)</SelectItem>
+                      {availableDrivers.map((driver) => (
+                        <SelectItem key={driver.id} value={driver.id}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{driver.name || driver.user?.name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {driver.carPlateNumber} • {driver.nationality}
+                              {(driver.hasActiveTrip || driver.trips?.length > 0) && (
+                                <span className="text-orange-600"> • لديه رحلة نشطة</span>
+                              )}
+                            </span>
+                            {driver.vehicleTypes?.length > 0 && (
+                              <span className="text-xs text-blue-600">
+                                يقود: {driver.vehicleTypes.map(vt => vt.nameAr || vt.name || vt.vehicleType?.nameAr || vt.vehicleType?.name).join(', ')}
+                              </span>
+                            )}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  يتم عرض السائقين الذين يمكنهم قيادة نوع المركبة المحدد فقط
+                </p>
               </div>
             </div>
           </div>

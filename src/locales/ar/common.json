@@ -129,5 +129,10 @@
   "paymentNumber": "رقم الدفعة",
   "invoice": "الفاتورة",
   "noPaymentsFound": "لم يتم العثور على مدفوعات",
-  "noPaymentsDescription": "لا توجد مدفوعات تطابق المرشحات الحالية"
+  "noPaymentsDescription": "لا توجد مدفوعات تطابق المرشحات الحالية",
+  "manageDriverVehicleTypes": "إدارة أنواع مركبات السائقين",
+  "autoAssignVehicleTypes": "ربط أنواع المركبات تلقائياً",
+  "driverManagement": "إدارة السائقين",
+  "manageDriverVehicleAssignments": "إدارة تخصيص أنواع المركبات للسائقين",
+  "systemStatus": "حالة النظام"
 }

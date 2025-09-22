@@ -203,5 +203,6 @@
   "orSelectFromSavedAddresses": "Or select from saved addresses",
   "selectFromSavedAddresses": "Select from saved addresses",
   "cannotCancelTrip": "Cannot cancel this trip",
-  "onlyPendingTripsCanBeCancelled": "Only pending trips can be cancelled"
+  "onlyPendingTripsCanBeCancelled": "Only pending trips can be cancelled",
+  "selectDriver": "Select Driver"
 }

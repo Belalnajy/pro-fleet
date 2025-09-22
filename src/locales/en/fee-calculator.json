@@ -120,5 +120,6 @@
   "dutyFees": "Duty Fees",
   "vatTax": "VAT Tax",
   "invoiceValuePlaceholder": "Enter invoice value",
-  "exportSuccess": "Tariffs exported successfully"
+  "exportSuccess": "Tariffs exported successfully",
+  "fetchError": "Failed to load customs tariffs"
 }

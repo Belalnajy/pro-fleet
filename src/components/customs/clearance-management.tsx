@@ -64,7 +64,12 @@ export function ClearanceManagement({ customsBrokerId }: ClearanceManagementProp
     customsFee: '',
     additionalFees: '',
     notes: '',
-    estimatedCompletionDate: ''
+    estimatedCompletionDate: '',
+    // New fields for percentage-based calculations
+    customsFeeType: 'FIXED', // 'FIXED' or 'PERCENTAGE'
+    customsFeePercentage: '',
+    additionalFeesType: 'FIXED', // 'FIXED' or 'PERCENTAGE' 
+    additionalFeesPercentage: ''
   })
 
   const [editForm, setEditForm] = useState({
@@ -77,9 +82,10 @@ export function ClearanceManagement({ customsBrokerId }: ClearanceManagementProp
   })
 
   useEffect(() => {
+    console.log('Fetching clearances with:', { statusFilter, page, customsBrokerId })
     fetchClearances()
     fetchAvailableInvoices()
-  }, [statusFilter, page])
+  }, [statusFilter, page, customsBrokerId])
 
   useEffect(() => {
     console.log('availableInvoices state updated:', availableInvoices)
@@ -120,10 +126,18 @@ export function ClearanceManagement({ customsBrokerId }: ClearanceManagementProp
       })
 
       const response = await fetch(`/api/customs-broker/clearances?${params}`)
+      console.log('Clearances API response status:', response.status)
       if (response.ok) {
         const data = await response.json()
-        setClearances(data.clearances)
-        setTotalPages(data.pagination.pages)
+        console.log('Clearances API data:', data)
+        console.log('Clearances array:', data.clearances)
+        console.log('Clearances count:', data.clearances?.length || 0)
+        setClearances(data.clearances || [])
+        setTotalPages(data.pagination?.pages || 1)
+      } else {
+        const errorData = await response.json()
+        console.error('Clearances API Error:', errorData)
+        toast.error(errorData.error || t('failedToLoadClearances'))
       }
     } catch (error) {
       console.error('Error fetching clearances:', error)
@@ -135,7 +149,12 @@ export function ClearanceManagement({ customsBrokerId }: ClearanceManagementProp
 
   const handleCreateClearance = async () => {
     try {
-      if (!newClearanceForm.invoiceId || !newClearanceForm.customsFee) {
+      // Validate required fields based on fee type
+      const customsFeeValue = newClearanceForm.customsFeeType === 'FIXED' 
+        ? newClearanceForm.customsFee 
+        : newClearanceForm.customsFeePercentage
+      
+      if (!newClearanceForm.invoiceId || !customsFeeValue) {
         toast.error(t('fillAllRequiredFields'))
         return
       }
@@ -146,9 +165,25 @@ export function ClearanceManagement({ customsBrokerId }: ClearanceManagementProp
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...newClearanceForm,
-          customsFee: parseFloat(newClearanceForm.customsFee),
-          additionalFees: parseFloat(newClearanceForm.additionalFees) || 0
+          invoiceId: newClearanceForm.invoiceId,
+          notes: newClearanceForm.notes,
+          estimatedCompletionDate: newClearanceForm.estimatedCompletionDate,
+          // Customs fee data
+          customsFeeType: newClearanceForm.customsFeeType,
+          customsFee: newClearanceForm.customsFeeType === 'FIXED' 
+            ? parseFloat(newClearanceForm.customsFee) 
+            : 0,
+          customsFeePercentage: newClearanceForm.customsFeeType === 'PERCENTAGE' 
+            ? parseFloat(newClearanceForm.customsFeePercentage) 
+            : 0,
+          // Additional fees data
+          additionalFeesType: newClearanceForm.additionalFeesType,
+          additionalFees: newClearanceForm.additionalFeesType === 'FIXED' 
+            ? (parseFloat(newClearanceForm.additionalFees) || 0) 
+            : 0,
+          additionalFeesPercentage: newClearanceForm.additionalFeesType === 'PERCENTAGE' 
+            ? (parseFloat(newClearanceForm.additionalFeesPercentage) || 0) 
+            : 0
         }),
       })
 
@@ -160,7 +195,11 @@ export function ClearanceManagement({ customsBrokerId }: ClearanceManagementProp
           customsFee: '',
           additionalFees: '',
           notes: '',
-          estimatedCompletionDate: ''
+          estimatedCompletionDate: '',
+          customsFeeType: 'FIXED',
+          customsFeePercentage: '',
+          additionalFeesType: 'FIXED',
+          additionalFeesPercentage: ''
         })
         fetchClearances()
       } else {
@@ -220,21 +259,53 @@ export function ClearanceManagement({ customsBrokerId }: ClearanceManagementProp
         return <Clock className="h-4 w-4" />
     }
   }
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'IN_REVIEW':
-        return 'bg-blue-100 text-blue-800'
-      case 'APPROVED':
-        return 'bg-green-100 text-green-800'
-      case 'REJECTED':
-        return 'bg-red-100 text-red-800'
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800'
+      case "DELIVERED":
+      case "delivered":
+        return "bg-green-100 text-green-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "PENDING":
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "CANCELLED":
+      case "cancelled":
+        return "bg-red-100 text-red-800"
+      case "PAID":
+      case "paid":
+        return "bg-green-100 text-green-800"
+      case "ASSIGNED":
+      case "assigned":
+        return "bg-blue-100 text-blue-800"
+      case "IN_TRANSIT":
+      case "inTransit":
+        return "bg-yellow-100 text-yellow-800"
+      case "OVERDUE":
+      case "overdue":
+        return "bg-red-100 text-red-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "EN_ROUTE_PICKUP":
+      case "enRoutePickup":
+        return "bg-blue-100 text-blue-800"
+      case "AT_PICKUP":
+      case "atPickup":
+        return "bg-blue-100 text-blue-800"
+      case "PICKED_UP":
+      case "pickedUp":
+        return "bg-blue-100 text-blue-800"
+      case "AT_DESTINATION":
+      case "atDestination":
+        return "bg-blue-100 text-blue-800"
+      case "SENT":
+      case "sent":
+        return "bg-blue-100 text-blue-800"
+        
       default:
-        return 'bg-gray-100 text-gray-800'
+        return "bg-gray-100 text-gray-800"
     }
   }
 
@@ -318,23 +389,85 @@ export function ClearanceManagement({ customsBrokerId }: ClearanceManagementProp
               </div>
               <div>
                 <Label htmlFor="customsFee">{t('customsFeesSar')}</Label>
-                <Input
-                  id="customsFee"
-                  type="number"
-                  value={newClearanceForm.customsFee}
-                  onChange={(e) => setNewClearanceForm({ ...newClearanceForm, customsFee: e.target.value })}
-                  placeholder="0.00"
-                />
+                <div className="space-y-2">
+                  <Select value={newClearanceForm.customsFeeType} onValueChange={(value) => setNewClearanceForm({ ...newClearanceForm, customsFeeType: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FIXED">{t('fixedAmount')}</SelectItem>
+                      <SelectItem value="PERCENTAGE">{t('percentageAmount')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {newClearanceForm.customsFeeType === 'FIXED' ? (
+                    <Input
+                      id="customsFee"
+                      type="number"
+                      value={newClearanceForm.customsFee}
+                      onChange={(e) => setNewClearanceForm({ ...newClearanceForm, customsFee: e.target.value })}
+                      placeholder="0.00 ريال"
+                    />
+                  ) : (
+                    <div className="space-y-1">
+                      <Input
+                        id="customsFeePercentage"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={newClearanceForm.customsFeePercentage}
+                        onChange={(e) => setNewClearanceForm({ ...newClearanceForm, customsFeePercentage: e.target.value })}
+                        placeholder="0.0%"
+                      />
+                      {newClearanceForm.customsFeePercentage && availableInvoices.find(inv => inv.id === newClearanceForm.invoiceId) && (
+                        <p className="text-sm text-muted-foreground">
+                          المبلغ المحسوب: {((availableInvoices.find(inv => inv.id === newClearanceForm.invoiceId)?.total || 0) * parseFloat(newClearanceForm.customsFeePercentage)) / 100} ريال
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <Label htmlFor="additionalFees">{t('additionalFeesSar')}</Label>
-                <Input
-                  id="additionalFees"
-                  type="number"
-                  value={newClearanceForm.additionalFees}
-                  onChange={(e) => setNewClearanceForm({ ...newClearanceForm, additionalFees: e.target.value })}
-                  placeholder="0.00"
-                />
+                <div className="space-y-2">
+                  <Select value={newClearanceForm.additionalFeesType} onValueChange={(value) => setNewClearanceForm({ ...newClearanceForm, additionalFeesType: value })}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FIXED">{t('fixedAmount')}</SelectItem>
+                      <SelectItem value="PERCENTAGE">{t('percentageAmount')}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {newClearanceForm.additionalFeesType === 'FIXED' ? (
+                    <Input
+                      id="additionalFees"
+                      type="number"
+                      value={newClearanceForm.additionalFees}
+                      onChange={(e) => setNewClearanceForm({ ...newClearanceForm, additionalFees: e.target.value })}
+                      placeholder="0.00 ريال"
+                    />
+                  ) : (
+                    <div className="space-y-1">
+                      <Input
+                        id="additionalFeesPercentage"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value={newClearanceForm.additionalFeesPercentage}
+                        onChange={(e) => setNewClearanceForm({ ...newClearanceForm, additionalFeesPercentage: e.target.value })}
+                        placeholder="0.0%"
+                      />
+                      {newClearanceForm.additionalFeesPercentage && availableInvoices.find(inv => inv.id === newClearanceForm.invoiceId) && (
+                        <p className="text-sm text-muted-foreground">
+                          المبلغ المحسوب: {((availableInvoices.find(inv => inv.id === newClearanceForm.invoiceId)?.total || 0) * parseFloat(newClearanceForm.additionalFeesPercentage)) / 100} ريال
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <Label htmlFor="estimatedDate">{t('estimatedCompletionDate')}</Label>

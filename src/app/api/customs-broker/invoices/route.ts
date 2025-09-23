@@ -40,10 +40,12 @@ export async function GET(request: NextRequest) {
       limit
     })
 
-    // Get invoices assigned to this customs broker
+    // Get invoices for trips assigned to this customs broker
     const invoices = await prisma.invoice.findMany({
       where: {
-        customsBrokerId: customsBroker.id,
+        trip: {
+          customsBrokerId: customsBroker.id
+        },
         invoiceNumber: {
           contains: search,
           mode: "insensitive"
@@ -74,7 +76,9 @@ export async function GET(request: NextRequest) {
     // Get total count for pagination
     const totalCount = await prisma.invoice.count({
       where: {
-        customsBrokerId: customsBroker.id,
+        trip: {
+          customsBrokerId: customsBroker.id
+        },
         invoiceNumber: {
           contains: search,
           mode: "insensitive"
@@ -125,12 +129,12 @@ export async function GET(request: NextRequest) {
         },
         vehicle: {
           type: trip?.vehicle?.vehicleType?.name || "غير محدد",
-          capacity: trip?.vehicle?.capacity || "غير محدد"
+          capacity: trip?.vehicle?.vehicleType?.capacity || "غير محدد"
         },
         temperature: trip?.temperature?.option || "عادي",
         subtotal: invoice.subtotal,
         taxAmount: invoice.taxAmount,
-        customsFee: invoice.customsFee,
+        customsFee: 0, // Regular invoices don't have customs fees
         total: invoice.total,
         currency: invoice.currency,
         paymentStatus: invoice.paymentStatus,

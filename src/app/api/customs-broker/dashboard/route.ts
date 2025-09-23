@@ -26,9 +26,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Customs broker profile not found" }, { status: 404 })
     }
 
-    // Get all invoices for this customs broker separately
+    // Get all invoices for trips assigned to this customs broker
     const allInvoices = await prisma.invoice.findMany({
-      where: { customsBrokerId: customsBroker.id },
+      where: {
+        trip: {
+          customsBrokerId: customsBroker.id
+        }
+      },
       include: {
         trip: {
           include: {
@@ -51,9 +55,8 @@ export async function GET(request: NextRequest) {
     const overdueInvoices = allInvoices.filter(inv => inv.paymentStatus === 'OVERDUE').length
     
     // Calculate total customs fees collected from paid invoices
-    const totalCustomsFees = allInvoices
-      .filter(inv => inv.paymentStatus === 'PAID')
-      .reduce((sum, inv) => sum + (inv.customsFee || 0), 0)
+    // Note: Regular invoices don't have customsFee, we'll use 0 for now
+    const totalCustomsFees = 0
 
     // Get real customs clearances statistics
     const totalClearances = await prisma.customsClearance.count({
@@ -132,7 +135,7 @@ export async function GET(request: NextRequest) {
         tripNumber: invoice.trip?.tripNumber || 'غير محدد',
         customer: invoice.trip?.customer?.name || 'عميل غير محدد',
         route: `${invoice.trip?.fromCity?.name || 'غير محدد'} → ${invoice.trip?.toCity?.name || 'غير محدد'}`,
-        customsFee: invoice.customsFee,
+        customsFee: 0, // Regular invoices don't have customs fees
         total: invoice.total,
         paymentStatus: invoice.paymentStatus,
         createdAt: invoice.createdAt

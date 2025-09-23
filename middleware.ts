@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { withAuth } from 'next-auth/middleware'
-import { locales, defaultLocale, type Locale } from '@/lib/types'
+import { withAuth } from "next-auth/middleware"
+import { locales, defaultLocale, type Locale } from "@/lib/types"
 
 // Get locale from request
 function getLocale(request: NextRequest): Locale {
-  // Check URL pathname
-  const pathname = request.nextUrl.pathname
-  const pathnameHasLocale = locales.some(
-    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-  )
-
-  if (pathnameHasLocale) {
-    return pathname.split('/')[1] as Locale
+  // First priority: Check for saved language preference in cookies
+  const savedLanguage = request.cookies.get('preferred-language')?.value as Locale
+  console.log('🍪 Cookie saved language:', savedLanguage)
+  
+  if (savedLanguage && locales.includes(savedLanguage)) {
+    console.log('✅ Using saved language from cookie:', savedLanguage)
+    return savedLanguage
   }
 
-  // Check Accept-Language header
+  // Second priority: Check Accept-Language header
   const acceptLanguage = request.headers.get('Accept-Language')
+  console.log('🌐 Accept-Language header:', acceptLanguage)
+  
   if (acceptLanguage) {
     const preferredLocale = acceptLanguage
       .split(',')
@@ -23,86 +24,64 @@ function getLocale(request: NextRequest): Locale {
       .find(lang => locales.includes(lang.split('-')[0] as Locale))
     
     if (preferredLocale) {
-      return preferredLocale.split('-')[0] as Locale
+      const locale = preferredLocale.split('-')[0] as Locale
+      console.log('🌐 Using Accept-Language locale:', locale)
+      return locale
     }
   }
 
+  // Default fallback
+  console.log('🔄 Using default locale:', defaultLocale)
   return defaultLocale
 }
 
 // Main middleware function
-export default withAuth(
-  function middleware(request: NextRequest) {
-    const pathname = request.nextUrl.pathname
+export default function middleware(request: NextRequest) {
+  console.log('🚀 MIDDLEWARE CALLED!', new Date().toISOString())
+  const pathname = request.nextUrl.pathname
+  console.log('🔍 Middleware processing:', pathname)
 
-    // Skip middleware for API routes, static files, and Next.js internals
-    if (
-      pathname.startsWith('/api/') ||
-      pathname.startsWith('/_next/') ||
-      pathname.startsWith('/favicon.ico') ||
-      pathname.includes('.')
-    ) {
-      return NextResponse.next()
-    }
-
-    // Check if pathname has locale
-    const pathnameHasLocale = locales.some(
-      (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
-    )
-
-    // Redirect to locale-prefixed URL if no locale in pathname
-    if (!pathnameHasLocale) {
-      const locale = getLocale(request)
-      const newUrl = new URL(`/${locale}${pathname}`, request.url)
-      
-      // Preserve search params
-      newUrl.search = request.nextUrl.search
-      
-      return NextResponse.redirect(newUrl)
-    }
-
-    // Add locale and pathname to headers for root layout
-    const response = NextResponse.next()
-    const currentLocale = pathname.split('/')[1] as Locale
-    response.headers.set('x-locale', currentLocale)
-    response.headers.set('x-pathname', pathname)
-    
-    return response
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        const pathname = req.nextUrl.pathname
-        
-        // Remove locale prefix for auth check
-        const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, '') || '/'
-        
-        // Public routes that don't require authentication
-        const publicRoutes = [
-          '/',
-          '/auth/signin',
-          '/auth/signup',
-          '/auth/forgot-password',
-          '/auth/reset-password',
-          '/admin',
-          '/driver',
-          '/customer',
-          '/accountant',
-          '/customs-broker',
-          '/dashboard'
-        ]
-
-        // Allow public routes
-        if (publicRoutes.includes(pathWithoutLocale)) {
-          return true
-        }
-
-        // Require authentication for all other routes
-        return !!token
-      },
-    },
+  // Skip middleware for API routes, static files, and Next.js internals
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/favicon.ico') ||
+    pathname.includes('.')
+  ) {
+    console.log('⏭️ Skipping middleware for:', pathname)
+    return NextResponse.next()
   }
-)
+
+  // Check if pathname has locale
+  const pathnameHasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  )
+  
+  console.log('🔍 Pathname has locale:', pathnameHasLocale)
+  console.log('🔍 Current pathname:', pathname)
+
+  // Only redirect if no locale in pathname
+  if (!pathnameHasLocale) {
+    const locale = getLocale(request)
+    const newUrl = new URL(`/${locale}${pathname}`, request.url)
+    
+    console.log('🔄 Redirecting to:', newUrl.toString())
+    
+    // Preserve search params
+    newUrl.search = request.nextUrl.search
+    
+    return NextResponse.redirect(newUrl)
+  }
+
+  // Add locale and pathname to headers for root layout
+  const response = NextResponse.next()
+  const currentLocale = pathname.split('/')[1] as Locale
+  response.headers.set('x-locale', currentLocale)
+  response.headers.set('x-pathname', pathname)
+  
+  console.log('✅ Setting headers - locale:', currentLocale, 'pathname:', pathname)
+  return response
+}
 
 export const config = {
   matcher: [

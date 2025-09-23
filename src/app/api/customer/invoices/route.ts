@@ -5,7 +5,7 @@ import { db } from "@/lib/db"
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('🔍 Customer invoices API called')
+    console.log('🔍 Customer invoices API called - FIXED VERSION')
     const session = await getServerSession(authOptions)
     console.log('Session:', session ? { userId: session.user.id, role: session.user.role } : 'No session')
     
@@ -39,16 +39,16 @@ export async function GET(request: NextRequest) {
               }
             },
             deliveredDate: true,
-            scheduledDate: true
-          }
-        },
-        customsBroker: {
-          select: {
-            id: true,
-            licenseNumber: true,
-            user: {
+            scheduledDate: true,
+            customsBroker: {
               select: {
-                name: true
+                id: true,
+                licenseNumber: true,
+                user: {
+                  select: {
+                    name: true
+                  }
+                }
               }
             }
           }
@@ -70,14 +70,14 @@ export async function GET(request: NextRequest) {
           toCity: { name: string; nameAr: string | null };
           deliveredDate: Date | null;
           scheduledDate: Date;
+          customsBroker: {
+            id: string;
+            licenseNumber: string | null;
+            user: {
+              name: string;
+            };
+          } | null;
         };
-        customsBroker: {
-          id: string;
-          licenseNumber: string | null;
-          user: {
-            name: string;
-          };
-        } | null;
       };
 
       return {
@@ -87,11 +87,19 @@ export async function GET(request: NextRequest) {
         tripNumber: invoiceWithRelations.trip.tripNumber,
         subtotal: invoiceWithRelations.subtotal,
         taxAmount: invoiceWithRelations.taxAmount,
-        customsFees: invoiceWithRelations.customsFee,
+        customsFees: 0, // Regular invoices don't have customs fees directly
         totalAmount: invoiceWithRelations.total,
         status: invoiceWithRelations.paymentStatus,
         dueDate: invoiceWithRelations.dueDate.toISOString(),
         paidDate: invoiceWithRelations.paidDate?.toISOString() || null,
+        // Payment tracking fields
+        amountPaid: invoiceWithRelations.amountPaid || 0,
+        remainingAmount: invoiceWithRelations.remainingAmount !== null ? invoiceWithRelations.remainingAmount : (invoiceWithRelations.total - (invoiceWithRelations.amountPaid || 0)),
+        installmentCount: invoiceWithRelations.installmentCount || null,
+        installmentsPaid: invoiceWithRelations.installmentsPaid || 0,
+        installmentAmount: invoiceWithRelations.installmentAmount || null,
+        nextInstallmentDate: invoiceWithRelations.nextInstallmentDate?.toISOString() || null,
+        payments: [], // Will be loaded separately if needed
         createdAt: invoiceWithRelations.createdAt.toISOString(),
         updatedAt: invoiceWithRelations.updatedAt.toISOString(),
         currency: invoiceWithRelations.currency,
@@ -104,9 +112,9 @@ export async function GET(request: NextRequest) {
           deliveredDate: invoiceWithRelations.trip.deliveredDate?.toISOString(),
           scheduledDate: invoiceWithRelations.trip.scheduledDate.toISOString()
         },
-        customsBroker: invoiceWithRelations.customsBroker ? {
-          name: invoiceWithRelations.customsBroker.user.name,
-          licenseNumber: invoiceWithRelations.customsBroker.licenseNumber
+        customsBroker: invoiceWithRelations.trip.customsBroker ? {
+          name: invoiceWithRelations.trip.customsBroker.user.name,
+          licenseNumber: invoiceWithRelations.trip.customsBroker.licenseNumber
         } : null
       };
     })

@@ -31,6 +31,7 @@ import {
   X,
   Loader2
 } from "lucide-react"
+import { PaymentManagement } from "@/components/invoices/payment-management"
 
 interface InvoiceDetails {
   id: string
@@ -59,6 +60,14 @@ interface InvoiceDetails {
   paymentStatus: string
   dueDate: string
   paidDate?: string
+  // New payment tracking fields
+  amountPaid: number
+  remainingAmount: number
+  installmentCount?: number
+  installmentsPaid: number
+  installmentAmount?: number
+  nextInstallmentDate?: string
+  payments?: any[]
   createdAt: string
   updatedAt: string
   notes?: string
@@ -251,21 +260,55 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
   }
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "paid":
+    switch (status) {
+      case "DELIVERED":
+      case "delivered":
         return "bg-green-100 text-green-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "PENDING":
       case "pending":
         return "bg-yellow-100 text-yellow-800"
-      case "sent":
+      case "CANCELLED":
+      case "cancelled":
+        return "bg-red-100 text-red-800"
+      case "PAID":
+      case "paid":
+        return "bg-green-100 text-green-800"
+      case "ASSIGNED":
+      case "assigned":
         return "bg-blue-100 text-blue-800"
+      case "IN_TRANSIT":
+      case "inTransit":
+        return "bg-yellow-100 text-yellow-800"
+      case "OVERDUE":
       case "overdue":
         return "bg-red-100 text-red-800"
-      case "cancelled":
-        return "bg-gray-100 text-gray-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "EN_ROUTE_PICKUP":
+      case "enRoutePickup":
+        return "bg-blue-100 text-blue-800"
+      case "AT_PICKUP":
+      case "atPickup":
+        return "bg-blue-100 text-blue-800"
+      case "PICKED_UP":
+      case "pickedUp":
+        return "bg-blue-100 text-blue-800"
+      case "AT_DESTINATION":
+      case "atDestination":
+        return "bg-blue-100 text-blue-800"
+      case "SENT":
+      case "sent":
+        return "bg-blue-100 text-blue-800"
+        
       default:
         return "bg-gray-100 text-gray-800"
     }
   }
+
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -660,6 +703,42 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
                   </div>
                 </CardContent>
               </Card>
+            )}
+            
+            {/* Payment Management Section */}
+            {invoice && !isEditing && (
+              <div className="mt-6">
+                <PaymentManagement
+                  invoice={{
+                    id: invoice.id,
+                    invoiceNumber: invoice.invoiceNumber,
+                    total: invoice.total,
+                    amountPaid: invoice.amountPaid || 0,
+                    remainingAmount: invoice.remainingAmount || invoice.total,
+                    paymentStatus: invoice.paymentStatus,
+                    installmentCount: invoice.installmentCount,
+                    installmentsPaid: invoice.installmentsPaid || 0,
+                    installmentAmount: invoice.installmentAmount,
+                    nextInstallmentDate: invoice.nextInstallmentDate,
+                    payments: invoice.payments
+                  }}
+                  onPaymentAdded={(updatedInvoice) => {
+                    // Update the invoice state with new payment information
+                    if (updatedInvoice) {
+                      setInvoice(prev => prev ? {
+                        ...prev,
+                        amountPaid: updatedInvoice.amountPaid || 0,
+                        remainingAmount: updatedInvoice.remainingAmount || prev.total,
+                        paymentStatus: updatedInvoice.paymentStatus || prev.paymentStatus,
+                        installmentsPaid: updatedInvoice.installmentsPaid || 0,
+                        nextInstallmentDate: updatedInvoice.nextInstallmentDate || prev.nextInstallmentDate,
+                        paidDate: updatedInvoice.paymentStatus === 'PAID' ? new Date().toISOString() : prev.paidDate
+                      } : null)
+                    }
+                  }}
+                  apiEndpoint="/api/accountant/invoices"
+                />
+              </div>
             )}
           </div>
         </div>

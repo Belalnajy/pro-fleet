@@ -16,30 +16,14 @@ export async function GET(
 
     const { id } = await params
     const invoice = await db.invoice.findUnique({
-      where: {
-        id
-      },
+      where: { id },
       include: {
         trip: {
           include: {
-            customer: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                phone: true
-              }
-            },
+            customer: true,
             driver: {
-              select: {
-                id: true,
-                user: {
-                  select: {
-                    name: true,
-                    phone: true,
-                    email: true
-                  }
-                }
+              include: {
+                user: true
               }
             },
             vehicle: {
@@ -49,23 +33,21 @@ export async function GET(
             },
             fromCity: true,
             toCity: true,
-            temperature: true
-          }
-        },
-        customsBroker: {
-          select: {
-            id: true,
-            user: {
-              select: {
-                name: true,
-                email: true,
-                phone: true
+            temperature: true,
+            customsBroker: {
+              include: {
+                user: true
               }
             }
           }
+        },
+        payments: {
+          orderBy: {
+            createdAt: 'desc'
+          }
         }
       }
-    })
+    }) as any
 
     if (!invoice) {
       return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
@@ -75,57 +57,69 @@ export async function GET(
     const formattedInvoice = {
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
-      tripNumber: invoice.trip?.tripNumber || '',
+      tripNumber: invoice.trip?.tripNumber || 'N/A',
       customer: {
         id: invoice.trip?.customer?.id || '',
-        name: invoice.trip?.customer?.name || '',
+        name: invoice.trip?.customer?.name || 'Unknown Customer',
         email: invoice.trip?.customer?.email || '',
         phone: invoice.trip?.customer?.phone || ''
       },
       route: {
-        from: invoice.trip?.fromCity?.name || '',
-        to: invoice.trip?.toCity?.name || ''
+        from: invoice.trip?.fromCity?.nameAr || invoice.trip?.fromCity?.name || 'N/A',
+        to: invoice.trip?.toCity?.nameAr || invoice.trip?.toCity?.name || 'N/A'
       },
-      driver: invoice.trip?.driver?.user?.name || '',
+      driver: invoice.trip?.driver?.user?.name || 'N/A',
       vehicle: {
-        type: invoice.trip?.vehicle?.vehicleType?.name || '',
-        capacity: invoice.trip?.vehicle?.capacity || 0
+        type: invoice.trip?.vehicle?.vehicleType?.nameAr || invoice.trip?.vehicle?.vehicleType?.name || 'N/A',
+        capacity: invoice.trip?.vehicle?.vehicleType?.capacity || 0,
+        vehicleNumber: invoice.trip?.vehicle?.vehicleNumber || 'N/A'
       },
-      customsBroker: invoice.customsBroker?.user?.name || '',
+      customsBroker: invoice.trip?.customsBroker?.user?.name || 'N/A',
       subtotal: invoice.subtotal,
       taxAmount: invoice.taxAmount,
-      customsFee: invoice.customsFee,
+      customsFee: 0, // Regular invoices don't have customs fees
       total: invoice.total,
       paymentStatus: invoice.paymentStatus,
       dueDate: invoice.dueDate?.toISOString() || '',
       paidDate: invoice.paidDate?.toISOString() || null,
+      // New payment tracking fields
+      amountPaid: invoice.amountPaid || 0,
+      remainingAmount: invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0)),
+      installmentCount: invoice.installmentCount,
+      installmentsPaid: invoice.installmentsPaid || 0,
+      installmentAmount: invoice.installmentAmount,
+      nextInstallmentDate: invoice.nextInstallmentDate?.toISOString(),
+      payments: invoice.payments || [],
       createdAt: invoice.createdAt.toISOString(),
+      updatedAt: invoice.updatedAt.toISOString(),
+      notes: invoice.notes,
       // Additional details for the details page
       trip: {
-        tripNumber: invoice.trip?.tripNumber,
-        scheduledDate: invoice.trip?.scheduledDate?.toISOString(),
-        actualStartDate: invoice.trip?.actualStartDate?.toISOString(),
-        deliveredDate: invoice.trip?.deliveredDate?.toISOString(),
-        status: invoice.trip?.status,
-        price: invoice.trip?.price,
-        notes: invoice.trip?.notes,
+        tripNumber: invoice.trip?.tripNumber || 'N/A',
+        scheduledDate: invoice.trip?.scheduledDate?.toISOString() || null,
+        actualStartDate: invoice.trip?.actualStartDate?.toISOString() || null,
+        deliveredDate: invoice.trip?.deliveredDate?.toISOString() || null,
+        status: invoice.trip?.status || 'PENDING',
+        price: invoice.trip?.price || 0,
+        notes: invoice.trip?.notes || '',
         temperature: {
-          option: invoice.trip?.temperature?.option,
-          value: invoice.trip?.temperature?.value,
-          unit: invoice.trip?.temperature?.unit
+          option: invoice.trip?.temperature?.option || 'STANDARD',
+          value: invoice.trip?.temperature?.value || null,
+          unit: invoice.trip?.temperature?.unit || 'C'
         },
         vehicle: {
-          capacity: invoice.trip?.vehicle?.capacity,
-          description: invoice.trip?.vehicle?.description,
+          vehicleNumber: invoice.trip?.vehicle?.vehicleNumber || 'N/A',
+          capacity: invoice.trip?.vehicle?.vehicleType?.capacity || 0,
+          description: invoice.trip?.vehicle?.vehicleType?.description || 'N/A',
           vehicleType: {
-            name: invoice.trip?.vehicle?.vehicleType?.name,
-            nameAr: invoice.trip?.vehicle?.vehicleType?.nameAr
+            name: invoice.trip?.vehicle?.vehicleType?.name || 'N/A',
+            nameAr: invoice.trip?.vehicle?.vehicleType?.nameAr || 'غير محدد'
           }
         },
         driver: {
-          name: invoice.trip?.driver?.user?.name,
-          phone: invoice.trip?.driver?.user?.phone,
-          email: invoice.trip?.driver?.user?.email
+          name: invoice.trip?.driver?.user?.name || 'N/A',
+          phone: invoice.trip?.driver?.user?.phone || 'N/A',
+          email: invoice.trip?.driver?.user?.email || 'N/A'
         }
       }
     }
@@ -170,7 +164,7 @@ export async function PUT(
       data: {
         subtotal: subtotal ? parseFloat(subtotal) : undefined,
         taxAmount: taxAmount ? parseFloat(taxAmount) : undefined,
-        customsFee: customsFee ? parseFloat(customsFee) : undefined,
+        // customsFee: customsFee ? parseFloat(customsFee) : undefined, // Not available in regular invoices
         total: total ? parseFloat(total) : undefined,
         paymentStatus: paymentStatus || undefined,
         dueDate: dueDate ? new Date(dueDate) : undefined,

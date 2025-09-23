@@ -138,11 +138,18 @@ export async function GET(request: NextRequest) {
       tripNumber: invoice.trip?.tripNumber || null,
       subtotal: invoice.subtotal,
       taxAmount: invoice.taxAmount,
-      customsFees: invoice.customsFee,
+      customsFees: 0, // Regular invoices don't have customs fees
       totalAmount: invoice.total,
       paymentStatus: invoice.paymentStatus, // PENDING, PAID, OVERDUE, CANCELLED
       dueDate: invoice.dueDate.toISOString(),
       paidDate: invoice.paidDate?.toISOString() || null,
+      // Payment tracking fields
+      amountPaid: invoice.amountPaid || 0,
+      remainingAmount: invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0)),
+      installmentCount: invoice.installmentCount,
+      installmentsPaid: invoice.installmentsPaid || 0,
+      installmentAmount: invoice.installmentAmount,
+      nextInstallmentDate: invoice.nextInstallmentDate?.toISOString(),
       createdAt: invoice.createdAt.toISOString(),
       updatedAt: invoice.updatedAt.toISOString(),
       currency: invoice.currency,
@@ -340,6 +347,38 @@ export async function POST(request: NextRequest) {
     
     if (invoice.customsBrokerId) {
       console.log('✅ [INVOICE CREATION] SUCCESS: Invoice is linked to customs broker:', invoice.customsBrokerId)
+      
+      // Auto-create customs clearance if customs broker is assigned
+      try {
+        console.log('🔄 [AUTO CLEARANCE] Creating automatic clearance for invoice:', invoice.invoiceNumber)
+        
+        // Generate clearance number
+        const clearanceCount = await db.customsClearance.count()
+        const clearanceNumber = `CL-${String(clearanceCount + 1).padStart(6, '0')}`
+
+        const clearance = await db.customsClearance.create({
+          data: {
+            clearanceNumber,
+            invoiceId: invoice.id,
+            customsBrokerId: invoice.customsBrokerId,
+            customsFee: 0, // Will be updated by customs broker
+            additionalFees: 0,
+            totalFees: 0,
+            status: "PENDING",
+            notes: `Auto-created clearance for invoice ${invoice.invoiceNumber}`,
+            estimatedCompletionDate: null // Will be set by customs broker
+          }
+        })
+        
+        console.log('🎉 [AUTO CLEARANCE] Created automatic clearance:', {
+          clearanceId: clearance.id,
+          clearanceNumber: clearance.clearanceNumber,
+          invoiceNumber: invoice.invoiceNumber
+        })
+      } catch (clearanceError) {
+        console.error('❌ [AUTO CLEARANCE] Failed to create automatic clearance:', clearanceError)
+        // Don't fail the invoice creation if clearance creation fails
+      }
     } else {
       console.log('❌ [INVOICE CREATION] WARNING: Invoice is NOT linked to any customs broker')
     }
@@ -353,7 +392,7 @@ export async function POST(request: NextRequest) {
       tripNumber: trip?.tripNumber || null,
       subtotal: invoice.subtotal,
       taxAmount: invoice.taxAmount,
-      customsFees: invoice.customsFee,
+      customsFees: 0, // Regular invoices don't have customs fees
       totalAmount: invoice.total,
       status: invoice.paymentStatus,
       dueDate: invoice.dueDate.toISOString(),

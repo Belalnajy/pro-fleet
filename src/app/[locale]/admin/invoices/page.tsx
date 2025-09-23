@@ -42,7 +42,8 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  DollarSign
 } from "lucide-react"
 import { CreateInvoiceModal } from "@/components/invoices/create-invoice-modal"
 import * as XLSX from 'xlsx'
@@ -61,6 +62,13 @@ interface Invoice {
   paymentStatus: string
   dueDate: string
   paidDate: string | null
+  // New payment tracking fields
+  amountPaid: number
+  remainingAmount: number
+  installmentCount?: number
+  installmentsPaid: number
+  installmentAmount?: number
+  nextInstallmentDate?: string
   createdAt: string
   updatedAt: string
   currency: string
@@ -288,10 +296,14 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
     switch (status.toLowerCase()) {
       case "paid":
         return "bg-green-100 text-green-800"
+      case "partial":
+        return "bg-orange-100 text-orange-800"
+      case "installment":
+        return "bg-blue-100 text-blue-800"
       case "pending":
         return "bg-yellow-100 text-yellow-800"
       case "sent":
-        return "bg-blue-100 text-blue-800"
+        return "bg-indigo-100 text-indigo-800"
       case "overdue":
         return "bg-red-100 text-red-800"
       case "cancelled":
@@ -325,6 +337,8 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         'PENDING': 'في الانتظار',
         'SENT': 'تم الإرسال',
         'PAID': 'مدفوعة',
+        'PARTIAL': 'دفع جزئي',
+        'INSTALLMENT': 'أقساط',
         'OVERDUE': 'متأخرة',
         'CANCELLED': 'ملغية'
       },
@@ -332,6 +346,8 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         'PENDING': 'Pending',
         'SENT': 'Sent',
         'PAID': 'Paid',
+        'PARTIAL': 'Partial',
+        'INSTALLMENT': 'Installment',
         'OVERDUE': 'Overdue',
         'CANCELLED': 'Cancelled'
       },
@@ -339,6 +355,8 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         'PENDING': 'زیر التواء',
         'SENT': 'بھیج دیا گیا',
         'PAID': 'ادا شدہ',
+        'PARTIAL': 'جزوی ادائیگی',
+        'INSTALLMENT': 'قسطوں میں',
         'OVERDUE': 'تاخیر شدہ',
         'CANCELLED': 'منسوخ شدہ'
       }
@@ -610,11 +628,30 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold">
-                          {invoice.totalAmount?.toLocaleString() || '0'} {invoice.currency || t("sar")}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {t("tax")}: {invoice.taxAmount?.toLocaleString() || '0'}
+                        <div className="space-y-1">
+                          <div className="font-semibold">
+                            {invoice.totalAmount?.toLocaleString() || '0'} {invoice.currency || t("sar")}
+                          </div>
+                          {(invoice.paymentStatus === 'PARTIAL' || invoice.paymentStatus === 'INSTALLMENT') && (
+                            <div className="text-xs space-y-1">
+                              <div className="text-green-600">
+                                مدفوع: {(invoice.amountPaid || 0).toLocaleString()} {invoice.currency || 'ريال'}
+                              </div>
+                              <div className="text-orange-600">
+                                متبقي: {(invoice.remainingAmount || 0).toLocaleString()} {invoice.currency || 'ريال'}
+                              </div>
+                              {invoice.paymentStatus === 'INSTALLMENT' && invoice.installmentCount && (
+                                <div className="text-blue-600">
+                                  أقساط: {invoice.installmentsPaid}/{invoice.installmentCount}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {invoice.paymentStatus === 'PAID' && (
+                            <div className="text-xs text-green-600">
+                              مدفوع بالكامل
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -685,10 +722,16 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                                 <Eye className="h-4 w-4 mr-2" />
                                 {t("viewDetailsAction")}
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEditInvoice(invoice.id)}>
+                              {invoice.paymentStatus !== 'PAID' && invoice.paymentStatus !== 'CANCELLED' && (invoice.remainingAmount || 0) > 0 && (
+                                <DropdownMenuItem onClick={() => handleViewInvoice(invoice.id)}>
+                                  <DollarSign className="h-4 w-4 mr-2" />
+                                  إدارة المدفوعات
+                                </DropdownMenuItem>
+                              )}
+                              {/* <DropdownMenuItem onClick={() => handleEditInvoice(invoice.id)}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 {t("editInvoiceAction")}
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                               {invoice.paymentStatus !== 'PAID' && (
                                 <DropdownMenuItem 
                                   onClick={() => handleDeleteInvoice(invoice.id)}

@@ -56,19 +56,26 @@ export async function GET(request: NextRequest) {
               }
             },
             vehicle: {
+              select: {
+                vehicleNumber: true,
+                vehicleType: { 
+                  select: { 
+                    name: true, 
+                    nameAr: true,
+                    capacity: true 
+                  } 
+                }
+              }
+            },
+            customsBroker: {
               include: {
-                vehicleType: { select: { name: true, nameAr: true } }
+                user: { select: { name: true } }
               }
             }
           }
-        },
-        customsBroker: {
-          include: {
-            user: { select: { name: true } }
-          }
         }
       }
-    })
+    }) as any[]
     const totalCount = await db.invoice.count({ where })
 
     // Format invoices for frontend
@@ -89,16 +96,24 @@ export async function GET(request: NextRequest) {
       driver: invoice.trip?.driver?.user?.name || 'N/A',
       vehicle: {
         type: invoice.trip?.vehicle?.vehicleType?.nameAr || invoice.trip?.vehicle?.vehicleType?.name || 'N/A',
-        capacity: invoice.trip?.vehicle?.capacity || 0
+        capacity: invoice.trip?.vehicle?.vehicleType?.capacity || 0,
+        vehicleNumber: invoice.trip?.vehicle?.vehicleNumber || 'N/A'
       },
-      customsBroker: invoice.customsBroker?.user?.name || 'N/A',
+      customsBroker: invoice.trip?.customsBroker?.user?.name || 'N/A',
       subtotal: invoice.subtotal,
       taxAmount: invoice.taxAmount,
-      customsFee: invoice.customsFee,
+      customsFee: 0, // Regular invoices don't have customs fees
       total: invoice.total,
       paymentStatus: invoice.paymentStatus,
       dueDate: invoice.dueDate,
       paidDate: invoice.paidDate,
+      // Payment tracking fields
+      amountPaid: invoice.amountPaid || 0,
+      remainingAmount: invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0)),
+      installmentCount: invoice.installmentCount,
+      installmentsPaid: invoice.installmentsPaid || 0,
+      installmentAmount: invoice.installmentAmount,
+      nextInstallmentDate: invoice.nextInstallmentDate,
       createdAt: invoice.createdAt,
       updatedAt: invoice.updatedAt
     }))

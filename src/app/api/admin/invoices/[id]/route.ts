@@ -53,16 +53,9 @@ export async function GET(
             temperature: true
           }
         },
-        customsBroker: {
-          select: {
-            id: true,
-            user: {
-              select: {
-                name: true,
-                email: true,
-                phone: true
-              }
-            }
+        payments: {
+          orderBy: {
+            createdAt: 'desc'
           }
         }
       }
@@ -92,15 +85,25 @@ export async function GET(
         type: invoice.trip?.vehicle?.vehicleType?.name || '',
         capacity: invoice.trip?.vehicle?.capacity || 0
       },
-      customsBroker: invoice.customsBroker?.user?.name || '',
+      customsBroker: '', // Regular invoices don't have customs broker
       subtotal: invoice.subtotal,
       taxAmount: invoice.taxAmount,
-      customsFee: invoice.customsFee,
+      customsFee: 0, // Regular invoices don't have customs fee
       total: invoice.total,
       paymentStatus: invoice.paymentStatus,
       dueDate: invoice.dueDate?.toISOString() || '',
       paidDate: invoice.paidDate?.toISOString() || null,
+      // New payment tracking fields
+      amountPaid: invoice.amountPaid || 0,
+      remainingAmount: invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0)),
+      installmentCount: invoice.installmentCount,
+      installmentsPaid: invoice.installmentsPaid || 0,
+      installmentAmount: invoice.installmentAmount,
+      nextInstallmentDate: invoice.nextInstallmentDate?.toISOString(),
+      payments: invoice.payments || [],
       createdAt: invoice.createdAt.toISOString(),
+      updatedAt: invoice.updatedAt.toISOString(),
+      notes: invoice.notes,
       // Additional details for the details page
       trip: {
         tripNumber: invoice.trip?.tripNumber,

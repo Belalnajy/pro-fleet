@@ -42,7 +42,8 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  Plus
+  Plus,
+  DollarSign
 } from "lucide-react"
 import { CreateInvoiceModal } from "@/components/invoices/create-invoice-modal"
 import * as XLSX from 'xlsx'
@@ -74,6 +75,14 @@ interface Invoice {
   paymentStatus: string
   dueDate: string
   paidDate?: string
+  // New payment tracking fields
+  amountPaid: number
+  remainingAmount: number
+  installmentCount?: number
+  installmentsPaid: number
+  installmentAmount?: number
+  nextInstallmentDate?: string
+  payments?: any[]
   createdAt: string
   trip?: {
     customer?: {
@@ -302,23 +311,59 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
       setActionLoading(prev => ({ ...prev, [loadingKey]: false }))
     }
   }
-
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "paid":
+    switch (status) {
+      case "DELIVERED":
+      case "delivered":
         return "bg-green-100 text-green-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "PENDING":
       case "pending":
         return "bg-yellow-100 text-yellow-800"
-      case "sent":
+      case "CANCELLED":
+      case "cancelled":
+        return "bg-red-100 text-red-800"
+      case "PAID":
+      case "paid":
+        return "bg-green-100 text-green-800"
+      case "PARTIAL":
+      case "partial":
+        return "bg-orange-100 text-orange-800"
+      case "INSTALLMENT":
+      case "installment":
+        return "bg-purple-100 text-purple-800"
+      case "ASSIGNED":
+      case "assigned":
         return "bg-blue-100 text-blue-800"
+      case "IN_TRANSIT":
+      case "inTransit":
+        return "bg-yellow-100 text-yellow-800"
+      case "OVERDUE":
       case "overdue":
         return "bg-red-100 text-red-800"
-      case "cancelled":
-        return "bg-gray-100 text-gray-800"
+      case "EN_ROUTE_PICKUP":
+      case "enRoutePickup":
+        return "bg-blue-100 text-blue-800"
+      case "AT_PICKUP":
+      case "atPickup":
+        return "bg-blue-100 text-blue-800"
+      case "PICKED_UP":
+      case "pickedUp":
+        return "bg-blue-100 text-blue-800"
+      case "AT_DESTINATION":
+      case "atDestination":
+        return "bg-blue-100 text-blue-800"
+      case "SENT":
+      case "sent":
+        return "bg-blue-100 text-blue-800"
+        
       default:
         return "bg-gray-100 text-gray-800"
     }
   }
+
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
@@ -344,6 +389,8 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         'PENDING': 'في الانتظار',
         'SENT': 'تم الإرسال',
         'PAID': 'مدفوعة',
+        'PARTIAL': 'جزئي',
+        'INSTALLMENT': 'أقساط',
         'OVERDUE': 'متأخرة',
         'CANCELLED': 'ملغية'
       },
@@ -351,6 +398,8 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         'PENDING': 'Pending',
         'SENT': 'Sent',
         'PAID': 'Paid',
+        'PARTIAL': 'Partial',
+        'INSTALLMENT': 'Installment',
         'OVERDUE': 'Overdue',
         'CANCELLED': 'Cancelled'
       },
@@ -358,6 +407,8 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
         'PENDING': 'زیر التواء',
         'SENT': 'بھیج دیا گیا',
         'PAID': 'ادا شدہ',
+        'PARTIAL': 'جزوی',
+        'INSTALLMENT': 'قسطیں',
         'OVERDUE': 'تاخیر شدہ',
         'CANCELLED': 'منسوخ شدہ'
       }
@@ -693,6 +744,12 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                                 <Edit className="h-4 w-4 mr-2" />
                                 {t("editInvoiceAction")}
                               </DropdownMenuItem>
+                              {invoice.paymentStatus !== 'PAID' && invoice.paymentStatus !== 'CANCELLED' && (invoice.remainingAmount || 0) > 0 && (
+                                <DropdownMenuItem onClick={() => handleViewInvoice(invoice.id)}>
+                                  <DollarSign className="h-4 w-4 mr-2" />
+                                  إدارة المدفوعات
+                                </DropdownMenuItem>
+                              )}
                               {invoice.paymentStatus !== 'PAID' && (
                                 <DropdownMenuItem 
                                   onClick={() => handleDeleteInvoice(invoice.id)}

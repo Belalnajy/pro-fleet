@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Truck, Shield, Users, Calculator, FileText } from "lucide-react"
+import { Loader2, Truck, Shield, Users, Calculator, FileText, ArrowLeft } from "lucide-react"
 import { useLanguage } from "@/components/providers/language-provider"
 
 function SignInInner({ locale }: { locale: string }) {
@@ -117,8 +117,25 @@ function SignInInner({ locale }: { locale: string }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 to-secondary/10 p-4 ">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-secondary/10 p-4 relative">
+      {/* Back to Homepage Button - Fixed Position */}
+      <div className="absolute top-6 right-6 z-10">
+        <Link href={`/${locale}`}>
+          <Button 
+            variant="outline" 
+            size="sm"
+            className="group flex items-center gap-2 bg-white/90 backdrop-blur-md border-primary/30 text-primary hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            <span className="font-medium">{t("backToHomepage")}</span>
+          </Button>
+        </Link>
+      </div>
+      
+      {/* Main Content */}
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-md">
+        
         {/* Logo and Brand */}
         <div className="text-center mb-3">
        
@@ -240,6 +257,7 @@ function SignInInner({ locale }: { locale: string }) {
               </div>
             </Link>
           </div>
+        </div>
         </div>
       </div>
     </div>

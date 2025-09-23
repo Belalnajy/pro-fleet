@@ -234,15 +234,56 @@ export function CustomerTrackingMap({
   };
 
   // Get status color
-  const getStatusColor = (status: string): string => {
-    const colorMap: { [key: string]: string } = {
-      'PENDING': 'bg-yellow-100 text-yellow-800',
-      'IN_PROGRESS': 'bg-blue-100 text-blue-800',
-      'DELIVERED': 'bg-green-100 text-green-800',
-      'CANCELLED': 'bg-red-100 text-red-800'
-    };
-    return colorMap[status] || 'bg-gray-100 text-gray-800';
-  };
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "DELIVERED":
+      case "delivered":
+        return "bg-green-100 text-green-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "PENDING":
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "CANCELLED":
+      case "cancelled":
+        return "bg-red-100 text-red-800"
+      case "PAID":
+      case "paid":
+        return "bg-green-100 text-green-800"
+      case "ASSIGNED":
+      case "assigned":
+        return "bg-blue-100 text-blue-800"
+      case "IN_TRANSIT":
+      case "inTransit":
+        return "bg-yellow-100 text-yellow-800"
+      case "OVERDUE":
+      case "overdue":
+        return "bg-red-100 text-red-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "EN_ROUTE_PICKUP":
+      case "enRoutePickup":
+        return "bg-blue-100 text-blue-800"
+      case "AT_PICKUP":
+      case "atPickup":
+        return "bg-blue-100 text-blue-800"
+      case "PICKED_UP":
+      case "pickedUp":
+        return "bg-blue-100 text-blue-800"
+      case "AT_DESTINATION":
+      case "atDestination":
+        return "bg-blue-100 text-blue-800"
+      case "SENT":
+      case "sent":
+        return "bg-blue-100 text-blue-800"
+        
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
+  }
+
 
   // Create custom icons
   const createStoreIcon = () => {

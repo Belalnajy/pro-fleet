@@ -9,6 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { MapPin, Search, Navigation, Check, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 
+// Import Leaflet CSS statically
+import "leaflet/dist/leaflet.css"
+
 // Dynamic import for Leaflet components to prevent SSR issues
 const MapComponent = dynamic(
   () => {
@@ -106,11 +109,6 @@ export function LocationPicker({
 
   // Initialize position when component mounts
   useEffect(() => {
-    // Import CSS on client side
-    if (typeof window !== "undefined") {
-      import("leaflet/dist/leaflet.css")
-    }
-    
     if (initialLocation && typeof window !== "undefined") {
       import("leaflet").then((L) => {
         const newPos = new L.LatLng(initialLocation.lat, initialLocation.lng)

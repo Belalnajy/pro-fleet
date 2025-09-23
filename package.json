@@ -17,7 +17,9 @@
     "db:seed-pricing": "node scripts/seed-pricing.js",
     "db:fresh-start": "npm run db:cleanup-cities && npm run db:seed-pricing",
     "db:comprehensive-seed": "node scripts/comprehensive-seed.js",
-    "db:full-reset": "npm run db:reset && npm run db:comprehensive-seed"
+    "db:full-reset": "npm run db:reset && npm run db:comprehensive-seed",
+    "db:fix-clearance-invoices": "node scripts/fix-missing-clearance-invoices.js",
+    "test:percentage-calculations": "node scripts/test-percentage-calculations.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -8,6 +8,8 @@ async function main() {
 
   // Clear existing data
   console.log('🧹 Cleaning existing data...')
+  await prisma.payment.deleteMany()
+  await prisma.customsClearanceInvoice.deleteMany()
   await prisma.customsDocument.deleteMany()
   await prisma.customsClearance.deleteMany()
   await prisma.trackingLog.deleteMany()
@@ -466,63 +468,198 @@ async function main() {
     }
   }
 
-  // 10. Create Invoices
-  console.log('🧾 Creating invoices...')
+  // 10. Create Trip Invoices (Transportation only)
+  console.log('🧾 Creating trip invoices...')
   const invoices = []
-  const paymentStatuses = ['PENDING', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED']
+  const paymentStatuses = ['PENDING', 'PAID', 'PARTIAL', 'INSTALLMENT', 'SENT']
   
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < trips.length; i++) {
     const trip = trips[i]
-    const status = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)]
-    
-    const customsFee = Math.floor(Math.random() * 500)
     const subtotal = trip.price
     const taxAmount = subtotal * 0.15
-    const total = subtotal + taxAmount + customsFee
+    const total = subtotal + taxAmount
+    
+    // Randomly assign payment status
+    const paymentStatus = paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)]
+    
+    let amountPaid = 0
+    let remainingAmount = total
+    let installmentCount = null
+    let installmentsPaid = 0
+    let installmentAmount = null
+    let nextInstallmentDate = null
+    let paidDate = null
+    
+    // Calculate payment details based on status
+    if (paymentStatus === 'PAID') {
+      amountPaid = total
+      remainingAmount = 0
+      paidDate = new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+    } else if (paymentStatus === 'PARTIAL') {
+      amountPaid = Math.floor(total * (0.3 + Math.random() * 0.4)) // 30-70% paid
+      remainingAmount = total - amountPaid
+    } else if (paymentStatus === 'INSTALLMENT') {
+      installmentCount = [3, 4, 6][Math.floor(Math.random() * 3)]
+      installmentsPaid = Math.floor(Math.random() * installmentCount)
+      installmentAmount = Math.round(total / installmentCount)
+      amountPaid = installmentsPaid * installmentAmount
+      remainingAmount = total - amountPaid
+      
+      if (installmentsPaid < installmentCount) {
+        nextInstallmentDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // Next month
+      }
+    }
     
     const invoice = await prisma.invoice.create({
       data: {
         invoiceNumber: `INV-${String(i + 1).padStart(6, '0')}`,
-        tripId: trip.id,
-        customsBrokerId: trip.customsBrokerId,
         subtotal: subtotal,
         taxAmount: taxAmount,
-        customsFee: customsFee,
         total: total,
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        paymentStatus: status,
-        notes: `فاتورة للرحلة ${trip.tripNumber}`,
-        paidDate: status === 'PAID' ? new Date() : null
+        amountPaid: amountPaid,
+        remainingAmount: remainingAmount,
+        installmentCount: installmentCount,
+        installmentsPaid: installmentsPaid,
+        installmentAmount: installmentAmount,
+        nextInstallmentDate: nextInstallmentDate,
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        paymentStatus: paymentStatus,
+        notes: `فاتورة الرحلة من ${trip.pickupAddress} إلى ${trip.deliveryAddress}`,
+        paidDate: paidDate,
+        trip: {
+          connect: { id: trip.id }
+        }
       }
     })
+    
     invoices.push(invoice)
   }
 
-  // 11. Create Customs Clearances
-  console.log('📋 Creating customs clearances...')
+  // 11. Create Payment Records for invoices with payments
+  console.log('💳 Creating payment records...')
+  
+  for (const invoice of invoices) {
+    if (invoice.paymentStatus === 'PAID') {
+      // Create single full payment
+      await prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          amount: invoice.total,
+          paymentMethod: ['CASH', 'BANK_TRANSFER', 'CREDIT_CARD'][Math.floor(Math.random() * 3)],
+          paymentDate: invoice.paidDate,
+          reference: `PAY-${invoice.invoiceNumber}-001`,
+          notes: 'دفعة كاملة'
+        }
+      })
+    } else if (invoice.paymentStatus === 'PARTIAL') {
+      // Create partial payment
+      await prisma.payment.create({
+        data: {
+          invoiceId: invoice.id,
+          amount: invoice.amountPaid,
+          paymentMethod: ['CASH', 'BANK_TRANSFER'][Math.floor(Math.random() * 2)],
+          paymentDate: new Date(Date.now() - Math.random() * 15 * 24 * 60 * 60 * 1000),
+          reference: `PAY-${invoice.invoiceNumber}-001`,
+          notes: 'دفعة جزئية'
+        }
+      })
+    } else if (invoice.paymentStatus === 'INSTALLMENT' && invoice.installmentsPaid > 0) {
+      // Create installment payments
+      for (let i = 0; i < invoice.installmentsPaid; i++) {
+        await prisma.payment.create({
+          data: {
+            invoiceId: invoice.id,
+            amount: invoice.installmentAmount,
+            paymentMethod: ['BANK_TRANSFER', 'CASH'][Math.floor(Math.random() * 2)],
+            paymentDate: new Date(Date.now() - (invoice.installmentsPaid - i) * 30 * 24 * 60 * 60 * 1000),
+            reference: `PAY-${invoice.invoiceNumber}-${String(i + 1).padStart(3, '0')}`,
+            notes: `قسط رقم ${i + 1} من ${invoice.installmentCount}`
+          }
+        })
+      }
+    }
+  }
+
+  // 12. Create Customs Clearances for some invoices
+  console.log('🛃 Creating customs clearances...')
   const clearanceStatuses = ['PENDING', 'IN_REVIEW', 'APPROVED', 'COMPLETED']
   
-  for (let i = 0; i < 8; i++) {
+  // Create clearances for first 8 invoices
+  for (let i = 0; i < Math.min(8, invoices.length); i++) {
     const invoice = invoices[i]
     const status = clearanceStatuses[Math.floor(Math.random() * clearanceStatuses.length)]
+    const broker = customsBrokers[i % customsBrokers.length] // Rotate through brokers
     
     await prisma.customsClearance.create({
       data: {
-        clearanceNumber: `CLR-${String(i + 1).padStart(5, '0')}`,
-        invoiceId: invoice.id,
-        customsBrokerId: customsBrokers[i % customsBrokers.length].userId,
+        clearanceNumber: `CLR-${String(i + 1).padStart(6, '0')}`,
         status: status,
         customsFee: Math.floor(Math.random() * 1000) + 500,
         additionalFees: Math.floor(Math.random() * 200),
         totalFees: Math.floor(Math.random() * 1200) + 700,
         estimatedCompletionDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         actualCompletionDate: status === 'COMPLETED' ? new Date() : null,
-        notes: `تخليص جمركي للفاتورة ${invoice.invoiceNumber}`
+        notes: `تخليص جمركي للفاتورة ${invoice.invoiceNumber}`,
+        invoice: {
+          connect: { id: invoice.id }
+        },
+        customsBroker: {
+          connect: { id: broker.userId }
+        }
       }
     })
   }
 
-  // 12. Create Saved Addresses
+  // 13. Create Customs Clearance Invoices
+  console.log('💰 Creating customs clearance invoices...')
+  const clearances = await prisma.customsClearance.findMany({
+    include: {
+      invoice: {
+        include: {
+          trip: {
+            include: {
+              customsBroker: true
+            }
+          }
+        }
+      }
+    }
+  })
+  
+  for (const clearance of clearances) {
+    // Skip clearances without customs broker
+    if (!clearance.invoice.trip.customsBroker) {
+      console.log(`Skipping clearance ${clearance.clearanceNumber} - no customs broker`)
+      continue
+    }
+    
+    const customsFee = clearance.customsFee
+    const additionalFees = clearance.additionalFees
+    const subtotal = customsFee + additionalFees
+    const taxAmount = subtotal * 0.15
+    const total = subtotal + taxAmount
+    
+    const clearanceInvoiceNumber = `CCI-${String(clearances.indexOf(clearance) + 1).padStart(6, '0')}`
+    
+    await prisma.customsClearanceInvoice.create({
+      data: {
+        invoiceNumber: clearanceInvoiceNumber,
+        clearanceId: clearance.id,
+        customsBrokerId: clearance.invoice.trip.customsBroker.id,
+        customsFee: customsFee,
+        additionalFees: additionalFees,
+        subtotal: subtotal,
+        taxAmount: taxAmount,
+        total: total,
+        dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days
+        paymentStatus: ['PENDING', 'PAID'][Math.floor(Math.random() * 2)],
+        notes: `فاتورة تخليص جمركي رقم ${clearance.clearanceNumber}`,
+        paidDate: Math.random() > 0.5 ? new Date() : null
+      }
+    })
+  }
+
+  // 14. Create Saved Addresses
   console.log('🏠 Creating saved addresses...')
   const addressLabels = ['Home', 'Office', 'Warehouse', 'Factory', 'Store']
   
@@ -556,7 +693,8 @@ async function main() {
 - ${vehicleTypes.length} Vehicle types
 - ${vehicles.length} Vehicles
 - ${trips.length} Trips with various statuses
-- ${invoices.length} Invoices with different payment statuses
+- ${invoices.length} Invoices with payment tracking (PAID, PARTIAL, INSTALLMENT, PENDING, SENT)
+- Payment records for all paid/partial/installment invoices
 - 8 Customs clearances
 - Multiple tracking logs for active trips
 - Saved addresses for customers

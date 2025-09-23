@@ -79,8 +79,8 @@ model CustomsBroker {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  invoices      Invoice[]
   trips         Trip[]
+  clearanceInvoices CustomsClearanceInvoice[]
 
   @@map("customs_brokers")
 }
@@ -213,28 +213,101 @@ model Trip {
   @@map("trips")
 }
 
+// Trip Invoice - for transportation services
 model Invoice {
   id              String         @id @default(cuid())
   invoiceNumber   String         @unique
-  tripId          String?        @unique
-  customsBrokerId String?
-  customsFee      Float          @default(0)
+  tripId          String         @unique
+  subtotal        Float
   taxRate         Float          @default(0.15)
   taxAmount       Float
-  subtotal        Float
   total           Float
   currency        String         @default("SAR")
   paymentStatus   PaymentStatus  @default(PENDING)
   dueDate         DateTime
   paidDate        DateTime?
+  // Payment tracking fields
+  amountPaid      Float          @default(0)
+  remainingAmount Float          @default(0)
+  installmentCount Int?          // Number of installments for INSTALLMENT status
+  installmentsPaid Int           @default(0)
+  nextInstallmentDate DateTime?
+  installmentAmount Float?
   notes           String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
-  customsBroker   CustomsBroker? @relation(fields: [customsBrokerId], references: [id])
-  trip            Trip?          @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  trip            Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
   customsClearances CustomsClearance[]
+  payments        Payment[]      // Payment history
 
   @@map("invoices")
+}
+
+// Customs Clearance Invoice - for customs services
+model CustomsClearanceInvoice {
+  id                String            @id @default(cuid())
+  invoiceNumber     String            @unique
+  clearanceId       String            @unique
+  customsBrokerId   String
+  customsFee        Float             @default(0)
+  additionalFees    Float             @default(0)
+  subtotal          Float
+  taxRate           Float             @default(0.15)
+  taxAmount         Float
+  total             Float
+  currency          String            @default("SAR")
+  paymentStatus     PaymentStatus     @default(PENDING)
+  dueDate           DateTime
+  paidDate          DateTime?
+  // Payment tracking fields
+  amountPaid        Float             @default(0)
+  remainingAmount   Float             @default(0)
+  installmentCount  Int?              // Number of installments for INSTALLMENT status
+  installmentsPaid  Int               @default(0)
+  nextInstallmentDate DateTime?
+  installmentAmount Float?
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  clearance         CustomsClearance  @relation(fields: [clearanceId], references: [id], onDelete: Cascade)
+  customsBroker     CustomsBroker     @relation(fields: [customsBrokerId], references: [id])
+  payments          ClearancePayment[] // Payment history
+
+  @@map("customs_clearance_invoices")
+}
+
+// Payment history for regular invoices
+model Payment {
+  id            String        @id @default(cuid())
+  invoiceId     String
+  amount        Float
+  paymentMethod String?       // "cash", "bank_transfer", "check", etc.
+  paymentDate   DateTime      @default(now())
+  reference     String?       // Reference number or transaction ID
+  notes         String?
+  createdBy     String?       // User who recorded the payment
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
+}
+
+// Payment history for customs clearance invoices
+model ClearancePayment {
+  id            String                   @id @default(cuid())
+  invoiceId     String
+  amount        Float
+  paymentMethod String?                  // "cash", "bank_transfer", "check", etc.
+  paymentDate   DateTime                 @default(now())
+  reference     String?                  // Reference number or transaction ID
+  notes         String?
+  createdBy     String?                  // User who recorded the payment
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+  invoice       CustomsClearanceInvoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("clearance_payments")
 }
 
 model SubscriptionPlan {
@@ -362,6 +435,11 @@ model CustomsClearance {
   customsFee              Float             @default(0)
   additionalFees          Float             @default(0)
   totalFees               Float             @default(0)
+  // New fields for percentage-based calculations
+  customsFeeType          String            @default("FIXED") // 'FIXED' or 'PERCENTAGE'
+  customsFeePercentage    Float             @default(0)
+  additionalFeesType      String            @default("FIXED") // 'FIXED' or 'PERCENTAGE'
+  additionalFeesPercentage Float            @default(0)
   estimatedCompletionDate DateTime?
   actualCompletionDate    DateTime?
   notes                   String?
@@ -370,6 +448,7 @@ model CustomsClearance {
   invoice                 Invoice           @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
   customsBroker           User              @relation(fields: [customsBrokerId], references: [id], onDelete: Restrict)
   documents               CustomsDocument[]
+  clearanceInvoice        CustomsClearanceInvoice?
 
   @@map("customs_clearances")
 }
@@ -443,11 +522,13 @@ enum SubscriptionType {
 }
 
 enum PaymentStatus {
-  PENDING
-  SENT
-  PAID
-  OVERDUE
-  CANCELLED
+  PENDING      // في انتظار الدفع
+  SENT         // تم الإرسال
+  PAID         // مدفوعة بالكامل
+  PARTIAL      // دفع جزئي
+  INSTALLMENT  // دفع بالأقساط
+  OVERDUE      // متأخرة
+  CANCELLED    // ملغية
 }
 
 enum ClearanceStatus {

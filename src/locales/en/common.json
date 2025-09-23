@@ -134,5 +134,6 @@
   "autoAssignVehicleTypes": "Auto-Assign Vehicle Types",
   "driverManagement": "Driver Management",
   "manageDriverVehicleAssignments": "Manage driver vehicle type assignments",
-  "systemStatus": "System Status"
+  "systemStatus": "System Status",
+  "installmentStatus": "Installment"
 }

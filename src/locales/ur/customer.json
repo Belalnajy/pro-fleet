@@ -207,5 +207,6 @@
   "orSelectFromSavedAddresses": "یا محفوظ شدہ پتوں سے منتخب کریں",
   "selectFromSavedAddresses": "محفوظ شدہ پتوں سے منتخب کریں",
   "cannotCancelTrip": "یہ سفر منسوخ نہیں ہو سکتا",
-  "onlyPendingTripsCanBeCancelled": "صرف زیر انتظار سفر منسوخ ہو سکتے ہیں"
+  "onlyPendingTripsCanBeCancelled": "صرف زیر انتظار سفر منسوخ ہو سکتے ہیں",
+  "viewClearances": "کلیئرنس دیکھیں"
 }

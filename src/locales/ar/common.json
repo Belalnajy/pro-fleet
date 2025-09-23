@@ -134,5 +134,6 @@
   "autoAssignVehicleTypes": "ربط أنواع المركبات تلقائياً",
   "driverManagement": "إدارة السائقين",
   "manageDriverVehicleAssignments": "إدارة تخصيص أنواع المركبات للسائقين",
-  "systemStatus": "حالة النظام"
+  "systemStatus": "حالة النظام",
+  "installmentStatus": "Installment"
 }

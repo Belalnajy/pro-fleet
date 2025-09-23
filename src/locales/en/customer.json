@@ -204,5 +204,10 @@
   "selectFromSavedAddresses": "Select from saved addresses",
   "cannotCancelTrip": "Cannot cancel this trip",
   "onlyPendingTripsCanBeCancelled": "Only pending trips can be cancelled",
-  "selectDriver": "Select Driver"
+  "selectDriver": "Select Driver",
+  "viewClearances": "View Clearances",
+  "customsClearances": "Customs Clearances",
+  "partialStatus": "Partial",
+  "installmentStatus": "Installment",
+  "assignedStatus": "Assigned"
 }

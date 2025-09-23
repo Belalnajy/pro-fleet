@@ -10,6 +10,7 @@ import { FileText, Users, Truck, Shield, ArrowLeft, Home } from 'lucide-react';
 import Link from 'next/link';
 import { useLanguage } from '@/components/providers/language-provider';
 import { DashboardLayout } from '@/components/layout/dashboard-layout';
+import { useCompanyInfo } from '@/hooks/useCompanyInfo';
 
 interface TermsPageProps {
   params: Promise<{
@@ -20,6 +21,7 @@ interface TermsPageProps {
 export default function TermsPage({ params }: TermsPageProps) {
   const { locale } = use(params);
   const { t, dir } = useLanguage();
+  const { companyInfo } = useCompanyInfo();
   
   return (
     <DashboardLayout
@@ -153,7 +155,7 @@ export default function TermsPage({ params }: TermsPageProps) {
                     <section>
                       <h3 className="text-xl font-semibold mb-3 text-foreground">{t('introduction')}</h3>
                       <p className="text-muted-foreground leading-relaxed">
-                        تُمثل هذه الضوابط والشروط اتفاق رسمي "عقد" بين شركة برو المحدودة القابضة سجل تجاري رقم 4030522610 المالك للعلامة التجارية "profleet" ومقدمي خدمات التوصيل (المناديب).
+                        تُمثل هذه الضوابط والشروط اتفاق رسمي "عقد" بين شركة برو المحدودة القابضة سجل تجاري رقم {companyInfo.commercialRegister} المالك للعلامة التجارية "profleet" ومقدمي خدمات التوصيل (المناديب).
                       </p>
                     </section>
 
@@ -311,8 +313,8 @@ export default function TermsPage({ params }: TermsPageProps) {
                           إذا كان لديك أي أسئلة بشأن هذه الشروط أو الممارسات بهذا التطبيق، يمكنكم التواصل معنا من خلال:
                         </p>
                         <ul className="space-y-2 text-muted-foreground">
-                          <li><strong>{t('website')}:</strong> <a href="https://www.profleet.app" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.profleet.app</a></li>
-                          <li><strong>{t('email')}:</strong> <a href="mailto:info@profleet.app" className="text-primary hover:underline">info@profleet.app</a></li>
+                          <li><strong>{t('website')}:</strong> <a href={`https://${companyInfo.website}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{companyInfo.website}</a></li>
+                          <li><strong>{t('email')}:</strong> <a href={`mailto:${companyInfo.email}`} className="text-primary hover:underline">{companyInfo.email}</a></li>
                           <li><strong>{t('twitter')}:</strong> <a href="https://x.com/profleetapp" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">@profleetapp</a></li>
                           <li><strong>{t('snapchat')}:</strong> <a href="https://snapchat.com/add/profleetapp" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">profleetapp</a></li>
                         </ul>

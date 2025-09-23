@@ -3,6 +3,7 @@
 import React, { use } from 'react'
 import Link from 'next/link'
 import { useTranslation } from '@/hooks/useTranslation'
+import { useCompanyInfo } from '@/hooks/useCompanyInfo'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -45,6 +46,7 @@ interface LocalePageProps {
 export default function HomePage({ params }: LocalePageProps) {
   const { locale } = use(params)
   const { t } = useTranslation()
+  const { companyInfo } = useCompanyInfo()
 
   const features = [
     {
@@ -130,9 +132,9 @@ export default function HomePage({ params }: LocalePageProps) {
       {/* Navigation Bar */}
       <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20 sm:h-24 md:h-28">
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
-            <img src="/Website-Logo.png" alt="Logo" className=" w-36 h-36" />
+            <img src={companyInfo.logo} alt={companyInfo.name} className="h-16 w-auto sm:h-20 md:h-24 lg:h-32 xl:h-36 object-contain" />
             </div>
             
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
@@ -341,7 +343,7 @@ export default function HomePage({ params }: LocalePageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-mono">0539977837</p>
+                <p className="text-lg font-mono">{companyInfo.phone}</p>
                 <p className="text-sm text-muted-foreground mt-1">8002440411</p>
               </CardContent>
             </Card>
@@ -354,8 +356,8 @@ export default function HomePage({ params }: LocalePageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg">info@profleet.app</p>
-                <p className="text-sm text-muted-foreground mt-1">www@profleet.app</p>
+                <p className="text-lg">{companyInfo.email}</p>
+                <p className="text-sm text-muted-foreground mt-1">{companyInfo.website}</p>
               </CardContent>
             </Card>
             
@@ -367,7 +369,7 @@ export default function HomePage({ params }: LocalePageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg">www.profleet.app</p>
+                <p className="text-lg">{companyInfo.website}</p>
               </CardContent>
             </Card>
             
@@ -379,8 +381,8 @@ export default function HomePage({ params }: LocalePageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-lg font-mono">4030522610</p>
-                <p className="text-sm text-muted-foreground mt-1">{t('unifiedRegister')}: 7033220067</p>
+                <p className="text-lg font-mono">{companyInfo.commercialRegister}</p>
+                <p className="text-sm text-muted-foreground mt-1">{t('unifiedRegister')}: {companyInfo.unifiedCommercialRegister}</p>
               </CardContent>
             </Card>
             
@@ -392,7 +394,7 @@ export default function HomePage({ params }: LocalePageProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm">JENA7503</p>
+                <p className="text-sm">{companyInfo.shortNationalAddress}</p>
               </CardContent>
             </Card>
             
@@ -445,7 +447,7 @@ export default function HomePage({ params }: LocalePageProps) {
               <div className="flex items-center justify-center sm:justify-start space-x-3 rtl:space-x-reverse">
                 <Link href="https://www.facebook.com/profleetapp/" target="_blank">
                   <div className="h-6 w-6 bg-yellow-400 rounded" />
-                  <span className="font-medium text-sm sm:text-base">profleet.app</span>
+                  <span className="font-medium text-sm sm:text-base">{companyInfo.domain}</span>
                 </Link>
               </div>
             </Card>
@@ -485,7 +487,7 @@ export default function HomePage({ params }: LocalePageProps) {
             {/* Company Info */}
             <div className="col-span-1 lg:col-span-2">
               <div>
-                <img  src="/Website-Logo.png" alt="Logo" className="w-36 h-36 " />
+                <img src={companyInfo.logo} alt={companyInfo.name} className="h-24 w-auto sm:h-28 md:h-32 lg:h-36 object-contain" />
               </div>
               <p className="text-muted-foreground mb-6 max-w-md">
                 {t('aboutUsDescription')}
@@ -535,21 +537,21 @@ export default function HomePage({ params }: LocalePageProps) {
                 <li className="flex items-center space-x-2 rtl:space-x-reverse">
                   <Phone className="h-4 w-4 flex-shrink-0" />
                   <div>
-                    <div>0539977837</div>
-                    <div className="text-xs">8002440411</div>
+                    <div>{companyInfo.phone}</div>
+                    <div className="text-xs">{companyInfo.unifiedNumber}</div>
                   </div>
                 </li>
                 <li className="flex items-center space-x-2 rtl:space-x-reverse">
                   <Mail className="h-4 w-4 flex-shrink-0" />
                   <div>
-                    <div>info@profleet.app</div>
+                    <div>{companyInfo.email}</div>
                   </div>
                 </li>
                 <li className="flex items-center space-x-2 rtl:space-x-reverse">
                   <Globe className="h-4 w-4 flex-shrink-0" />
                   <div>
-                    <div>www.profleet.app</div>
-                    <div className="text-xs">profleet.app</div>
+                    <div>{companyInfo.website}</div>
+                    <div className="text-xs">{companyInfo.domain}</div>
                   </div>
                 </li>
               </ul>
@@ -563,14 +565,14 @@ export default function HomePage({ params }: LocalePageProps) {
                   <Building2 className="h-4 w-4 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium">{t('commercialRegisterNumber')}</div>
-                    <div className="text-xs">4030522610</div>
+                    <div className="text-xs">{companyInfo.commercialRegister}</div>
                   </div>
                 </li>
                 <li className="flex items-start space-x-2 rtl:space-x-reverse">
                   <CreditCard className="h-4 w-4 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium">{t('unifiedCommercialRegister')}</div>
-                    <div className="text-xs">7033220067</div>
+                    <div className="text-xs">{companyInfo.unifiedCommercialRegister}</div>
                   </div>
                 </li>
                 <li className="flex items-start space-x-2 rtl:space-x-reverse">
@@ -584,7 +586,7 @@ export default function HomePage({ params }: LocalePageProps) {
                   <MapPinned className="h-4 w-4 flex-shrink-0 mt-0.5" />
                   <div>
                     <div className="font-medium">{t('shortNationalAddress')}</div>
-                    <div className="text-xs">JENA7503</div>
+                    <div className="text-xs">{companyInfo.shortNationalAddress}</div>
                   </div>
                 </li>
                 <li className="flex items-start space-x-2 rtl:space-x-reverse">
@@ -592,9 +594,9 @@ export default function HomePage({ params }: LocalePageProps) {
                   <div>
                     <div className="font-medium">{t('fullNationalAddress')}</div>
                     <div className="text-xs leading-relaxed">
-                      {t('buildingNumber')} 7503 – {t('subNumber')} 2695<br />
-                      {t('postalCode')} 23621 – {t('district')}<br />
-                      {t('street')}
+                      {t('buildingNumber')} {companyInfo.buildingNumber} – {t('subNumber')} {companyInfo.subNumber}<br />
+                      {t('postalCode')} {companyInfo.postalCode} – {companyInfo.district}<br />
+                      {companyInfo.street}
                     </div>
                   </div>
                 </li>

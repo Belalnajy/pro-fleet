@@ -2,21 +2,28 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
-import { PaymentStatus } from "@prisma/client"
 import nodemailer from "nodemailer"
+import { getCompanyInfo } from "@/lib/system-settings"
+import { PaymentStatus } from "@prisma/client";
 
 // POST /api/admin/invoices/[id]/send-email - Send invoice via email
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params
+  const { id } = await params;
   try {
-    console.log('=== EMAIL API START ===', { invoiceId: id })
-    const session = await getServerSession(authOptions)
+    console.log("=== EMAIL API START ===", { invoiceId: id });
+    const session = await getServerSession(authOptions);
     
-    if (!session || (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    // Get company info from system settings
+    const companyInfo = await getCompanyInfo();
+
+    if (
+      !session ||
+      (session.user.role !== "ADMIN" && session.user.role !== "ACCOUNTANT")
+    ) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const invoice = await db.invoice.findUnique({
@@ -40,53 +47,65 @@ export async function POST(
           }
         }
       }
-    })
+    });
 
     if (!invoice) {
-      return NextResponse.json({ error: "Invoice not found" }, { status: 404 })
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
     if (!invoice.trip?.customer?.email) {
-      return NextResponse.json({ error: "Customer email not found" }, { status: 400 })
+      return NextResponse.json(
+        { error: "Customer email not found" },
+        { status: 400 }
+      );
     }
 
     // Validate SMTP configuration
     if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.error('SMTP configuration missing:', {
+      console.error("SMTP configuration missing:", {
         SMTP_HOST: process.env.SMTP_HOST,
         SMTP_PORT: process.env.SMTP_PORT,
-        SMTP_USER: process.env.SMTP_USER ? 'Set' : 'Missing',
-        SMTP_PASS: process.env.SMTP_PASS ? 'Set' : 'Missing'
-      })
-      return NextResponse.json({ 
-        error: "SMTP configuration is incomplete. Please check environment variables." 
-      }, { status: 500 })
+        SMTP_USER: process.env.SMTP_USER ? "Set" : "Missing",
+        SMTP_PASS: process.env.SMTP_PASS ? "Set" : "Missing"
+      });
+      return NextResponse.json(
+        {
+          error:
+            "SMTP configuration is incomplete. Please check environment variables."
+        },
+        { status: 500 }
+      );
     }
 
     // Create email transporter (configure with your SMTP settings)
     const transporter = nodemailer.createTransporter({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
+      host: process.env.SMTP_HOST || "smtp.gmail.com",
+      port: parseInt(process.env.SMTP_PORT || "587"),
       secure: false, // true for 465, false for other ports
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
+        pass: process.env.SMTP_PASS
       },
       tls: {
         rejectUnauthorized: false // Allow self-signed certificates
       }
-    })
+    });
 
     // Test the connection
     try {
-      await transporter.verify()
-      console.log('SMTP connection verified successfully')
+      await transporter.verify();
+      console.log("SMTP connection verified successfully");
     } catch (verifyError) {
-      console.error('SMTP connection failed:', verifyError)
-      return NextResponse.json({ 
-        error: "SMTP connection failed. Please check your email configuration.",
-        details: verifyError instanceof Error ? verifyError.message : 'Unknown error'
-      }, { status: 500 })
+      console.error("SMTP connection failed:", verifyError);
+      return NextResponse.json(
+        {
+          error:
+            "SMTP connection failed. Please check your email configuration.",
+          details:
+            verifyError instanceof Error ? verifyError.message : "Unknown error"
+        },
+        { status: 500 }
+      );
     }
 
     // Email content
@@ -230,43 +249,67 @@ export async function POST(
                     </div>
                     <div class="invoice-row">
                         <span class="label">تاريخ الإصدار:</span>
-                        <span class="value">${new Date(invoice.createdAt).toLocaleDateString('ar-SA')}</span>
+                        <span class="value">${new Date(
+                          invoice.createdAt
+                        ).toLocaleDateString("ar-SA")}</span>
                     </div>
                     <div class="invoice-row">
                         <span class="label">تاريخ الاستحقاق:</span>
-                        <span class="value">${new Date(invoice.dueDate).toLocaleDateString('ar-SA')}</span>
+                        <span class="value">${new Date(
+                          invoice.dueDate
+                        ).toLocaleDateString("ar-SA")}</span>
                     </div>
                     <div class="invoice-row">
                         <span class="label">الحالة:</span>
                         <span class="value">
                             <span class="status-badge status-${invoice.paymentStatus.toLowerCase()}">
-                                ${invoice.paymentStatus === 'PENDING' ? 'في الانتظار' : 
-                                  invoice.paymentStatus === 'PAID' ? 'مدفوعة' : 
-                                  invoice.paymentStatus === 'OVERDUE' ? 'متأخرة' : 'ملغية'}
+                                ${
+                                  invoice.paymentStatus === "PENDING"
+                                    ? "في الانتظار"
+                                    : invoice.paymentStatus === "PAID"
+                                    ? "مدفوعة"
+                                    : invoice.paymentStatus === "OVERDUE"
+                                    ? "متأخرة"
+                                    : "ملغية"
+                                }
                             </span>
                         </span>
                     </div>
                     <div class="invoice-row">
                         <span class="label">المبلغ الفرعي:</span>
-                        <span class="value">${invoice.subtotal.toFixed(2)} ${invoice.currency}</span>
+                        <span class="value">${invoice.subtotal.toFixed(2)} ${
+      invoice.currency
+    }</span>
                     </div>
                     <div class="invoice-row">
                         <span class="label">ضريبة القيمة المضافة:</span>
-                        <span class="value">${invoice.taxAmount.toFixed(2)} ${invoice.currency}</span>
+                        <span class="value">${invoice.taxAmount.toFixed(2)} ${
+      invoice.currency
+    }</span>
                     </div>
-                    ${invoice.customsFee > 0 ? `
+                    ${
+                      invoice.customsFee > 0
+                        ? `
                     <div class="invoice-row">
                         <span class="label">الرسوم الجمركية:</span>
-                        <span class="value">${invoice.customsFee.toFixed(2)} ${invoice.currency}</span>
+                        <span class="value">${invoice.customsFee.toFixed(2)} ${
+                            invoice.currency
+                          }</span>
                     </div>
-                    ` : ''}
+                    `
+                        : ""
+                    }
                     <div class="invoice-row">
                         <span class="label">المجموع الإجمالي:</span>
-                        <span class="value">${invoice.total.toFixed(2)} ${invoice.currency}</span>
+                        <span class="value">${invoice.total.toFixed(2)} ${
+      invoice.currency
+    }</span>
                     </div>
                 </div>
 
-                ${invoice.trip ? `
+                ${
+                  invoice.trip
+                    ? `
                 <div class="trip-info">
                     <div class="trip-title">تفاصيل الرحلة</div>
                     <div class="invoice-row">
@@ -275,24 +318,32 @@ export async function POST(
                     </div>
                     <div class="invoice-row">
                         <span class="label">المسار:</span>
-                        <span class="value">${invoice.trip.fromCity?.name} → ${invoice.trip.toCity?.name}</span>
+                        <span class="value">${invoice.trip.fromCity?.name} → ${
+                        invoice.trip.toCity?.name
+                      }</span>
                     </div>
                     <div class="invoice-row">
                         <span class="label">السائق:</span>
-                        <span class="value">${invoice.trip.driver?.user?.name || 'غير محدد'}</span>
+                        <span class="value">${
+                          invoice.trip.driver?.user?.name || "غير محدد"
+                        }</span>
                     </div>
                 </div>
-                ` : ''}
+                `
+                    : ""
+                }
 
                 <p>يمكنكم تحميل نسخة PDF من الفاتورة من خلال النقر على الرابط أدناه:</p>
                 
-                <a href="${process.env.NEXTAUTH_URL}/api/admin/invoices/${invoice.id}/pdf" class="button">
+                <a href="${process.env.NEXTAUTH_URL}/api/admin/invoices/${
+      invoice.id
+    }/pdf" class="button">
                     تحميل الفاتورة PDF
                 </a>
 
                 <p>في حالة وجود أي استفسارات، يرجى التواصل معنا على:</p>
                 <ul>
-                    <li>الهاتف: +966 11 123 4567</li>
+                    <li>الهاتف: ${companyInfo.phone}</li>
                     <li>البريد الإلكتروني: billing@profleet.com</li>
                 </ul>
 
@@ -307,75 +358,87 @@ export async function POST(
         </div>
     </body>
     </html>
-    `
+    `;
 
     // Send email
     const mailOptions = {
       from: process.env.SMTP_FROM || `"برو فليت" <${process.env.SMTP_USER}>`,
       to: invoice.trip.customer.email,
       subject: `فاتورة رقم ${invoice.invoiceNumber} - برو فليت`,
-      html: emailHtml,
-    }
+      html: emailHtml
+    };
 
-    console.log('Attempting to send email:', {
+    console.log("Attempting to send email:", {
       from: mailOptions.from,
       to: mailOptions.to,
       subject: mailOptions.subject
-    })
+    });
 
     try {
-      const info = await transporter.sendMail(mailOptions)
-      console.log('Email sent successfully:', info.messageId)
-      
+      const info = await transporter.sendMail(mailOptions);
+      console.log("Email sent successfully:", info.messageId);
+
       // Update invoice to mark as sent (only if currently PENDING)
       if (invoice.paymentStatus === PaymentStatus.PENDING) {
         await db.invoice.update({
           where: { id },
-          data: { 
-            paymentStatus: 'SENT' as any // Force type since SENT exists in schema
+          data: {
+            paymentStatus: "SENT" as any // Force type since SENT exists in schema
           }
-        })
+        });
       }
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         message: "Invoice sent successfully",
         email: invoice.trip.customer.email,
         messageId: info.messageId
-      })
+      });
     } catch (emailError) {
       console.error("Detailed email error:", {
         error: emailError,
-        code: emailError instanceof Error ? (emailError as any).code : 'Unknown',
-        response: emailError instanceof Error ? (emailError as any).response : 'No response'
-      })
-      
-      let errorMessage = "Failed to send email."
+        code:
+          emailError instanceof Error ? (emailError as any).code : "Unknown",
+        response:
+          emailError instanceof Error
+            ? (emailError as any).response
+            : "No response"
+      });
+
+      let errorMessage = "Failed to send email.";
       if (emailError instanceof Error) {
-        if ((emailError as any).code === 'EAUTH') {
-          errorMessage = "Email authentication failed. Please check your email credentials."
-        } else if ((emailError as any).code === 'ECONNECTION') {
-          errorMessage = "Cannot connect to email server. Please check your network connection."
+        if ((emailError as any).code === "EAUTH") {
+          errorMessage =
+            "Email authentication failed. Please check your email credentials.";
+        } else if ((emailError as any).code === "ECONNECTION") {
+          errorMessage =
+            "Cannot connect to email server. Please check your network connection.";
         } else {
-          errorMessage = `Email error: ${emailError.message}`
+          errorMessage = `Email error: ${emailError.message}`;
         }
       }
-      
-      return NextResponse.json({ 
-        error: errorMessage,
-        details: emailError instanceof Error ? emailError.message : 'Unknown error'
-      }, { status: 500 })
-    }
 
+      return NextResponse.json(
+        {
+          error: errorMessage,
+          details:
+            emailError instanceof Error ? emailError.message : "Unknown error"
+        },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error("=== EMAIL API ERROR ===", {
       error: error,
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack',
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : "No stack",
       invoiceId: id
-    })
-    return NextResponse.json({ 
-      error: "Internal server error",
-      details: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    });
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
+    );
   }
 }

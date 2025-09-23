@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
-import puppeteer from "puppeteer";
-import chromium from "@sparticuz/chromium";
-import fs from "fs";
-import path from "path";
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import puppeteer from "puppeteer"
+import chromium from "@sparticuz/chromium"
+import fs from "fs"
+import path from "path"
+import { getCompanyInfo } from "@/lib/system-settings";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,7 +19,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: invoiceId } = await params;
+    const invoiceId = params.id;
+    
+    // Get company info from system settings
+    const companyInfo = await getCompanyInfo();
 
     // Get invoice details
     const invoice = (await db.invoice.findUnique({
@@ -330,7 +334,7 @@ export async function GET(
                 <img src="${getLogoBase64()}" alt="شعار الشركة" class="logo">
                 <div class="company-name">برو فليت للنقل</div>
                 <div class="company-tagline">خدمات النقل واللوجستيات</div>
-                <div class="company-contact">المملكة العربية السعودية | هاتف: +966 11 123 4567 | البريد: info@profleet.com</div>
+                <div class="company-contact">المملكة العربية السعودية | هاتف: ${companyInfo.phone} | البريد: ${companyInfo.email}</div>
             </div>
             
             <div class="invoice-header">
@@ -391,37 +395,52 @@ export async function GET(
                 <div class="info-grid">
                     <div class="info-row">
                         <span class="label">المبلغ الإجمالي:</span>
-                        <span class="value">${invoice.total.toLocaleString('ar-SA')} ريال</span>
+                        <span class="value">${invoice.total.toLocaleString(
+                          "ar-SA"
+                        )} ريال</span>
                     </div>
                     <div class="info-row">
                         <span class="label">المبلغ المدفوع:</span>
-                        <span class="value">${(invoice.amountPaid || 0).toLocaleString('ar-SA')} ريال</span>
+                        <span class="value">${(
+                          invoice.amountPaid || 0
+                        ).toLocaleString("ar-SA")} ريال</span>
                     </div>
                     <div class="info-row">
                         <span class="label">المبلغ المتبقي:</span>
-                        <span class="value">${(invoice.remainingAmount || invoice.total).toLocaleString('ar-SA')} ريال</span>
+                        <span class="value">${(
+                          invoice.remainingAmount || invoice.total
+                        ).toLocaleString("ar-SA")} ريال</span>
                     </div>
                     ${
-                      invoice.paymentStatus === "INSTALLMENT" && invoice.installmentCount
+                      invoice.paymentStatus === "INSTALLMENT" &&
+                      invoice.installmentCount
                         ? `
                     <div class="info-row">
                         <span class="label">عدد الأقساط:</span>
-                        <span class="value">${invoice.installmentCount} قسط</span>
+                        <span class="value">${
+                          invoice.installmentCount
+                        } قسط</span>
                     </div>
                     <div class="info-row">
                         <span class="label">الأقساط المدفوعة:</span>
-                        <span class="value">${invoice.installmentsPaid || 0} من ${invoice.installmentCount}</span>
+                        <span class="value">${
+                          invoice.installmentsPaid || 0
+                        } من ${invoice.installmentCount}</span>
                     </div>
                     <div class="info-row">
                         <span class="label">قيمة القسط:</span>
-                        <span class="value">${(invoice.installmentAmount || 0).toLocaleString('ar-SA')} ريال</span>
+                        <span class="value">${(
+                          invoice.installmentAmount || 0
+                        ).toLocaleString("ar-SA")} ريال</span>
                     </div>
                     ${
                       invoice.nextInstallmentDate
                         ? `
                     <div class="info-row">
                         <span class="label">تاريخ القسط التالي:</span>
-                        <span class="value">${new Date(invoice.nextInstallmentDate).toLocaleDateString("ar-SA")}</span>
+                        <span class="value">${new Date(
+                          invoice.nextInstallmentDate
+                        ).toLocaleDateString("ar-SA")}</span>
                     </div>
                     `
                         : ""

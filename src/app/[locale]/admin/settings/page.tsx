@@ -11,7 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Save, RefreshCw, Settings, MapPin, Thermometer, Truck, Receipt } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/hooks/useTranslation"
-import { useSystemSettings } from "@/hooks/useSystemSettings"
+import { useSystemSettings } from '@/hooks/useSystemSettings';
+import { toast } from 'sonner';
+import { LogoUpload } from '@/components/admin/LogoUpload';
 
 interface SystemSettings {
   business: {
@@ -19,6 +21,20 @@ interface SystemSettings {
     companyEmail: string
     companyPhone: string
     companyAddress: string
+    website: string
+    domain: string
+    // Commercial Registration Info
+    commercialRegister: string
+    unifiedCommercialRegister: string
+    unifiedNumber: string
+    // National Address
+    shortNationalAddress: string
+    buildingNumber: string
+    subNumber: string
+    postalCode: string
+    district: string
+    street: string
+    fullNationalAddress: string
   }
   financial: {
     defaultTaxRate: number
@@ -204,6 +220,51 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
                     }
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website" className="text-sm font-medium">{t('website')}</Label>
+                  <Input
+                    id="website"
+                    className="h-11"
+                    placeholder="www.profleet.app"
+                    value={settings.business.website}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        business: { ...settings.business, website: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="domain" className="text-sm font-medium">{t('domain')}</Label>
+                  <Input
+                    id="domain" 
+                    className="h-11"
+                    placeholder="profleet.app"
+                    value={settings.business.domain}
+                    onChange={(e) => setSettings(prev => ({
+                      ...prev,
+                      business: {
+                        ...prev.business,
+                        domain: e.target.value
+                      }
+                    }))}
+                  />
+                </div>
+                <LogoUpload
+                  currentLogo={settings.business.companyLogo}
+                  onLogoUpdate={(newLogoPath) => {
+                    if (settings) {
+                      setSettings({
+                        ...settings,
+                        business: {
+                          ...settings.business,
+                          companyLogo: newLogoPath
+                        }
+                      });
+                    }
+                  }}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="companyAddress" className="text-sm font-medium">{t('companyAddress')}</Label>
@@ -218,6 +279,184 @@ export default function AdminSettingsPage({ params }: { params: Promise<{ locale
                     })
                   }
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Commercial Registration Info */}
+          <Card className="shadow-sm border-0 bg-gradient-to-br from-background to-muted/20">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Receipt className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">المعلومات التجارية</CardTitle>
+                  <CardDescription className="text-sm">تحديث معلومات السجل التجاري والعنوان الوطني</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="commercialRegister" className="text-sm font-medium">السجل التجاري</Label>
+                  <Input
+                    id="commercialRegister"
+                    className="h-11 font-mono"
+                    placeholder="4030522610"
+                    value={settings.business.commercialRegister}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        business: { ...settings.business, commercialRegister: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="unifiedCommercialRegister" className="text-sm font-medium">السجل التجاري الموحد</Label>
+                  <Input
+                    id="unifiedCommercialRegister"
+                    className="h-11 font-mono"
+                    placeholder="7033220067"
+                    value={settings.business.unifiedCommercialRegister}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        business: { ...settings.business, unifiedCommercialRegister: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="unifiedNumber" className="text-sm font-medium">الرقم الموحد</Label>
+                  <Input
+                    id="unifiedNumber"
+                    className="h-11 font-mono"
+                    placeholder="8002440411"
+                    value={settings.business.unifiedNumber}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        business: { ...settings.business, unifiedNumber: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              
+              {/* National Address Section */}
+              <div className="border-t pt-6">
+                <h4 className="text-lg font-semibold mb-4">العنوان الوطني</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="shortNationalAddress" className="text-sm font-medium">العنوان الوطني المختصر</Label>
+                    <Input
+                      id="shortNationalAddress"
+                      className="h-11 font-mono"
+                      placeholder="JENA7503"
+                      value={settings.business.shortNationalAddress}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          business: { ...settings.business, shortNationalAddress: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="buildingNumber" className="text-sm font-medium">رقم المبنى</Label>
+                    <Input
+                      id="buildingNumber"
+                      className="h-11"
+                      placeholder="7503"
+                      value={settings.business.buildingNumber}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          business: { ...settings.business, buildingNumber: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="subNumber" className="text-sm font-medium">الرقم الفرعي</Label>
+                    <Input
+                      id="subNumber"
+                      className="h-11"
+                      placeholder="2695"
+                      value={settings.business.subNumber}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          business: { ...settings.business, subNumber: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="postalCode" className="text-sm font-medium">الرمز البريدي</Label>
+                    <Input
+                      id="postalCode"
+                      className="h-11"
+                      placeholder="23621"
+                      value={settings.business.postalCode}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          business: { ...settings.business, postalCode: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="district" className="text-sm font-medium">الحي</Label>
+                    <Input
+                      id="district"
+                      className="h-11"
+                      placeholder="النعيم"
+                      value={settings.business.district}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          business: { ...settings.business, district: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="street" className="text-sm font-medium">الشارع</Label>
+                    <Input
+                      id="street"
+                      className="h-11"
+                      placeholder="الأمير سلطان"
+                      value={settings.business.street}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          business: { ...settings.business, street: e.target.value },
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2 mt-4">
+                  <Label htmlFor="fullNationalAddress" className="text-sm font-medium">العنوان الوطني الكامل</Label>
+                  <textarea
+                    id="fullNationalAddress"
+                    className="w-full h-20 px-3 py-2 text-sm border border-input bg-background rounded-md resize-none"
+                    placeholder="رقم المبنى 7503 – الرقم الفرعي 2695&#10;الرمز البريدي 23621 – الحي النعيم&#10;الشارع الأمير سلطان"
+                    value={settings.business.fullNationalAddress}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        business: { ...settings.business, fullNationalAddress: e.target.value },
+                      })
+                    }
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>

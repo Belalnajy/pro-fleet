@@ -65,5 +65,7 @@
   "openCustomsTariffs": "Open Tariffs Management",
   "customsTariffsDescription": "You can add, edit and delete customs tariffs and manage fees and taxes for each category of goods.",
   "settingsSavedSuccessfully": "Settings saved successfully",
-  "errorSavingSettings": "Error saving settings"
+  "errorSavingSettings": "Error saving settings",
+  "domain": "Domain",
+  "companyLogo": "Company Logo"
 }

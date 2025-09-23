@@ -1,22 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import nodemailer from "nodemailer";
+import { getCompanyInfo } from "@/lib/system-settings";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== 'ACCOUNTANT') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== "ACCOUNTANT") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id: invoiceId } = await params
-    const body = await request.json()
-    const { recipientEmail, subject, message } = body
+    const { id: invoiceId } = await params;
+    const body = await request.json();
+    const { recipientEmail, subject, message } = body;
+    
+    // Get company info from system settings
+    const companyInfo = await getCompanyInfo();
 
     // Get invoice details
     const invoice = await db.invoice.findUnique({
@@ -37,10 +42,10 @@ export async function POST(
           }
         }
       }
-    })
+    });
 
     if (!invoice) {
-      return NextResponse.json({ error: 'Invoice not found' }, { status: 404 })
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
     // In a real implementation, you would use an email service like:
@@ -49,7 +54,7 @@ export async function POST(
     // - AWS SES
     // - Resend
     // - Mailgun
-    
+
     const emailData = {
       to: recipientEmail || invoice.trip?.customer?.email,
       subject: subject || `فاتورة رقم ${invoice.invoiceNumber} - شركة ProFleet`,
@@ -58,16 +63,16 @@ export async function POST(
         {
           filename: `${invoice.invoiceNumber}.pdf`,
           // In real implementation, you would generate and attach the actual PDF
-          content: 'PDF content would go here'
+          content: "PDF content would go here"
         }
       ]
-    }
+    };
 
     // Simulate email sending
-    const emailResult = await sendEmail(emailData)
-    
+    const emailResult = await sendEmail(emailData);
+
     if (!emailResult.success) {
-      throw new Error(emailResult.error)
+      throw new Error(emailResult.error);
     }
 
     // Update invoice to mark as sent
@@ -77,25 +82,27 @@ export async function POST(
         // In a real schema, you might have a 'sentDate' or 'emailSentAt' field
         updatedAt: new Date()
       }
-    })
+    });
 
     return NextResponse.json({
       success: true,
-      message: 'تم إرسال الفاتورة بالبريد الإلكتروني بنجاح',
+      message: "تم إرسال الفاتورة بالبريد الإلكتروني بنجاح",
       sentTo: emailData.to
-    })
-
+    });
   } catch (error) {
-    console.error('Error sending email:', error)
+    console.error("Error sending email:", error);
     return NextResponse.json(
-      { error: 'Failed to send email' },
+      { error: "Failed to send email" },
       { status: 500 }
-    )
+    );
   }
 }
 
 // Generate HTML email template
-function generateInvoiceEmailHTML(invoice: any, customMessage?: string): string {
+function generateInvoiceEmailHTML(
+  invoice: any,
+  customMessage?: string
+): string {
   return `
     <!DOCTYPE html>
     <html dir="rtl" lang="ar">
@@ -161,9 +168,13 @@ function generateInvoiceEmailHTML(invoice: any, customMessage?: string): string 
       <div class="content">
         <h2>عزيزي/عزيزتي ${invoice.trip?.customer?.name}</h2>
         
-        ${customMessage ? `<p>${customMessage}</p>` : `
+        ${
+          customMessage
+            ? `<p>${customMessage}</p>`
+            : `
         <p>نتشرف بإرسال فاتورة الخدمات المقدمة لكم. يرجى مراجعة التفاصيل أدناه:</p>
-        `}
+        `
+        }
         
         <div class="invoice-details">
           <div class="detail-row">
@@ -172,15 +183,19 @@ function generateInvoiceEmailHTML(invoice: any, customMessage?: string): string 
           </div>
           <div class="detail-row">
             <span>رقم الرحلة:</span>
-            <span>${invoice.trip?.tripNumber || 'غير محدد'}</span>
+            <span>${invoice.trip?.tripNumber || "غير محدد"}</span>
           </div>
           <div class="detail-row">
             <span>المسار:</span>
-            <span>${invoice.trip?.fromCity?.nameAr || invoice.trip?.fromCity?.name} → ${invoice.trip?.toCity?.nameAr || invoice.trip?.toCity?.name}</span>
+            <span>${
+              invoice.trip?.fromCity?.nameAr || invoice.trip?.fromCity?.name
+            } → ${
+    invoice.trip?.toCity?.nameAr || invoice.trip?.toCity?.name
+  }</span>
           </div>
           <div class="detail-row">
             <span>السائق:</span>
-            <span>${invoice.trip?.driver?.user?.name || 'غير محدد'}</span>
+            <span>${invoice.trip?.driver?.user?.name || "غير محدد"}</span>
           </div>
           <div class="detail-row">
             <span>المبلغ الفرعي:</span>
@@ -200,26 +215,30 @@ function generateInvoiceEmailHTML(invoice: any, customMessage?: string): string 
           </div>
         </div>
         
-        <p><strong>تاريخ الاستحقاق:</strong> ${new Date(invoice.dueDate).toLocaleDateString('ar-SA')}</p>
+        <p><strong>تاريخ الاستحقاق:</strong> ${new Date(
+          invoice.dueDate
+        ).toLocaleDateString("ar-SA")}</p>
         
         <p>يرجى سداد المبلغ المستحق في الموعد المحدد. في حالة وجود أي استفسارات، لا تترددوا في التواصل معنا.</p>
         
         <div class="footer">
           <p>شكراً لكم لاختيار خدماتنا</p>
           <p>شركة ProFleet للنقل</p>
-          <p>البريد الإلكتروني: info@profleet.com | الهاتف: +966 11 123 4567</p>
+          <p>البريد الإلكتروني: ${companyInfo.email} | الهاتف: ${companyInfo.phone}</p>
         </div>
       </div>
     </body>
     </html>
-  `
+  `;
 }
 
 // Simulate email sending (in real implementation, use actual email service)
-async function sendEmail(emailData: any): Promise<{ success: boolean; error?: string }> {
+async function sendEmail(
+  emailData: any
+): Promise<{ success: boolean; error?: string }> {
   // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
   // In a real implementation, you would use an email service:
   /*
   try {
@@ -240,8 +259,8 @@ async function sendEmail(emailData: any): Promise<{ success: boolean; error?: st
     return { success: false, error: error.message }
   }
   */
-  
+
   // For demo purposes, always return success
-  console.log('Simulated email sent:', emailData)
-  return { success: true }
+  console.log("Simulated email sent:", emailData);
+  return { success: true };
 }

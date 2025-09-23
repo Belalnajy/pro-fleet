@@ -19,6 +19,8 @@
     "db:comprehensive-seed": "node scripts/comprehensive-seed.js",
     "db:full-reset": "npm run db:reset && npm run db:comprehensive-seed",
     "db:fix-clearance-invoices": "node scripts/fix-missing-clearance-invoices.js",
+    "db:setup-business-info": "node scripts/setup-business-info.js",
+    "test:cloudinary": "node scripts/test-cloudinary-config.js",
     "test:percentage-calculations": "node scripts/test-percentage-calculations.js"
   },
   "dependencies": {
@@ -67,6 +69,7 @@
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
+    "cloudinary": "^2.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",

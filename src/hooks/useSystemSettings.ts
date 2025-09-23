@@ -6,7 +6,22 @@ interface SystemSettings {
     companyName: string
     companyEmail: string
     companyPhone: string
-    companyAddress: string
+    companyAddress: string;
+    website: string;
+    domain: string;
+    companyLogo: string;
+    // Commercial Registration Info
+    commercialRegister: string
+    unifiedCommercialRegister: string
+    unifiedNumber: string
+    // National Address
+    shortNationalAddress: string
+    buildingNumber: string
+    subNumber: string
+    postalCode: string
+    district: string
+    street: string
+    fullNationalAddress: string
   }
   financial: {
     defaultTaxRate: number

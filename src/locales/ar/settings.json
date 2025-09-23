@@ -65,5 +65,7 @@
   "openCustomsTariffs": "فتح إدارة التعريفات",
   "customsTariffsDescription": "يمكنك إضافة وتعديل وحذف التعريفات الجمركية وإدارة الرسوم والضرائب لكل فئة من البضائع.",
   "settingsSavedSuccessfully": "تم حفظ الإعدادات بنجاح",
-  "errorSavingSettings": "خطأ في حفظ الإعدادات"
+  "errorSavingSettings": "خطأ في حفظ الإعدادات",
+  "domain": "النطاق",
+  "companyLogo": "شعار الشركة"
 }

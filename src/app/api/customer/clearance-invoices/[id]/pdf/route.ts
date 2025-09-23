@@ -1,32 +1,38 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
-import puppeteer from "puppeteer"
-import chromium from "@sparticuz/chromium"
-import fs from "fs"
-import path from "path"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import fs from "fs";
+import path from "path";
+import { getCompanyInfo } from "@/lib/system-settings";
 
 // Helper function to get logo as base64
 function getLogoBase64(): string {
   try {
-    const logoPath = path.join(process.cwd(), 'public', 'Website-Logo.png');
+    const logoPath = path.join(process.cwd(), "public", "Website-Logo.png");
     if (fs.existsSync(logoPath)) {
       const logoBuffer = fs.readFileSync(logoPath);
-      return `data:image/png;base64,${logoBuffer.toString('base64')}`;
+      return `data:image/png;base64,${logoBuffer.toString("base64")}`;
     }
   } catch (error) {
-    console.log('Logo not found, using placeholder');
+    console.log("Logo not found, using placeholder");
   }
   // Fallback: simple SVG logo
-  return 'data:image/svg+xml;base64,' + Buffer.from(`
+  return (
+    "data:image/svg+xml;base64," +
+    Buffer.from(
+      `
     <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
       <rect width="100" height="100" fill="#3b82f6" rx="10"/>
       <text x="50" y="35" font-family="Arial" font-size="12" fill="white" text-anchor="middle">PRO</text>
       <text x="50" y="55" font-family="Arial" font-size="12" fill="white" text-anchor="middle">FLEET</text>
       <text x="50" y="75" font-family="Arial" font-size="8" fill="white" text-anchor="middle">LOGISTICS</text>
     </svg>
-  `).toString('base64');
+  `
+    ).toString("base64")
+  );
 }
 
 export async function GET(
@@ -34,13 +40,16 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await getServerSession(authOptions);
+
     if (!session || session.user.role !== "CUSTOMER") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const invoiceId = params.id
+    const invoiceId = params.id;
+    
+    // Get company info from system settings
+    const companyInfo = await getCompanyInfo();
 
     // Verify the clearance invoice belongs to the customer and get full details
     const clearanceInvoice = await db.customsClearanceInvoice.findFirst({
@@ -105,10 +114,13 @@ export async function GET(
           }
         }
       }
-    })
+    });
 
     if (!clearanceInvoice) {
-      return NextResponse.json({ error: "Clearance invoice not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Clearance invoice not found" },
+        { status: 404 }
+      );
     }
 
     // Generate Arabic HTML content for PDF
@@ -247,7 +259,7 @@ export async function GET(
             <img src="${getLogoBase64()}" alt="شعار الشركة" style="width: 100px; height: 100px; margin-bottom: 10px;">
             <div class="company">شركة برو فليت للنقل</div>
             <div>خدمات النقل واللوجستيات</div>
-            <div>المملكة العربية السعودية | هاتف: 4567 123 11 966+ | البريد: info@profleet.com</div>
+            <div>المملكة العربية السعودية | هاتف: ${companyInfo.phone} | البريد: ${companyInfo.email}</div>
         </div>
         
         <div class="invoice-info">
@@ -258,113 +270,176 @@ export async function GET(
             </div>
             <div class="info-row">
                 <span class="label">رقم التخليص:</span>
-                <span class="value">${clearanceInvoice.clearance.clearanceNumber}</span>
+                <span class="value">${
+                  clearanceInvoice.clearance.clearanceNumber
+                }</span>
             </div>
             <div class="info-row">
                 <span class="label">تاريخ الإصدار:</span>
-                <span class="value">${new Date(clearanceInvoice.createdAt).toLocaleDateString("ar-SA")}</span>
+                <span class="value">${new Date(
+                  clearanceInvoice.createdAt
+                ).toLocaleDateString("ar-SA")}</span>
             </div>
             <div class="info-row">
                 <span class="label">تاريخ الاستحقاق:</span>
-                <span class="value">${new Date(clearanceInvoice.dueDate).toLocaleDateString("ar-SA")}</span>
+                <span class="value">${new Date(
+                  clearanceInvoice.dueDate
+                ).toLocaleDateString("ar-SA")}</span>
             </div>
             <div class="info-row">
                 <span class="label">حالة الدفع:</span>
                 <span class="value">
                     <span class="status ${
-                      clearanceInvoice.paymentStatus === 'PAID' ? 'status-paid' : 
-                      clearanceInvoice.paymentStatus === 'OVERDUE' ? 'status-overdue' : 'status-pending'
+                      clearanceInvoice.paymentStatus === "PAID"
+                        ? "status-paid"
+                        : clearanceInvoice.paymentStatus === "OVERDUE"
+                        ? "status-overdue"
+                        : "status-pending"
                     }">
-                        ${clearanceInvoice.paymentStatus === 'PAID' ? 'مدفوعة' : 
-                          clearanceInvoice.paymentStatus === 'OVERDUE' ? 'متأخرة' : 
-                          clearanceInvoice.paymentStatus === 'SENT' ? 'مرسلة' : 'في الانتظار'}
+                        ${
+                          clearanceInvoice.paymentStatus === "PAID"
+                            ? "مدفوعة"
+                            : clearanceInvoice.paymentStatus === "OVERDUE"
+                            ? "متأخرة"
+                            : clearanceInvoice.paymentStatus === "SENT"
+                            ? "مرسلة"
+                            : "في الانتظار"
+                        }
                     </span>
                 </span>
             </div>
-            ${clearanceInvoice.paidDate ? `
+            ${
+              clearanceInvoice.paidDate
+                ? `
             <div class="info-row">
                 <span class="label">تاريخ الدفع:</span>
-                <span class="value">${new Date(clearanceInvoice.paidDate).toLocaleDateString("ar-SA")}</span>
+                <span class="value">${new Date(
+                  clearanceInvoice.paidDate
+                ).toLocaleDateString("ar-SA")}</span>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
         </div>
 
         <div class="customer-info">
             <div class="section-title">معلومات العميل</div>
             <div class="info-row">
                 <span class="label">اسم العميل:</span>
-                <span class="value">${clearanceInvoice.clearance.invoice.trip.customer.name}</span>
+                <span class="value">${
+                  clearanceInvoice.clearance.invoice.trip.customer.name
+                }</span>
             </div>
             <div class="info-row">
                 <span class="label">البريد الإلكتروني:</span>
-                <span class="value">${clearanceInvoice.clearance.invoice.trip.customer.email}</span>
+                <span class="value">${
+                  clearanceInvoice.clearance.invoice.trip.customer.email
+                }</span>
             </div>
-            ${clearanceInvoice.clearance.invoice.trip.customer.phone ? `
+            ${
+              clearanceInvoice.clearance.invoice.trip.customer.phone
+                ? `
             <div class="info-row">
                 <span class="label">رقم الهاتف:</span>
                 <span class="value">${clearanceInvoice.clearance.invoice.trip.customer.phone}</span>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
         </div>
 
         <div class="clearance-info">
             <div class="section-title">معلومات المخلص الجمركي</div>
             <div class="info-row">
                 <span class="label">اسم المخلص:</span>
-                <span class="value">${clearanceInvoice.customsBroker.user.name}</span>
+                <span class="value">${
+                  clearanceInvoice.customsBroker.user.name
+                }</span>
             </div>
-            ${clearanceInvoice.customsBroker.licenseNumber ? `
+            ${
+              clearanceInvoice.customsBroker.licenseNumber
+                ? `
             <div class="info-row">
                 <span class="label">رقم الترخيص:</span>
                 <span class="value">${clearanceInvoice.customsBroker.licenseNumber}</span>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
             <div class="info-row">
                 <span class="label">البريد الإلكتروني:</span>
-                <span class="value">${clearanceInvoice.customsBroker.user.email}</span>
+                <span class="value">${
+                  clearanceInvoice.customsBroker.user.email
+                }</span>
             </div>
-            ${clearanceInvoice.customsBroker.user.phone ? `
+            ${
+              clearanceInvoice.customsBroker.user.phone
+                ? `
             <div class="info-row">
                 <span class="label">رقم الهاتف:</span>
                 <span class="value">${clearanceInvoice.customsBroker.user.phone}</span>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
             <div class="info-row">
                 <span class="label">حالة التخليص:</span>
                 <span class="value">${clearanceInvoice.clearance.status}</span>
             </div>
-            ${clearanceInvoice.clearance.actualCompletionDate ? `
+            ${
+              clearanceInvoice.clearance.actualCompletionDate
+                ? `
             <div class="info-row">
                 <span class="label">تاريخ التخليص:</span>
-                <span class="value">${new Date(clearanceInvoice.clearance.actualCompletionDate).toLocaleDateString("ar-SA")}</span>
+                <span class="value">${new Date(
+                  clearanceInvoice.clearance.actualCompletionDate
+                ).toLocaleDateString("ar-SA")}</span>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
         </div>
 
         <div class="trip-info">
             <div class="section-title">معلومات الرحلة</div>
             <div class="info-row">
                 <span class="label">رقم الرحلة:</span>
-                <span class="value">${clearanceInvoice.clearance.invoice.trip.tripNumber}</span>
+                <span class="value">${
+                  clearanceInvoice.clearance.invoice.trip.tripNumber
+                }</span>
             </div>
             <div class="info-row">
                 <span class="label">المسار:</span>
                 <span class="value">
-                    ${clearanceInvoice.clearance.invoice.trip.fromCity.nameAr || clearanceInvoice.clearance.invoice.trip.fromCity.name} 
+                    ${
+                      clearanceInvoice.clearance.invoice.trip.fromCity.nameAr ||
+                      clearanceInvoice.clearance.invoice.trip.fromCity.name
+                    } 
                     ← 
-                    ${clearanceInvoice.clearance.invoice.trip.toCity.nameAr || clearanceInvoice.clearance.invoice.trip.toCity.name}
+                    ${
+                      clearanceInvoice.clearance.invoice.trip.toCity.nameAr ||
+                      clearanceInvoice.clearance.invoice.trip.toCity.name
+                    }
                 </span>
             </div>
             <div class="info-row">
                 <span class="label">تاريخ الجدولة:</span>
-                <span class="value">${new Date(clearanceInvoice.clearance.invoice.trip.scheduledDate).toLocaleDateString("ar-SA")}</span>
+                <span class="value">${new Date(
+                  clearanceInvoice.clearance.invoice.trip.scheduledDate
+                ).toLocaleDateString("ar-SA")}</span>
             </div>
-            ${clearanceInvoice.clearance.invoice.trip.deliveredDate ? `
+            ${
+              clearanceInvoice.clearance.invoice.trip.deliveredDate
+                ? `
             <div class="info-row">
                 <span class="label">تاريخ التسليم:</span>
-                <span class="value">${new Date(clearanceInvoice.clearance.invoice.trip.deliveredDate).toLocaleDateString("ar-SA")}</span>
+                <span class="value">${new Date(
+                  clearanceInvoice.clearance.invoice.trip.deliveredDate
+                ).toLocaleDateString("ar-SA")}</span>
             </div>
-            ` : ''}
+            `
+                : ""
+            }
         </div>
 
         <table>
@@ -381,20 +456,26 @@ export async function GET(
                     <td>${clearanceInvoice.customsFee.toFixed(2)}</td>
                     <td>${clearanceInvoice.currency}</td>
                 </tr>
-                ${clearanceInvoice.additionalFees > 0 ? `
+                ${
+                  clearanceInvoice.additionalFees > 0
+                    ? `
                 <tr>
                     <td>رسوم إضافية</td>
                     <td>${clearanceInvoice.additionalFees.toFixed(2)}</td>
                     <td>${clearanceInvoice.currency}</td>
                 </tr>
-                ` : ''}
+                `
+                    : ""
+                }
                 <tr>
                     <td>المجموع الفرعي</td>
                     <td>${clearanceInvoice.subtotal.toFixed(2)}</td>
                     <td>${clearanceInvoice.currency}</td>
                 </tr>
                 <tr>
-                    <td>ضريبة القيمة المضافة (${(clearanceInvoice.taxRate * 100).toFixed(0)}%)</td>
+                    <td>ضريبة القيمة المضافة (${(
+                      clearanceInvoice.taxRate * 100
+                    ).toFixed(0)}%)</td>
                     <td>${clearanceInvoice.taxAmount.toFixed(2)}</td>
                     <td>${clearanceInvoice.currency}</td>
                 </tr>
@@ -405,22 +486,30 @@ export async function GET(
             <div class="final-total">
                 <div class="total-row">
                     <span>المجموع الكلي:</span>
-                    <span>${clearanceInvoice.total.toFixed(2)} ${clearanceInvoice.currency}</span>
+                    <span>${clearanceInvoice.total.toFixed(2)} ${
+      clearanceInvoice.currency
+    }</span>
                 </div>
             </div>
         </div>
 
-        ${clearanceInvoice.notes ? `
+        ${
+          clearanceInvoice.notes
+            ? `
         <div style="margin-top: 30px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
             <div class="section-title">ملاحظات</div>
             <p style="line-height: 1.6; margin: 10px 0;">${clearanceInvoice.notes}</p>
         </div>
-        ` : ''}
+        `
+            : ""
+        }
 
         <div style="text-align: center; margin-top: 30px; font-size: 12px; color: #666; border-top: 1px solid #ddd; padding-top: 20px;">
             <p>شكراً لاختياركم خدمات شركة برو فليت للنقل</p>
             <p>هذه فاتورة إلكترونية ولا تحتاج إلى توقيع</p>
-            <p>تم إنشاء هذه الفاتورة في: ${new Date().toLocaleDateString("ar-SA")} ${new Date().toLocaleTimeString("ar-SA")}</p>
+            <p>تم إنشاء هذه الفاتورة في: ${new Date().toLocaleDateString(
+              "ar-SA"
+            )} ${new Date().toLocaleTimeString("ar-SA")}</p>
         </div>
     </body>
     </html>
@@ -429,25 +518,26 @@ export async function GET(
     // Generate actual PDF using puppeteer
     const browser = await puppeteer.launch({
       headless: true,
-      args: process.env.VERCEL 
-        ? [...chromium.args, '--hide-scrollbars', '--disable-web-security']
+      args: process.env.VERCEL
+        ? [...chromium.args, "--hide-scrollbars", "--disable-web-security"]
         : [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--single-process',
-            '--disable-gpu',
-            '--disable-web-security',
-            '--disable-features=VizDisplayCompositor'
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
+            "--disable-dev-shm-usage",
+            "--disable-accelerated-2d-canvas",
+            "--no-first-run",
+            "--no-zygote",
+            "--single-process",
+            "--disable-gpu",
+            "--disable-web-security",
+            "--disable-features=VizDisplayCompositor"
           ],
-      executablePath: process.env.VERCEL 
+      executablePath: process.env.VERCEL
         ? await chromium.executablePath()
-        : process.env.NODE_ENV === 'production' 
-          ? process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
-          : undefined
+        : process.env.NODE_ENV === "production"
+        ? process.env.PUPPETEER_EXECUTABLE_PATH ||
+          "/usr/bin/google-chrome-stable"
+        : undefined
     });
 
     const page = await browser.newPage();
@@ -492,14 +582,18 @@ export async function GET(
       console.error(
         "Puppeteer browser error - likely Chrome/Chromium not available or misconfigured"
       );
-      console.error("Make sure Chrome is installed and PUPPETEER_EXECUTABLE_PATH is set correctly");
+      console.error(
+        "Make sure Chrome is installed and PUPPETEER_EXECUTABLE_PATH is set correctly"
+      );
     }
 
     return NextResponse.json(
       {
         error: "Failed to generate PDF",
         details:
-          process.env.NODE_ENV === "development" ? (error as Error).message : undefined
+          process.env.NODE_ENV === "development"
+            ? (error as Error).message
+            : undefined
       },
       { status: 500 }
     );

@@ -16,6 +16,7 @@ import {
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LanguageSelector } from "@/components/ui/language-selector"
 import { useLanguage } from "@/components/providers/language-provider"
+import { useCompanyInfo } from "@/hooks/useCompanyInfo"
 import {
   Shield,
   Users,
@@ -42,13 +43,14 @@ export function Navigation({ className }: NavigationProps) {
   const pathname = usePathname()
   const { t, dir, language } = useLanguage()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { companyInfo } = useCompanyInfo()
 
   const getNavItems = () => {
     if (!session?.user?.role) return []
 
     const baseItems = [
       {
-        href: `/${language}/${session.user.role.toLowerCase()}`,
+        href: `/${language}/dashboard`,
         label: t("dashboard"),
         icon: LayoutDashboard,
       },
@@ -58,49 +60,107 @@ export function Navigation({ className }: NavigationProps) {
       case "ADMIN":
         return [
           ...baseItems,
-          { href: `/${language}/admin/users`, label: t("users"), icon: Users },
-          { href: `/${language}/admin/vehicles`, label: t("vehicles"), icon: Truck },
-          { href: `/${language}/admin/pricing`, label: t("pricing"), icon: Calculator },
-          { href: `/${language}/admin/trips`, label: t("trips"), icon: FileText },
-          { href: `/${language}/admin/live-tracking`, label: t("tracking"), icon: NavigationIcon },
-          { href: `/${language}/admin/invoices`, label: t("invoices"), icon: FileText },
-          { href: `/${language}/admin/reports`, label: t("reports"), icon: FileText },
-          { href: `/${language}/admin/settings`, label: t("settings"), icon: Settings },
-
-        ]
-      case "DRIVER":
-        return [
-          ...baseItems,
-          { href: `/${language}/driver/trips`, label: t("trips"), icon: FileText },
-          { href: `/${language}/driver/live-tracking`, label: t("tracking"), icon: MapPin },
-          { href: `/${language}/profile`, label: t("profile"), icon: User },
+          {
+            href: `/${language}/admin/trips`,
+            label: t("trips"),
+            icon: Truck,
+          },
+          {
+            href: `/${language}/admin/invoices`,
+            label: t("invoices"),
+            icon: FileText,
+          },
+          {
+            href: `/${language}/admin/users`,
+            label: t("users"),
+            icon: Users,
+          },
+          {
+            href: `/${language}/admin/vehicles`,
+            label: t("vehicles"),
+            icon: Truck,
+          },
+          {
+            href: `/${language}/admin/pricing`,
+            label: t("pricing"),
+            icon: Calculator,
+          },
+          {
+            href: `/${language}/admin/tracking`,
+            label: t("tracking"),
+            icon: MapPin,
+          },
+          {
+            href: `/${language}/admin/settings`,
+            label: t("settings"),
+            icon: Settings,
+          },
         ]
       case "CUSTOMER":
         return [
           ...baseItems,
-          { href: `/${language}/customer/book-trip`, label: t("bookTrip"), icon: FileText },
-          { href: `/${language}/customer/my-trips`, label: t("myTrips"), icon: FileText },
-          { href: `/${language}/customer/addresses`, label: t("savedAddresses"), icon: MapPin },
-          { href: `/${language}/customer/tracking`, label: t("tracking"), icon: NavigationIcon },
-          { href: `/${language}/customer/invoices`, label: t("invoices"), icon: FileText },
-          { href: `/${language}/customer/clearances`, label: t("clearances"), icon: Shield },
-
+          {
+            href: `/${language}/customer/book-trip`,
+            label: t("bookTrip"),
+            icon: Truck,
+          },
+          {
+            href: `/${language}/customer/my-trips`,
+            label: t("myTrips"),
+            icon: NavigationIcon,
+          },
+          {
+            href: `/${language}/customer/invoices`,
+            label: t("invoices"),
+            icon: FileText,
+          },
+        ]
+      case "DRIVER":
+        return [
+          ...baseItems,
+          {
+            href: `/${language}/driver/trips`,
+            label: t("myTrips"),
+            icon: Truck,
+          },
+          {
+            href: `/${language}/driver/live-tracking`,
+            label: t("liveTracking"),
+            icon: MapPin,
+          },
         ]
       case "ACCOUNTANT":
         return [
           ...baseItems,
-          { href: `/${language}/accountant/invoices`, label: t("invoices"), icon: FileText },
-          { href: `/${language}/accountant/reports`, label: t("reports"), icon: FileText },
-          // { href: `/${language}/accountant/payments`, label: t("payments"), icon: Calculator },
-          // { href: `/${language}/accountant/settings`, label: t("settings"), icon: Settings },
+          {
+            href: `/${language}/accountant/invoices`,
+            label: t("invoices"),
+            icon: FileText,
+          },
+          {
+            href: `/${language}/accountant/reports`,
+            label: t("reports"),
+            icon: Calculator,
+          },
+          {
+            href: `/${language}/accountant/payments`,
+            label: t("payments"),
+            icon: Calculator,
+          },
         ]
       case "CUSTOMS_BROKER":
         return [
           ...baseItems,
-          { href: `/${language}/customs-broker/clearances`, label: t("clearanceManagement"), icon: Shield },
-          { href: `/${language}/customs-broker/invoices`, label: t("clearanceInvoices"), icon: FileText },
-          { href: `/${language}/customs-broker/documents`, label: t("documentsManagement"), icon: FileText },
-          { href: `/${language}/customs-broker/calculator`, label: t("feeCalculator"), icon: Calculator },
+          {
+            href: `/${language}/customs-broker/clearances`,
+            label: t("clearances"),
+            icon: Shield,
+          },
+          {
+            href: `/${language}/customs-broker/invoices`,
+            label: t("invoices"),
+            icon: FileText,
+          },
         ]
       default:
         return baseItems
@@ -110,42 +170,28 @@ export function Navigation({ className }: NavigationProps) {
   const navItems = getNavItems()
 
   const isActive = (href: string) => {
-    // Remove locale from pathname for comparison
-    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, '')
-    const hrefWithoutLocale = href.replace(/^\/[a-z]{2}/, '')
-    
-    // Exact match for dashboard pages
-    if (hrefWithoutLocale.endsWith('/admin') || hrefWithoutLocale.endsWith('/driver') || 
-        hrefWithoutLocale.endsWith('/customer') || hrefWithoutLocale.endsWith('/accountant') || 
-        hrefWithoutLocale.endsWith('/customs-broker')) {
-      return pathWithoutLocale === hrefWithoutLocale
+    if (href === `/${language}/dashboard`) {
+      return pathname === href || pathname === `/${language}`
     }
-    
-    // For other pages, use startsWith logic
-    return pathWithoutLocale === hrefWithoutLocale || pathWithoutLocale.startsWith(hrefWithoutLocale + "/")
+    return pathname.startsWith(href)
   }
 
   if (!session) {
     return (
-      <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${className}`} dir={dir}>
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={`/${language}`} className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
-            <img 
-              src="/Website-Logo.png" 
-              alt="Logo" 
-              className="h-[100px] w-auto object-contain" 
-            />
-          </Link>
-          
-          <div className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-4' : 'space-x-4'}`}>
-            <Link href={`/${language}/terms`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              {t("termsAndConditions")}
+      <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 ${className}`} dir={dir}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between ">
+            <Link href="/" className="flex items-center">
+              <img 
+                src={companyInfo.logo} 
+                alt={companyInfo.name} 
+                className="h-16 w-auto sm:h-20 md:h-24 lg:h-26 xl:h-30 object-contain" 
+              />
             </Link>
-            <LanguageSelector />
-            <ThemeToggle />
-            <Link href={`/${language}/auth/signin`}>
-              <Button>{t("signIn")}</Button>
-            </Link>
+            <div className="flex items-center space-x-4">
+              <LanguageSelector variant="compact" showLabel={false} />
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </nav>
@@ -153,46 +199,64 @@ export function Navigation({ className }: NavigationProps) {
   }
 
   return (
-    <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${className}`} dir={dir}>
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+    <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 h-20 md:h-24 z-50 ${className}`} dir={dir}>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between ">
           {/* Logo */}
-          <Link href="/" className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
+          <Link href="/" className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2' : 'space-x-2'}`}>
             <img 
-              src="/Website-Logo.png" 
-              alt="Logo" 
-              className="h-[100px] w-auto object-contain" 
+              src={companyInfo.logo} 
+              alt={companyInfo.name} 
+              className="h-16 w-auto sm:h-20 md:h-24 lg:h-26 xl:h-28 object-contain" 
             />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className={`hidden md:flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-6' : 'space-x-6'}`}>
+          {/* Desktop Navigation - Hidden on mobile and tablet */}
+          <div className={`hidden lg:flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-4 xl:space-x-6' : 'space-x-4 xl:space-x-6'}`}>
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2' : 'space-x-2'} px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2' : 'space-x-2'} px-2 xl:px-3 py-2 rounded-md text-xs xl:text-sm font-medium transition-colors ${
                   isActive(item.href)
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
                 }`}
               >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
+                <item.icon className="h-3 w-3 xl:h-4 xl:w-4" />
+                <span className="hidden xl:inline">{item.label}</span>
               </Link>
             ))}
           </div>
 
-          {/* User Menu */}
-          <div className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-4' : 'space-x-4'}`}>
-            <LanguageSelector />
-            <ThemeToggle />
+          {/* Right Side - User Menu & Controls */}
+          <div className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2 sm:space-x-3' : 'space-x-2 sm:space-x-3'}`}>
+            {/* Language & Theme - Hidden on small screens */}
+            <div className="hidden sm:flex items-center space-x-2">
+              <LanguageSelector variant="compact" showLabel={false} />
+              <ThemeToggle />
+            </div>
             
+            {/* Mobile Menu Button - Visible on tablet and mobile */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="lg:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
+            </Button>
+            
+            {/* User Avatar - Always visible */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
+                <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full">
+                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
+                    <AvatarFallback className="text-xs sm:text-sm">
                       {session.user.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
@@ -233,32 +297,22 @@ export function Navigation({ className }: NavigationProps) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? (
-                <X className="h-4 w-4" />
-              ) : (
-                <Menu className="h-4 w-4" />
-              )}
-            </Button>
           </div>
         </div>
 
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t py-4">
-            <div className="space-y-2">
+      </div>
+      
+      {/* Mobile Menu - Outside container but inside nav */}
+      {isMobileMenuOpen && (
+        <div className="lg:hidden bg-background border-t">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              {/* Mobile Navigation Items */}
               {navItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2' : 'space-x-2'} px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-3' : 'space-x-3'} px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive(item.href)
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -270,19 +324,20 @@ export function Navigation({ className }: NavigationProps) {
                 </Link>
               ))}
               
-              {/* Terms and Conditions Link */}
-              <Link
-                href={`/${language}/terms`}
-                className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2' : 'space-x-2'} px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors`}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <FileText className="h-4 w-4" />
-                <span>{t("termsAndConditions")}</span>
-              </Link>
+              {/* Mobile Language & Theme Controls */}
+              <div className="sm:hidden pt-4 border-t mt-4">
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm font-medium text-muted-foreground">{t("preferences")}</span>
+                  <div className="flex items-center space-x-2">
+                    <LanguageSelector variant="compact" showLabel={false} />
+                    <ThemeToggle />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </nav>
   )
 }

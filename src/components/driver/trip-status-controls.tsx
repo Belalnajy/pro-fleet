@@ -106,19 +106,53 @@ export function TripStatusControls({
   }
 
   const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      PENDING: "bg-gray-500",
-      ASSIGNED: "bg-blue-500", 
-      IN_PROGRESS: "bg-orange-500",
-      EN_ROUTE_PICKUP: "bg-yellow-500",
-      AT_PICKUP: "bg-purple-500",
-      PICKED_UP: "bg-green-500",
-      IN_TRANSIT: "bg-blue-600",
-      AT_DESTINATION: "bg-indigo-500",
-      DELIVERED: "bg-green-600",
-      CANCELLED: "bg-red-500"
+    switch (status) {
+      case "DELIVERED":
+      case "delivered":
+        return "bg-green-100 text-green-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "PENDING":
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "CANCELLED":
+      case "cancelled":
+        return "bg-red-100 text-red-800"
+      case "PAID":
+      case "paid":
+        return "bg-green-100 text-green-800"
+      case "ASSIGNED":
+      case "assigned":
+        return "bg-blue-100 text-blue-800"
+      case "IN_TRANSIT":
+      case "inTransit":
+        return "bg-yellow-100 text-yellow-800"
+      case "OVERDUE":
+      case "overdue":
+        return "bg-red-100 text-red-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "EN_ROUTE_PICKUP":
+      case "enRoutePickup":
+        return "bg-blue-100 text-blue-800"
+      case "AT_PICKUP":
+      case "atPickup":
+        return "bg-blue-100 text-blue-800"
+      case "PICKED_UP":
+      case "pickedUp":
+        return "bg-blue-100 text-blue-800"
+      case "AT_DESTINATION":
+      case "atDestination":
+        return "bg-blue-100 text-blue-800"
+      case "SENT":
+      case "sent":
+        return "bg-blue-100 text-blue-800"
+        
+      default:
+        return "bg-gray-100 text-gray-800"
     }
-    return colors[status] || "bg-gray-500"
   }
 
   const getStatusText = (status: string) => {

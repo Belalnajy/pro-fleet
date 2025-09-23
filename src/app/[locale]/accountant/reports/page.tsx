@@ -57,6 +57,20 @@ interface ReportData {
   }
   topRoutes: Array<{ route: string; trips: number; revenue: number; popularity: number }>
   driverPerformance: Array<{ driver: string; trips: number; rating: number; revenue: number }>
+  paymentStats?: {
+    totalInvoices: number
+    paidInvoices: number
+    partialInvoices: number
+    installmentInvoices: number
+    pendingInvoices: number
+    sentInvoices: number
+    cancelledInvoices: number
+    totalAmount: number
+    paidAmount: number
+    remainingAmount: number
+    collectionRate: number
+  }
+  paymentStatusDistribution?: Array<{ status: string; count: number; amount: number }>
 }
 
 interface KPIData {
@@ -100,6 +114,8 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
     growthRate: 0,
   })
   const [dateRange, setDateRange] = useState("last30days")
+  const [statusFilter, setStatusFilter] = useState("")
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("")
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -109,11 +125,15 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
     } else {
       fetchReportData()
     }
-  }, [session, status, router, dateRange])
+  }, [session, status, router, dateRange, statusFilter, paymentStatusFilter])
 
   const fetchReportData = async () => {
     try {
-      const response = await fetch(`/api/admin/reports?range=${dateRange}`)
+      const params = new URLSearchParams({ range: dateRange })
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter)
+      if (paymentStatusFilter && paymentStatusFilter !== 'all') params.append('paymentStatus', paymentStatusFilter)
+      
+      const response = await fetch(`/api/accountant/reports?${params.toString()}`)
       if (response.ok) {
         const data = await response.json()
         setReportData(data.reportData)
@@ -147,7 +167,11 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
 
   const handleExportExcel = async () => {
     try {
-      const response = await fetch(`/api/admin/reports/export?range=${dateRange}&format=excel`)
+      const params = new URLSearchParams({ range: dateRange, format: 'excel' })
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter)
+      if (paymentStatusFilter && paymentStatusFilter !== 'all') params.append('paymentStatus', paymentStatusFilter)
+      
+      const response = await fetch(`/api/accountant/reports/export?${params.toString()}`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
@@ -194,6 +218,32 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
                 <SelectItem value="last3months">{t("last3Months")}</SelectItem>
                 <SelectItem value="last6months">{t("last6Months")}</SelectItem>
                 <SelectItem value="lastyear">{t("lastYear")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="حالة الرحلة" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع الحالات</SelectItem>
+                <SelectItem value="PENDING">في الانتظار</SelectItem>
+                <SelectItem value="IN_PROGRESS">قيد التنفيذ</SelectItem>
+                <SelectItem value="DELIVERED">تم التسليم</SelectItem>
+                <SelectItem value="CANCELLED">ملغية</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={paymentStatusFilter} onValueChange={setPaymentStatusFilter}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="حالة الدفع" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">جميع حالات الدفع</SelectItem>
+                <SelectItem value="PAID">مدفوعة</SelectItem>
+                <SelectItem value="PARTIAL">جزئية</SelectItem>
+                <SelectItem value="INSTALLMENT">أقساط</SelectItem>
+                <SelectItem value="PENDING">معلقة</SelectItem>
+                <SelectItem value="SENT">مرسلة</SelectItem>
+                <SelectItem value="CANCELLED">ملغية</SelectItem>
               </SelectContent>
             </Select>
             <Button className="w-full md:w-auto" variant="outline" size="sm" onClick={handleExportExcel}>
@@ -274,10 +324,64 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
           </Card>
         </div>
 
+        {/* Payment Statistics */}
+        {reportData.paymentStats && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold">إحصائيات المدفوعات</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">إجمالي الفواتير</CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{reportData.paymentStats.totalInvoices}</div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">الفواتير المدفوعة</CardTitle>
+                  <DollarSign className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{reportData.paymentStats.paidInvoices}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {reportData.paymentStats.paidAmount.toFixed(2)} {t("currency")}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">الفواتير المعلقة</CardTitle>
+                  <Calendar className="h-4 w-4 text-orange-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">{reportData.paymentStats.pendingInvoices}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {reportData.paymentStats.remainingAmount.toFixed(2)} {t("currency")}
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">معدل التحصيل</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-blue-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">{reportData.paymentStats.collectionRate.toFixed(1)}%</div>
+                  <div className="text-xs text-muted-foreground">
+                    من إجمالي الفواتير
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
+
         {/* Charts */}
         <Tabs defaultValue="revenue" className="space-y-4">
           <div className="w-full overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 h-auto p-1 bg-muted rounded-lg">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1 h-auto p-1 bg-muted rounded-lg">
               <TabsTrigger 
                 value="revenue" 
                 className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground"
@@ -307,6 +411,12 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
                 className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground"
               >
                 {t("customerAnalysis")}
+              </TabsTrigger>
+              <TabsTrigger 
+                value="payments" 
+                className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap data-[state=active]:bg-background data-[state=active]:text-foreground"
+              >
+                إحصائيات الدفع
               </TabsTrigger>
             </TabsList>
           </div>
@@ -511,6 +621,107 @@ export default function ReportsPage({ params }: { params: Promise<{ locale: stri
                 </ResponsiveContainer>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="payments" className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>توزيع حالات الدفع</CardTitle>
+                  <CardDescription>نسبة الفواتير حسب حالة الدفع</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {reportData.paymentStatusDistribution && (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={reportData.paymentStatusDistribution}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ status, count }) => `${status}: ${count}`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="count"
+                        >
+                          {reportData.paymentStatusDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle>المبالغ حسب حالة الدفع</CardTitle>
+                  <CardDescription>قيمة الفواتير بالريال السعودي</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {reportData.paymentStatusDistribution && (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={reportData.paymentStatusDistribution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="status" />
+                        <YAxis />
+                        <Tooltip formatter={(value) => [`${Number(value).toFixed(2)} ريال`, 'المبلغ']} />
+                        <Bar dataKey="amount" fill="#8884d8" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+            
+            {reportData.paymentStats && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>تفاصيل إحصائيات المدفوعات</CardTitle>
+                  <CardDescription>معلومات شاملة عن حالة المدفوعات</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-green-50 rounded-lg">
+                      <div className="text-2xl font-bold text-green-600">{reportData.paymentStats.paidInvoices}</div>
+                      <div className="text-sm text-green-700">فواتير مدفوعة</div>
+                      <div className="text-xs text-muted-foreground">{reportData.paymentStats.paidAmount.toFixed(2)} ريال</div>
+                    </div>
+                    <div className="text-center p-4 bg-blue-50 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-600">{reportData.paymentStats.partialInvoices}</div>
+                      <div className="text-sm text-blue-700">فواتير جزئية</div>
+                    </div>
+                    <div className="text-center p-4 bg-purple-50 rounded-lg">
+                      <div className="text-2xl font-bold text-purple-600">{reportData.paymentStats.installmentInvoices}</div>
+                      <div className="text-sm text-purple-700">فواتير أقساط</div>
+                    </div>
+                    <div className="text-center p-4 bg-orange-50 rounded-lg">
+                      <div className="text-2xl font-bold text-orange-600">{reportData.paymentStats.pendingInvoices}</div>
+                      <div className="text-sm text-orange-700">فواتير معلقة</div>
+                      <div className="text-xs text-muted-foreground">{reportData.paymentStats.remainingAmount.toFixed(2)} ريال</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">معدل التحصيل:</span>
+                      <span className="text-2xl font-bold text-blue-600">{reportData.paymentStats.collectionRate.toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="font-medium">إجمالي المبالغ:</span>
+                      <span className="text-lg font-semibold">{reportData.paymentStats.totalAmount.toFixed(2)} ريال</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="font-medium">المبلغ المتبقي:</span>
+                      <span className="text-lg font-semibold text-red-600">{reportData.paymentStats.remainingAmount.toFixed(2)} ريال</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
         </Tabs>
       </div>

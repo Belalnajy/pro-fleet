@@ -15,6 +15,20 @@ function getStatusInArabic(status: string): string {
   return statusMap[status] || status
 }
 
+// Helper function to translate payment status to Arabic
+function getPaymentStatusInArabic(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PAID': 'مدفوعة',
+    'PARTIAL': 'جزئية',
+    'INSTALLMENT': 'أقساط',
+    'PENDING': 'معلقة',
+    'SENT': 'مرسلة',
+    'CANCELLED': 'ملغية',
+    'OVERDUE': 'متأخرة'
+  }
+  return statusMap[status] || status
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -25,6 +39,11 @@ export async function GET(req: NextRequest) {
 
     const format = req.nextUrl.searchParams.get("format") || "excel"
     const range = req.nextUrl.searchParams.get("range") || "last30days"
+    const status = req.nextUrl.searchParams.get("status")
+    const customerId = req.nextUrl.searchParams.get("customerId")
+    const driverId = req.nextUrl.searchParams.get("driverId")
+    const vehicleTypeId = req.nextUrl.searchParams.get("vehicleTypeId")
+    const paymentStatus = req.nextUrl.searchParams.get("paymentStatus")
 
     // Calculate date range
     const now = new Date()
@@ -53,13 +72,25 @@ export async function GET(req: NextRequest) {
         startDate.setDate(now.getDate() - 30)
     }
 
+    // Build filter conditions
+    const tripFilters: any = {
+      createdAt: {
+        gte: startDate
+      }
+    }
+
+    if (status) tripFilters.status = status
+    if (customerId) tripFilters.customerId = customerId
+    if (driverId) tripFilters.driverId = driverId
+    if (vehicleTypeId) {
+      tripFilters.vehicle = {
+        vehicleTypeId: vehicleTypeId
+      }
+    }
+
     // Get real trips data
     const trips = await db.trip.findMany({
-      where: {
-        createdAt: {
-          gte: startDate
-        }
-      },
+      where: tripFilters,
       include: {
         customer: {
           select: {
@@ -167,6 +198,85 @@ export async function GET(req: NextRequest) {
       
       // Add worksheet to workbook
       XLSX.utils.book_append_sheet(workbook, worksheet, "تقرير الرحلات")
+      
+      // Get invoices data for payment analysis
+      const invoiceFilters: any = {
+        createdAt: {
+          gte: startDate
+        }
+      }
+      if (paymentStatus) invoiceFilters.paymentStatus = paymentStatus
+      
+      const invoices = await db.invoice.findMany({
+        where: invoiceFilters,
+        include: {
+          trip: {
+            include: {
+              customer: { select: { name: true } },
+              fromCity: { select: { name: true } },
+              toCity: { select: { name: true } }
+            }
+          }
+        },
+        orderBy: { createdAt: "desc" }
+      })
+      
+      // Create invoices worksheet
+      const invoiceHeaders = [
+        "رقم الفاتورة",
+        "رقم الرحلة",
+        "العميل",
+        "المسار",
+        "المبلغ الإجمالي",
+        "المبلغ المدفوع",
+        "المبلغ المتبقي",
+        "حالة الدفع",
+        "عدد الأقساط",
+        "الأقساط المدفوعة",
+        "قيمة القسط",
+        "تاريخ القسط التالي",
+        "تاريخ الإنشاء"
+      ]
+      
+      const invoiceRows = invoices.map(invoice => [
+        invoice.invoiceNumber,
+        invoice.trip?.tripNumber || "غير محدد",
+        invoice.trip?.customer?.name || "غير محدد",
+        invoice.trip ? `${invoice.trip.fromCity?.name} ← ${invoice.trip.toCity?.name}` : "غير محدد",
+        invoice.total.toString(),
+        (invoice.amountPaid || 0).toString(),
+        (invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0))).toString(),
+        getPaymentStatusInArabic(invoice.paymentStatus),
+        (invoice.installmentCount || 0).toString(),
+        (invoice.installmentsPaid || 0).toString(),
+        (invoice.installmentAmount || 0).toString(),
+        invoice.nextInstallmentDate?.toISOString().split('T')[0] || "غير محدد",
+        invoice.createdAt.toISOString().split('T')[0]
+      ])
+      
+      const invoiceWorksheetData = [invoiceHeaders, ...invoiceRows]
+      const invoiceWorksheet = XLSX.utils.aoa_to_sheet(invoiceWorksheetData)
+      
+      // Set column widths for invoices
+      const invoiceColumnWidths = [
+        { wch: 15 }, // رقم الفاتورة
+        { wch: 15 }, // رقم الرحلة
+        { wch: 25 }, // العميل
+        { wch: 30 }, // المسار
+        { wch: 15 }, // المبلغ الإجمالي
+        { wch: 15 }, // المبلغ المدفوع
+        { wch: 15 }, // المبلغ المتبقي
+        { wch: 12 }, // حالة الدفع
+        { wch: 12 }, // عدد الأقساط
+        { wch: 15 }, // الأقساط المدفوعة
+        { wch: 12 }, // قيمة القسط
+        { wch: 18 }, // تاريخ القسط التالي
+        { wch: 15 }  // تاريخ الإنشاء
+      ]
+      invoiceWorksheet['!cols'] = invoiceColumnWidths
+      
+      // Add invoices worksheet
+      XLSX.utils.book_append_sheet(workbook, invoiceWorksheet, "تقرير الفواتير")
       
       // Generate buffer
       const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })

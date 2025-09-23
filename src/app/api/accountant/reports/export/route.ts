@@ -2,6 +2,32 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
+import * as XLSX from 'xlsx'
+
+// Helper function to translate status to Arabic
+function getStatusInArabic(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'في الانتظار',
+    'IN_PROGRESS': 'قيد التنفيذ',
+    'DELIVERED': 'تم التسليم',
+    'CANCELLED': 'ملغية'
+  }
+  return statusMap[status] || status
+}
+
+// Helper function to translate payment status to Arabic
+function getPaymentStatusInArabic(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PAID': 'مدفوعة',
+    'PARTIAL': 'جزئية',
+    'INSTALLMENT': 'أقساط',
+    'PENDING': 'معلقة',
+    'SENT': 'مرسلة',
+    'CANCELLED': 'ملغية',
+    'OVERDUE': 'متأخرة'
+  }
+  return statusMap[status] || status
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,6 +39,11 @@ export async function GET(req: NextRequest) {
 
     const format = req.nextUrl.searchParams.get("format") || "excel"
     const range = req.nextUrl.searchParams.get("range") || "last30days"
+    const status = req.nextUrl.searchParams.get("status")
+    const customerId = req.nextUrl.searchParams.get("customerId")
+    const driverId = req.nextUrl.searchParams.get("driverId")
+    const vehicleTypeId = req.nextUrl.searchParams.get("vehicleTypeId")
+    const paymentStatus = req.nextUrl.searchParams.get("paymentStatus")
 
     // Calculate date range
     const now = new Date()
@@ -41,154 +72,277 @@ export async function GET(req: NextRequest) {
         startDate.setDate(now.getDate() - 30)
     }
 
-    // Get financial data
-    const invoices = await db.invoice.findMany({
-      where: {
-        createdAt: {
-          gte: startDate
-        }
-      },
+    // Build filter conditions
+    const tripFilters: any = {
+      createdAt: {
+        gte: startDate
+      }
+    }
+
+    if (status) tripFilters.status = status
+    if (customerId) tripFilters.customerId = customerId
+    if (driverId) tripFilters.driverId = driverId
+    if (vehicleTypeId) {
+      tripFilters.vehicle = {
+        vehicleTypeId: vehicleTypeId
+      }
+    }
+
+    // Get real trips data
+    const trips = await db.trip.findMany({
+      where: tripFilters,
       include: {
-        trip: {
+        customer: {
+          select: {
+            name: true,
+            email: true
+          }
+        },
+        driver: {
           include: {
-            customer: true,
-            driver: {
-              include: {
-                user: true
+            user: {
+              select: {
+                name: true
               }
-            },
-            fromCity: true,
-            toCity: true,
-            vehicle: {
-              include: {
-                vehicleType: true
+            }
+          }
+        },
+        vehicle: {
+          include: {
+            vehicleType: {
+              select: {
+                name: true,
+                capacity: true
               }
-            },
-            temperature: true
+            }
+          }
+        },
+        fromCity: {
+          select: {
+            name: true
+          }
+        },
+        toCity: {
+          select: {
+            name: true
+          }
+        },
+        temperature: {
+          select: {
+            option: true,
+            value: true
           }
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: "desc"
       }
     })
 
     if (format === "excel") {
-      // Generate CSV format for Excel
-      const csvHeaders = [
-        "Invoice Number",
-        "Trip Number", 
-        "Customer",
-        "Route",
-        "Amount",
-        "Tax",
-        "Customs Fee",
-        "Total",
-        "Status",
-        "Created Date",
-        "Due Date",
-        "Paid Date"
+      // Create comprehensive XLSX export
+      const headers = [
+        "رقم الرحلة",
+        "العميل",
+        "السائق",
+        "المسار",
+        "نوع المركبة",
+        "سعة المركبة",
+        "درجة الحرارة",
+        "الحالة",
+        "السعر (ريال)",
+        "تاريخ الجدولة",
+        "تاريخ البدء",
+        "تاريخ التسليم",
+        "تاريخ الإنشاء"
       ]
-
-      const csvData = invoices.map(invoice => [
-        invoice.invoiceNumber,
-        invoice.trip?.tripNumber || "N/A",
-        invoice.trip?.customer?.companyName || "N/A",
-        `${invoice.trip?.fromCity?.name || "N/A"} - ${invoice.trip?.toCity?.name || "N/A"}`,
-        invoice.subtotal.toString(),
-        invoice.taxAmount.toString(),
-        invoice.customsFee?.toString() || "0",
-        invoice.total.toString(),
-        invoice.paymentStatus,
-        invoice.createdAt.toISOString().split('T')[0],
-        invoice.dueDate.toISOString().split('T')[0],
-        invoice.paidDate?.toISOString().split('T')[0] || "N/A"
+      
+      const rows = trips.map(trip => [
+        trip.tripNumber,
+        trip.customer.name,
+        trip.driver?.user?.name || "غير مخصص",
+        `${trip.fromCity.name} ← ${trip.toCity.name}`,
+        trip.vehicle?.vehicleType?.name || "غير محدد",
+        trip.vehicle?.vehicleType?.capacity || "غير محدد",
+        `${trip.temperature?.option || "غير محدد"} (${trip.temperature?.value || 0}°م)`,
+        getStatusInArabic(trip.status),
+        trip.price.toString(),
+        trip.scheduledDate.toISOString().split('T')[0],
+        trip.actualStartDate?.toISOString().split('T')[0] || "لم يبدأ",
+        trip.deliveredDate?.toISOString().split('T')[0] || "لم يسلم",
+        trip.createdAt.toISOString().split('T')[0]
       ])
-
-      const csvContent = [
-        csvHeaders.join(","),
-        ...csvData.map(row => row.join(","))
-      ].join("\n")
-
-      return new NextResponse(csvContent, {
-        headers: {
-          "Content-Type": "text/csv",
-          "Content-Disposition": `attachment; filename="financial-report-${new Date().toISOString().split('T')[0]}.csv"`
+      
+      // Create workbook and worksheet
+      const workbook = XLSX.utils.book_new()
+      const worksheetData = [headers, ...rows]
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+      
+      // Set column widths
+      const columnWidths = [
+        { wch: 15 }, // رقم الرحلة
+        { wch: 25 }, // العميل
+        { wch: 20 }, // السائق
+        { wch: 30 }, // المسار
+        { wch: 15 }, // نوع المركبة
+        { wch: 12 }, // سعة المركبة
+        { wch: 20 }, // درجة الحرارة
+        { wch: 12 }, // الحالة
+        { wch: 15 }, // السعر
+        { wch: 15 }, // تاريخ الجدولة
+        { wch: 15 }, // تاريخ البدء
+        { wch: 15 }, // تاريخ التسليم
+        { wch: 15 }  // تاريخ الإنشاء
+      ]
+      worksheet['!cols'] = columnWidths
+      
+      // Add worksheet to workbook
+      XLSX.utils.book_append_sheet(workbook, worksheet, "تقرير الرحلات")
+      
+      // Get invoices data for payment analysis
+      const invoiceFilters: any = {
+        createdAt: {
+          gte: startDate
         }
+      }
+      if (paymentStatus) invoiceFilters.paymentStatus = paymentStatus
+      
+      const invoices = await db.invoice.findMany({
+        where: invoiceFilters,
+        include: {
+          trip: {
+            include: {
+              customer: { select: { name: true } },
+              fromCity: { select: { name: true } },
+              toCity: { select: { name: true } }
+            }
+          }
+        },
+        orderBy: { createdAt: "desc" }
+      })
+      
+      // Create invoices worksheet
+      const invoiceHeaders = [
+        "رقم الفاتورة",
+        "رقم الرحلة",
+        "العميل",
+        "المسار",
+        "المبلغ الإجمالي",
+        "المبلغ المدفوع",
+        "المبلغ المتبقي",
+        "حالة الدفع",
+        "عدد الأقساط",
+        "الأقساط المدفوعة",
+        "قيمة القسط",
+        "تاريخ القسط التالي",
+        "تاريخ الإنشاء"
+      ]
+      
+      const invoiceRows = invoices.map(invoice => [
+        invoice.invoiceNumber,
+        invoice.trip?.tripNumber || "غير محدد",
+        invoice.trip?.customer?.name || "غير محدد",
+        invoice.trip ? `${invoice.trip.fromCity?.name} ← ${invoice.trip.toCity?.name}` : "غير محدد",
+        invoice.total.toString(),
+        (invoice.amountPaid || 0).toString(),
+        (invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0))).toString(),
+        getPaymentStatusInArabic(invoice.paymentStatus),
+        (invoice.installmentCount || 0).toString(),
+        (invoice.installmentsPaid || 0).toString(),
+        (invoice.installmentAmount || 0).toString(),
+        invoice.nextInstallmentDate?.toISOString().split('T')[0] || "غير محدد",
+        invoice.createdAt.toISOString().split('T')[0]
+      ])
+      
+      const invoiceWorksheetData = [invoiceHeaders, ...invoiceRows]
+      const invoiceWorksheet = XLSX.utils.aoa_to_sheet(invoiceWorksheetData)
+      
+      // Set column widths for invoices
+      const invoiceColumnWidths = [
+        { wch: 15 }, // رقم الفاتورة
+        { wch: 15 }, // رقم الرحلة
+        { wch: 25 }, // العميل
+        { wch: 30 }, // المسار
+        { wch: 15 }, // المبلغ الإجمالي
+        { wch: 15 }, // المبلغ المدفوع
+        { wch: 15 }, // المبلغ المتبقي
+        { wch: 12 }, // حالة الدفع
+        { wch: 12 }, // عدد الأقساط
+        { wch: 15 }, // الأقساط المدفوعة
+        { wch: 12 }, // قيمة القسط
+        { wch: 18 }, // تاريخ القسط التالي
+        { wch: 15 }  // تاريخ الإنشاء
+      ]
+      invoiceWorksheet['!cols'] = invoiceColumnWidths
+      
+      // Add invoices worksheet
+      XLSX.utils.book_append_sheet(workbook, invoiceWorksheet, "تقرير الفواتير")
+      
+      // Generate buffer
+      const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' })
+      
+      return new Response(buffer, {
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename=profleet-reports-${range}-${new Date().toISOString().split('T')[0]}.xlsx`,
+        },
       })
     }
 
     if (format === "pdf") {
-      // Generate PDF report summary
-      const totalRevenue = invoices
-        .filter(inv => inv.paymentStatus === 'PAID')
-        .reduce((sum, inv) => sum + inv.total, 0)
+      // Generate comprehensive PDF report content
+      const totalRevenue = trips.reduce((sum, trip) => sum + trip.price, 0)
+      const totalTrips = trips.length
+      const avgOrderValue = totalTrips > 0 ? totalRevenue / totalTrips : 0
       
-      const totalPending = invoices
-        .filter(inv => inv.paymentStatus === 'PENDING' || inv.paymentStatus === 'SENT')
-        .reduce((sum, inv) => sum + inv.total, 0)
-
-      const statusBreakdown = invoices.reduce((acc, inv) => {
-        acc[inv.paymentStatus] = (acc[inv.paymentStatus] || 0) + 1
+      const statusCounts = trips.reduce((acc, trip) => {
+        acc[trip.status] = (acc[trip.status] || 0) + 1
         return acc
       }, {} as Record<string, number>)
-
-      const topCustomers = invoices
-        .reduce((acc, inv) => {
-          const customerName = inv.trip?.customer?.companyName || "Unknown"
-          if (!acc[customerName]) {
-            acc[customerName] = { count: 0, revenue: 0 }
-          }
-          acc[customerName].count++
-          if (inv.paymentStatus === 'PAID') {
-            acc[customerName].revenue += inv.total
-          }
-          return acc
-        }, {} as Record<string, { count: number; revenue: number }>)
-
-      const pdfContent = `
-FINANCIAL REPORT
-Generated: ${new Date().toLocaleDateString()}
-Period: ${startDate.toLocaleDateString()} - ${now.toLocaleDateString()}
-
-SUMMARY:
-- Total Revenue (Paid): ${totalRevenue.toFixed(2)} SAR
-- Pending Payments: ${totalPending.toFixed(2)} SAR
-- Total Invoices: ${invoices.length}
-
-INVOICE STATUS BREAKDOWN:
-${Object.entries(statusBreakdown)
-  .map(([status, count]) => `- ${status}: ${count} invoices`)
-  .join('\n')}
-
-TOP CUSTOMERS:
-${Object.entries(topCustomers)
-  .sort(([,a], [,b]) => b.revenue - a.revenue)
-  .slice(0, 10)
-  .map(([customer, data]) => `- ${customer}: ${data.count} invoices, ${data.revenue.toFixed(2)} SAR`)
-  .join('\n')}
-
-DETAILED INVOICE LIST:
-${invoices.slice(0, 50).map(inv => 
-  `${inv.invoiceNumber} | ${inv.trip?.customer?.companyName || 'N/A'} | ${inv.total.toFixed(2)} SAR | ${inv.paymentStatus}`
-).join('\n')}
-${invoices.length > 50 ? `\n... and ${invoices.length - 50} more invoices` : ''}
-      `
-
-      return new NextResponse(pdfContent, {
-        headers: {
-          "Content-Type": "text/plain",
-          "Content-Disposition": `attachment; filename="financial-report-${new Date().toISOString().split('T')[0]}.txt"`
+      
+      const topCustomers = trips.reduce((acc, trip) => {
+        const customer = trip.customer.name
+        if (!acc[customer]) {
+          acc[customer] = { trips: 0, revenue: 0 }
         }
+        acc[customer].trips += 1
+        acc[customer].revenue += trip.price
+        return acc
+      }, {} as Record<string, { trips: number; revenue: number }>)
+      
+      const content = `ProFleet Reports - ${range.toUpperCase()}\n` +
+        `Generated: ${new Date().toISOString()}\n\n` +
+        `SUMMARY STATISTICS:\n` +
+        `Total Revenue: ${totalRevenue.toLocaleString()} SAR\n` +
+        `Total Trips: ${totalTrips}\n` +
+        `Average Order Value: ${avgOrderValue.toFixed(2)} SAR\n\n` +
+        `TRIP STATUS BREAKDOWN:\n` +
+        Object.entries(statusCounts).map(([status, count]) => `${status}: ${count}`).join('\n') + '\n\n' +
+        `TOP CUSTOMERS:\n` +
+        Object.entries(topCustomers)
+          .sort(([,a], [,b]) => b.revenue - a.revenue)
+          .slice(0, 10)
+          .map(([customer, data]) => `${customer}: ${data.trips} trips, ${data.revenue.toLocaleString()} SAR`)
+          .join('\n') + '\n\n' +
+        `DETAILED TRIP DATA:\n` +
+        trips.slice(0, 50).map(trip => 
+          `${trip.tripNumber} | ${trip.customer.name} | ${trip.fromCity.name} → ${trip.toCity.name} | ${trip.status} | ${trip.price} SAR`
+        ).join('\n')
+      
+      return new Response(content, {
+        headers: {
+          "Content-Type": "application/octet-stream",
+          "Content-Disposition": `attachment; filename=profleet-report-${range}-${new Date().toISOString().split('T')[0]}.txt`,
+        },
       })
     }
 
     return NextResponse.json({ error: "Unsupported format" }, { status: 400 })
-
+    
   } catch (error) {
-    console.error("Export error:", error)
+    console.error("Error exporting report data:", error)
     return NextResponse.json(
-      { error: "Failed to export report" },
+      { error: "Internal server error" },
       { status: 500 }
     )
   }

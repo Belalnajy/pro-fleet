@@ -12,6 +12,11 @@ export async function GET(req: NextRequest) {
     }
 
     const range = req.nextUrl.searchParams.get("range") || "last30days"
+    const status = req.nextUrl.searchParams.get("status")
+    const customerId = req.nextUrl.searchParams.get("customerId")
+    const driverId = req.nextUrl.searchParams.get("driverId")
+    const vehicleTypeId = req.nextUrl.searchParams.get("vehicleTypeId")
+    const paymentStatus = req.nextUrl.searchParams.get("paymentStatus")
 
     // Calculate date range
     const now = new Date()
@@ -40,13 +45,33 @@ export async function GET(req: NextRequest) {
         startDate.setDate(now.getDate() - 30)
     }
 
+    // Build filter conditions
+    const tripFilters: any = {
+      createdAt: {
+        gte: startDate
+      }
+    }
+
+    if (status) tripFilters.status = status
+    if (customerId) tripFilters.customerId = customerId
+    if (driverId) tripFilters.driverId = driverId
+    if (vehicleTypeId) {
+      tripFilters.vehicle = {
+        vehicleTypeId: vehicleTypeId
+      }
+    }
+
+    const invoiceFilters: any = {
+      createdAt: {
+        gte: startDate
+      }
+    }
+
+    if (paymentStatus) invoiceFilters.paymentStatus = paymentStatus
+
     // Get all trips with relations
     const trips = await db.trip.findMany({
-      where: {
-        createdAt: {
-          gte: startDate
-        }
-      },
+      where: tripFilters,
       include: {
         customer: {
           select: {
@@ -103,11 +128,7 @@ export async function GET(req: NextRequest) {
 
     // Get invoices for financial data
     const invoices = await db.invoice.findMany({
-      where: {
-        createdAt: {
-          gte: startDate
-        }
-      },
+      where: invoiceFilters,
       include: {
         trip: {
           include: {
@@ -347,6 +368,30 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10)
 
+    // Payment Statistics
+    const paymentStats = {
+      totalInvoices: invoices.length,
+      paidInvoices: invoices.filter(inv => inv.paymentStatus === 'PAID').length,
+      partialInvoices: invoices.filter(inv => inv.paymentStatus === 'PARTIAL').length,
+      installmentInvoices: invoices.filter(inv => inv.paymentStatus === 'INSTALLMENT').length,
+      pendingInvoices: invoices.filter(inv => inv.paymentStatus === 'PENDING').length,
+      sentInvoices: invoices.filter(inv => inv.paymentStatus === 'SENT').length,
+      cancelledInvoices: invoices.filter(inv => inv.paymentStatus === 'CANCELLED').length,
+      totalAmount: invoices.reduce((sum, inv) => sum + inv.total, 0),
+      paidAmount: invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0),
+      remainingAmount: invoices.reduce((sum, inv) => sum + (inv.remainingAmount !== null ? inv.remainingAmount : (inv.total - (inv.amountPaid || 0))), 0),
+      collectionRate: invoices.length > 0 ? Math.round((invoices.filter(inv => inv.paymentStatus === 'PAID').length / invoices.length) * 100 * 100) / 100 : 0
+    }
+
+    // Payment Status Distribution for Charts
+    const paymentStatusDistribution = [
+      { status: 'مدفوعة', count: paymentStats.paidInvoices, amount: invoices.filter(inv => inv.paymentStatus === 'PAID').reduce((sum, inv) => sum + inv.total, 0) },
+      { status: 'جزئية', count: paymentStats.partialInvoices, amount: invoices.filter(inv => inv.paymentStatus === 'PARTIAL').reduce((sum, inv) => sum + inv.total, 0) },
+      { status: 'أقساط', count: paymentStats.installmentInvoices, amount: invoices.filter(inv => inv.paymentStatus === 'INSTALLMENT').reduce((sum, inv) => sum + inv.total, 0) },
+      { status: 'معلقة', count: paymentStats.pendingInvoices, amount: invoices.filter(inv => inv.paymentStatus === 'PENDING').reduce((sum, inv) => sum + inv.total, 0) },
+      { status: 'مرسلة', count: paymentStats.sentInvoices, amount: invoices.filter(inv => inv.paymentStatus === 'SENT').reduce((sum, inv) => sum + inv.total, 0) }
+    ]
+
     const reportData = {
       monthlyRevenue,
       cityStats,
@@ -355,7 +400,9 @@ export async function GET(req: NextRequest) {
       dailyStats,
       performanceMetrics,
       topRoutes,
-      driverPerformance
+      driverPerformance,
+      paymentStats,
+      paymentStatusDistribution
     }
 
     return NextResponse.json({

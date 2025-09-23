@@ -29,6 +29,7 @@ import {
   Thermometer,
   X,
   Timer,
+  Shield,
 } from "lucide-react"
 import { TripStatus } from "@prisma/client"
 
@@ -63,6 +64,11 @@ interface Trip {
   vehicle: {
     type: string
     capacity: string
+  }
+  customsBroker?: {
+    user: {
+      name: string
+    }
   }
 }
 
@@ -433,6 +439,16 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
                       {t('currency')} {trip.price?.toLocaleString() || '0'}
                     </p>
                   </div>
+                  
+                  {trip.customsBroker && (
+                    <div>
+                      <div className="flex items-center space-x-1 text-muted-foreground mb-1">
+                        <Shield className="h-4 w-4" />
+                        <span className="text-sm">{t('customsBroker')}</span>
+                      </div>
+                      <p className="text-sm font-medium">{trip.customsBroker?.user?.name || t('notAssigned')}</p>
+                    </div>
+                  )}
                 </div>
 
                 {trip.notes && (

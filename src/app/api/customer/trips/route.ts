@@ -54,6 +54,15 @@ export async function GET(request: NextRequest) {
             value: true,
             unit: true,
           }
+        },
+        customsBroker: {
+          select: {
+            user: {
+              select: {
+                name: true
+              }
+            }
+          }
         }
       },
       orderBy: {
@@ -188,6 +197,8 @@ export async function POST(request: NextRequest) {
       toCityId,
       temperatureId: finalTemperatureId,
       vehicleId: finalVehicleId,
+      driverId: driverId || null,
+      customsBrokerId: customsBrokerId || null,
       scheduledDate,
       price: finalPrice
     })
@@ -202,6 +213,7 @@ export async function POST(request: NextRequest) {
         temperatureId: finalTemperatureId!,
         vehicleId: finalVehicleId!,
         driverId: driverId || null, // Include driver ID if provided
+        customsBrokerId: customsBrokerId || null, // Include customs broker ID if provided
         scheduledDate: new Date(scheduledDate),
         price: finalPrice,
         currency: "SAR",

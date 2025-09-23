@@ -48,7 +48,7 @@ export function Navigation({ className }: NavigationProps) {
 
     const baseItems = [
       {
-        href: `/${language}/dashboard`,
+        href: `/${language}/${session.user.role.toLowerCase()}`,
         label: t("dashboard"),
         icon: LayoutDashboard,
       },
@@ -83,6 +83,7 @@ export function Navigation({ className }: NavigationProps) {
           { href: `/${language}/customer/addresses`, label: t("savedAddresses"), icon: MapPin },
           { href: `/${language}/customer/tracking`, label: t("tracking"), icon: NavigationIcon },
           { href: `/${language}/customer/invoices`, label: t("invoices"), icon: FileText },
+          { href: `/${language}/customer/clearances`, label: t("clearances"), icon: Shield },
 
         ]
       case "ACCOUNTANT":
@@ -97,6 +98,7 @@ export function Navigation({ className }: NavigationProps) {
         return [
           ...baseItems,
           { href: `/${language}/customs-broker/clearances`, label: t("clearanceManagement"), icon: Shield },
+          { href: `/${language}/customs-broker/invoices`, label: t("clearanceInvoices"), icon: FileText },
           { href: `/${language}/customs-broker/documents`, label: t("documentsManagement"), icon: FileText },
           { href: `/${language}/customs-broker/calculator`, label: t("feeCalculator"), icon: Calculator },
         ]
@@ -108,14 +110,26 @@ export function Navigation({ className }: NavigationProps) {
   const navItems = getNavItems()
 
   const isActive = (href: string) => {
-    return pathname === href || pathname.startsWith(href + "/")
+    // Remove locale from pathname for comparison
+    const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}/, '')
+    const hrefWithoutLocale = href.replace(/^\/[a-z]{2}/, '')
+    
+    // Exact match for dashboard pages
+    if (hrefWithoutLocale.endsWith('/admin') || hrefWithoutLocale.endsWith('/driver') || 
+        hrefWithoutLocale.endsWith('/customer') || hrefWithoutLocale.endsWith('/accountant') || 
+        hrefWithoutLocale.endsWith('/customs-broker')) {
+      return pathWithoutLocale === hrefWithoutLocale
+    }
+    
+    // For other pages, use startsWith logic
+    return pathWithoutLocale === hrefWithoutLocale || pathWithoutLocale.startsWith(hrefWithoutLocale + "/")
   }
 
   if (!session) {
     return (
-      <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${className}`}>
+      <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${className}`} dir={dir}>
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={`/${language}`} className="flex items-center space-x-3">
+          <Link href={`/${language}`} className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
             <img 
               src="/Website-Logo.png" 
               alt="Logo" 
@@ -123,7 +137,7 @@ export function Navigation({ className }: NavigationProps) {
             />
           </Link>
           
-          <div className="flex items-center space-x-4">
+          <div className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-4' : 'space-x-4'}`}>
             <Link href={`/${language}/terms`} className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               {t("termsAndConditions")}
             </Link>
@@ -139,11 +153,11 @@ export function Navigation({ className }: NavigationProps) {
   }
 
   return (
-    <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${className}`}>
+    <nav className={`border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${className}`} dir={dir}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3">
+          <Link href="/" className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-3' : 'space-x-3'}`}>
             <img 
               src="/Website-Logo.png" 
               alt="Logo" 
@@ -152,12 +166,12 @@ export function Navigation({ className }: NavigationProps) {
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6">
+          <div className={`hidden md:flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-6' : 'space-x-6'}`}>
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2' : 'space-x-2'} px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive(item.href)
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -170,7 +184,7 @@ export function Navigation({ className }: NavigationProps) {
           </div>
 
           {/* User Menu */}
-          <div className="flex items-center space-x-4">
+          <div className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-4' : 'space-x-4'}`}>
             <LanguageSelector />
             <ThemeToggle />
             
@@ -184,7 +198,7 @@ export function Navigation({ className }: NavigationProps) {
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
+              <DropdownMenuContent className="w-56" align={dir === 'rtl' ? 'start' : 'end'} forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none">
@@ -202,19 +216,19 @@ export function Navigation({ className }: NavigationProps) {
 
                 <DropdownMenuItem asChild>
                   <Link href={`/${language}/profile`}>
-                    <Settings className="mr-2 h-4 w-4" />
+                    <Settings className={`${dir === 'rtl' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
                     <span>{t("profile")}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link href={`/${language}/terms`}>
-                    <FileText className="mr-2 h-4 w-4" />
+                    <FileText className={`${dir === 'rtl' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
                     <span>{t("termsAndConditions")}</span>
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => signOut({ callbackUrl: `/${language}/auth/signin` })}>
-                  <LogOut className="mr-2 h-4 w-4" />
+                  <LogOut className={`${dir === 'rtl' ? 'ml-2' : 'mr-2'} h-4 w-4`} />
                   <span>{t("signOut")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -244,7 +258,7 @@ export function Navigation({ className }: NavigationProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2' : 'space-x-2'} px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     isActive(item.href)
                       ? "bg-primary text-primary-foreground"
                       : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -259,7 +273,7 @@ export function Navigation({ className }: NavigationProps) {
               {/* Terms and Conditions Link */}
               <Link
                 href={`/${language}/terms`}
-                className="flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                className={`flex items-center ${dir === 'rtl' ? 'space-x-reverse space-x-2' : 'space-x-2'} px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <FileText className="h-4 w-4" />

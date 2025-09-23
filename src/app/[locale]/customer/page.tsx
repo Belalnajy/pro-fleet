@@ -19,6 +19,7 @@ import {
   DollarSign,
   TrendingUp,
   AlertTriangle,
+  Shield,
 } from "lucide-react"
 
 interface CustomerDashboardProps {
@@ -140,12 +141,73 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
       case "CANCELLED":
       case "cancelled":
         return "bg-red-100 text-red-800"
+      case "PAID":
       case "paid":
         return "bg-green-100 text-green-800"
+      case "ASSIGNED":
+      case "assigned":
+        return "bg-blue-100 text-blue-800"
+      case "IN_TRANSIT":
+      case "inTransit":
+        return "bg-yellow-100 text-yellow-800"
+      case "OVERDUE":
+      case "overdue":
+        return "bg-red-100 text-red-800"
+      case "IN_PROGRESS":
+      case "inProgress":
+        return "bg-blue-100 text-blue-800"
+      case "EN_ROUTE_PICKUP":
+      case "enRoutePickup":
+        return "bg-blue-100 text-blue-800"
+      case "AT_PICKUP":
+      case "atPickup":
+        return "bg-blue-100 text-blue-800"
+      case "PICKED_UP":
+      case "pickedUp":
+        return "bg-blue-100 text-blue-800"
+      case "AT_DESTINATION":
+      case "atDestination":
+        return "bg-blue-100 text-blue-800"
+      case "SENT":
+      case "sent":
+        return "bg-blue-100 text-blue-800"
+        
       default:
         return "bg-gray-100 text-gray-800"
     }
   }
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'PENDING':
+      case 'pending':
+        return t('pendingStatus')
+      case 'SENT':
+      case 'sent':
+        return t('sentStatus')
+      case 'PAID':
+      case 'paid':
+        return t('paidStatus')
+      case 'OVERDUE':
+      case 'overdue':
+        return t('overdueStatus')
+      case 'CANCELLED':
+      case 'cancelled':
+        return t('cancelled')
+      case 'PARTIAL':
+      case 'partial':
+        return t('partialStatus')
+      case 'INSTALLMENT':
+      case 'installment':
+        return t('installmentStatus')
+      case 'ASSIGNED':
+      case 'assigned':
+        return t('assignedStatus')
+      default:
+        return status
+    }
+  }
+
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -155,6 +217,30 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
         return <CheckCircle className="h-4 w-4" />
       case "IN_PROGRESS":
       case "inProgress":
+        return <Truck className="h-4 w-4" />
+      case "EN_ROUTE_PICKUP":
+      case "enRoutePickup":
+        return <Truck className="h-4 w-4" />
+      case "AT_PICKUP":
+      case "atPickup":
+        return <Truck className="h-4 w-4" />
+      case "PICKED_UP":
+      case "pickedUp":
+        return <Truck className="h-4 w-4" />
+      case "AT_DESTINATION":
+      case "atDestination":
+        return <Truck className="h-4 w-4" />
+      case "SENT":
+      case "sent":
+        return <Truck className="h-4 w-4" />
+      case "ASSIGNED":
+      case "assigned":
+        return <Truck className="h-4 w-4" />
+      case "IN_TRANSIT":
+      case "inTransit":
+        return <Truck className="h-4 w-4" />
+      case "OVERDUE":
+      case "overdue":
         return <Truck className="h-4 w-4" />
       case "PENDING":
       case "pending":
@@ -178,6 +264,7 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
     totalInvoices: invoices.length,
     paidInvoices: invoices.filter(inv => inv.status === "PAID").length,
     overdueInvoices: invoices.filter(inv => inv.status === "OVERDUE").length,
+    customsClearances: invoices.filter(inv => inv.customsBroker).length,
   }
 
   return (
@@ -219,7 +306,7 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
       </Card>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t("totalTrips")}</CardTitle>
@@ -275,6 +362,19 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
             </p>
           </CardContent>
         </Card>
+
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => router.push(`/${locale}/customer/clearances`)}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{t("customsClearances")}</CardTitle>
+            <Shield className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.customsClearances || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              activeClearances
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -320,7 +420,7 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
                           <span>{trip.toCity?.name}</span>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                          {trip.vehicle?.type} ({trip.vehicle?.capacity}) • {trip.temperature?.option}
+                          {trip.vehicle?.vehicleNumber} • {trip.temperature?.option}
                         </div>
                         <div className="text-sm text-muted-foreground">
                           {t("scheduled")}: {new Date(trip.scheduledDate).toLocaleDateString()}
@@ -368,9 +468,9 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
                   <div className="flex items-center space-x-3">
                     <FileText className="h-8 w-8 text-primary" />
                     <div>
-                      <h3 className="font-semibold">{invoice.id}</h3>
+                      <h3 className="font-semibold">{invoice.invoiceNumber}</h3>
                       <div className="text-sm text-muted-foreground">
-                        {t("trip")}: {invoice.tripId}
+                        {t("trip")}: {invoice.tripNumber}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {t("due")}: {new Date(invoice.dueDate).toLocaleDateString()}
@@ -379,11 +479,11 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
                   </div>
                   <div className="flex items-center space-x-4">
                     <div className="text-right">
-                      <div className="font-semibold">{translate("currency")} {(invoice.amount || 0).toLocaleString()}</div>
+                      <div className="font-semibold">{translate("currency")} {(invoice.totalAmount || 0).toLocaleString()}</div>
                       <Badge className={getStatusColor(invoice.status)}>
                         <div className="flex items-center space-x-1">
                           {getStatusIcon(invoice.status)}
-                          <span>{t(invoice.status)}</span>
+                          <span>{getStatusText(invoice.status)}</span>
                         </div>
                       </Badge>
                     </div>

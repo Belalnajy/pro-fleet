@@ -135,5 +135,5 @@
   "driverManagement": "إدارة السائقين",
   "manageDriverVehicleAssignments": "إدارة تخصيص أنواع المركبات للسائقين",
   "systemStatus": "حالة النظام",
-  "installmentStatus": "Installment"
+  "PaymentMethodIsRequired": "يجب اختيار طريقة الدفع"
 }

@@ -100,7 +100,7 @@ export default function TermsPage({ params }: TermsPageProps) {
                         </div>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <h4 className="font-semibold text-gray-800">النقل اللوجستي:</h4>
-                          <p className="text-muted-foreground">هو نقل البضائع أو الأغراض من نقطة يحددها العميل إلى نقطة أخرى عن طريق الخارطة أو العنوان عن طريق المناديب.</p>
+                          <p className="text-muted-foreground">هو نقل البضائع أو الأغراض من نقطة يحددها العميل إلى نقطة أخرى عن طريق الخارطة أو العنوان عن طريق السائقين.</p>
                         </div>
                       </div>
                     </section>
@@ -155,7 +155,7 @@ export default function TermsPage({ params }: TermsPageProps) {
                     <section>
                       <h3 className="text-xl font-semibold mb-3 text-foreground">{t('introduction')}</h3>
                       <p className="text-muted-foreground leading-relaxed">
-                        تُمثل هذه الضوابط والشروط اتفاق رسمي "عقد" بين شركة برو المحدودة القابضة سجل تجاري رقم {companyInfo.commercialRegister} المالك للعلامة التجارية "profleet" ومقدمي خدمات التوصيل (المناديب).
+                        تُمثل هذه الضوابط والشروط اتفاق رسمي "عقد" بين شركة برو المحدودة القابضة سجل تجاري رقم {companyInfo.commercialRegister} المالك للعلامة التجارية "profleet" ومقدمي خدمات التوصيل (السائقين).
                       </p>
                     </section>
 
@@ -196,7 +196,7 @@ export default function TermsPage({ params }: TermsPageProps) {
                     <section>
                       <h3 className="text-xl font-semibold mb-3 text-foreground">{t('prohibitedItems')}</h3>
                       <p className="text-muted-foreground mb-3">
-                        يحظر على المستخدمين والمناديب شراء أو توصيل أو إرسال أو تلقي أو استلام الفئات التالية من المواد والمُنتجات:
+                        يحظر على المستخدمين والسائقين شراء أو توصيل أو إرسال أو تلقي أو استلام الفئات التالية من المواد والمُنتجات:
                       </p>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

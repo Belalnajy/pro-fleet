@@ -209,5 +209,18 @@
   "customsClearances": "Customs Clearances",
   "partialStatus": "Partial",
   "installmentStatus": "Installment",
-  "assignedStatus": "Assigned"
+  "assignedStatus": "Assigned",
+  "pendingStatus": "Pending",
+  "sentStatus": "Sent",
+  "paidStatus": "Paid",
+  "overdueStatus": "Overdue",
+  "cancelled": "Cancelled",
+  "delivered": "Delivered",
+  "inProgress": "In Progress",
+  "assigned": "Assigned",
+  "enRoutePickup": "En Route to Pickup",
+  "atPickup": "At Pickup Location",
+  "pickedUp": "Picked Up",
+  "inTransit": "In Transit",
+  "atDestination": "At Destination"
 }

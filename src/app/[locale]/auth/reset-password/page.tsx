@@ -241,7 +241,7 @@ export default function ResetPasswordPage({ params: pageParams }: { params: Prom
                 
                 <div className="text-center text-sm text-muted-foreground">
                   <Link href={`/${locale}/auth/signin`} className="text-primary hover:underline">
-                    العودة لتسجيل الدخول
+                    <span className="hidden md:inline"> العودة لتسجيل الدخول</span>
                   </Link>
                 </div>
               </CardFooter>

@@ -244,5 +244,13 @@
   "sentStatus": "مرسل",
   "paidStatus": "مدفوع",
   "overdueStatus": "متأخر",
-  "cancelled": "ملغي"
+  "cancelled": "ملغي",
+  "delivered": "تم التسليم",
+  "inProgress": "قيد التنفيذ",
+  "assigned": "معين",
+  "enRoutePickup": "في الطريق للاستلام",
+  "atPickup": "وصل لنقطة الاستلام",
+  "pickedUp": "تم الاستلام",
+  "inTransit": "في الطريق",
+  "atDestination": "وصل للوجهة"
 }

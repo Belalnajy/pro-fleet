@@ -74,7 +74,15 @@ export async function POST(
         },
         trip: {
           include: {
-            customer: {
+            customer: true,
+            fromCity: true,
+            toCity: true,
+            vehicle: {
+              include: {
+                vehicleType: true
+              }
+            },
+            driver: {
               include: {
                 user: true
               }

@@ -62,6 +62,8 @@
   "notes": "نوٹس",
   "description": "تفصیل",
   "termsAndConditions": "شرائط و ضوابط",
+  "readTermsBeforeUse": "براہ کرم ہماری خدمات استعمال کرنے سے پہلے شرائط و ضوابط پڑھیں تاکہ آپ اپنے حقوق اور ذمہ داریوں کو سمجھ سکیں",
+  "readTermsAndConditions": "شرائط و ضوابط پڑھیں",
   "termsTitle": "شرائط و ضوابط",
   "termsSubtitle": "ProFleet پلیٹ فارم کے صارفین اور ڈرائیورز کے لیے شرائط و ضوابط",
   "lastUpdated": "آخری اپ ڈیٹ",

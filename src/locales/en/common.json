@@ -62,6 +62,8 @@
   "notes": "Notes",
   "description": "Description",
   "termsAndConditions": "Terms & Conditions",
+  "readTermsBeforeUse": "Please read the terms and conditions before using our services to ensure you understand your rights and obligations",
+  "readTermsAndConditions": "Read Terms & Conditions",
   "termsTitle": "Terms and Conditions",
   "termsSubtitle": "Terms and conditions for using the ProFleet platform for customers and drivers",
   "lastUpdated": "Last Updated",

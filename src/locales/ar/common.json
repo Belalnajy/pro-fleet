@@ -62,6 +62,8 @@
   "notes": "ملاحظات",
   "description": "الوصف",
   "termsAndConditions": "الشروط والأحكام",
+  "readTermsBeforeUse": "يرجى قراءة الشروط والأحكام قبل استخدام خدماتنا لضمان فهم حقوقك والتزاماتك",
+  "readTermsAndConditions": "اقرأ الشروط والأحكام",
   "termsTitle": "الشروط والأحكام",
   "termsSubtitle": "ضوابط وشروط وأحكام استخدام منصة ProFleet للعملاء والمناديب",
   "lastUpdated": "آخر تحديث",

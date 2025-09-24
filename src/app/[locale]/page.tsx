@@ -138,6 +138,14 @@ export default function HomePage({ params }: LocalePageProps) {
             </div>
             
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
+              {/* Terms and Conditions Link */}
+              <Link href={`/${locale}/terms`} className="hidden sm:block">
+                <Button variant="ghost" size="sm" className="text-sm text-muted-foreground hover:text-primary">
+                  <FileCheck className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
+                  {t('termsAndConditions')}
+                </Button>
+              </Link>
+              
               {/* Language Selector */}
               <LanguageSelector variant="compact" showLabel={false} />
               
@@ -455,6 +463,28 @@ export default function HomePage({ params }: LocalePageProps) {
         </div>
       </section>
 
+      {/* Terms and Conditions Section */}
+      <section className="bg-primary/5 border-t border-b">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-4">
+              <FileCheck className="h-8 w-8 text-primary mr-3 rtl:mr-0 rtl:ml-3" />
+              <h2 className="text-2xl font-bold text-foreground">{t('termsAndConditions')}</h2>
+            </div>
+            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+              {t('readTermsBeforeUse') || 'يرجى قراءة الشروط والأحكام قبل استخدام خدماتنا لضمان فهم حقوقك والتزاماتك'}
+            </p>
+            <Link href={`/${locale}/terms`}>
+              <Button size="lg" className="text-lg px-8">
+                <FileCheck className="h-5 w-5 mr-2 rtl:mr-0 rtl:ml-2" />
+                {t('readTermsAndConditions') || 'اقرأ الشروط والأحكام'}
+                <ArrowRight className="h-5 w-5 ml-2 rtl:ml-0 rtl:mr-2" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -481,8 +511,8 @@ export default function HomePage({ params }: LocalePageProps) {
       </section>
 
       {/* Footer */}
-      <footer className="bg-background border-t py-12">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="bg-muted/30 border-t">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
             {/* Company Info */}
             <div className="col-span-1 lg:col-span-2">

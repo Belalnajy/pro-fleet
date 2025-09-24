@@ -736,14 +736,14 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleViewInvoice(invoice.id)}>
+                              {/* <DropdownMenuItem onClick={() => handleViewInvoice(invoice.id)}>
                                 <Eye className="h-4 w-4 mr-2" />
                                 {t("viewDetailsAction")}
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleEditInvoice(invoice.id)}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 {t("editInvoiceAction")}
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                               {invoice.paymentStatus !== 'PAID' && invoice.paymentStatus !== 'CANCELLED' && (invoice.remainingAmount || 0) > 0 && (
                                 <DropdownMenuItem onClick={() => handleViewInvoice(invoice.id)}>
                                   <DollarSign className="h-4 w-4 mr-2" />

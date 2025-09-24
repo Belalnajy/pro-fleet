@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
-import { db } from '@/lib/db'
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { generateInvoiceNumber } from "@/lib/invoice-number-generator"
 
 export async function GET(request: NextRequest) {
   try {
@@ -234,24 +235,16 @@ export async function POST(request: NextRequest) {
       customsBrokerId = manualCustomsBrokerId
     }
 
-    // Generate invoice number
-    const lastInvoice = await db.invoice.findFirst({
-      orderBy: { createdAt: 'desc' }
-    })
-    
-    let invoiceNumber = "INV-000001"
-    if (lastInvoice) {
-      const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[1])
-      invoiceNumber = `INV-${(lastNumber + 1).toString().padStart(6, '0')}`
-    }
+    // Generate invoice number with new format: PRO-INV- + YYYYMMDD + sequential number
+    const invoiceCount = await db.invoice.count()
+    const invoiceNumber = generateInvoiceNumber(invoiceCount)
 
-    // Calculate total
-    const total = subtotal + taxAmount + (customsFees || 0)
+    // Calculate total (regular invoices don't have customs fees)
+    const total = subtotal + taxAmount
 
     // Create invoice data
     const invoiceData: any = {
       invoiceNumber,
-      customsFee: customsFees || 0,
       taxRate: taxAmount / subtotal, // Calculate tax rate
       taxAmount,
       subtotal,
@@ -259,7 +252,10 @@ export async function POST(request: NextRequest) {
       currency: 'SAR',
       paymentStatus: 'PENDING',
       dueDate: new Date(dueDate),
-      notes: notes || null
+      notes: notes || null,
+      // Payment tracking fields
+      amountPaid: 0,
+      remainingAmount: total
     }
 
     // Add tripId if provided
@@ -332,7 +328,7 @@ export async function POST(request: NextRequest) {
       tripNumber: trip?.tripNumber || null,
       subtotal: invoice.subtotal,
       taxAmount: invoice.taxAmount,
-      customsFees: invoice.customsFee,
+      customsFees: 0, // Regular invoices don't have customs fees
       totalAmount: invoice.total,
       status: invoice.paymentStatus,
       dueDate: invoice.dueDate.toISOString(),

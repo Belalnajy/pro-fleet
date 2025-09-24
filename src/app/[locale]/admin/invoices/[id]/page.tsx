@@ -29,7 +29,8 @@ import {
   Clock,
   AlertTriangle,
   X,
-  Loader2
+  Loader2,
+  CreditCard
 } from "lucide-react"
 import { PaymentManagement } from "@/components/invoices/payment-management"
 
@@ -302,7 +303,9 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
       case "SENT":
       case "sent":
         return "bg-blue-100 text-blue-800"
-        
+      case "INSTALLMENT":
+      case "installment":
+        return "bg-purple-100 text-purple-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -320,27 +323,25 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
         return <AlertTriangle className="h-4 w-4" />
       case "cancelled":
         return <X className="h-4 w-4" />
+      case "installment":
+        return <CreditCard className="h-4 w-4" />
       default:
         return <FileText className="h-4 w-4" />
     }
   }
-
   const getStatusText = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "paid":
-        return "مدفوعة"
-      case "pending":
-        return "في الانتظار"
-      case "sent":
-        return "مرسلة"
-      case "overdue":
-        return "متأخرة"
-      case "cancelled":
-        return "ملغية"
-      default:
-        return status
+    const statusMap: Record<string, string> = {
+      'PENDING': t("pendingStatus"),
+      'SENT': t("sentStatus"),
+      'PAID': t("paidStatus"),
+      'PARTIAL': t("partialStatus"),
+      'INSTALLMENT': t("installmentStatus"),
+      'OVERDUE': t("overdueStatus"),
+      'CANCELLED': t("cancelled")
     }
+    return statusMap[status] || status
   }
+
 
   if (status === "loading" || loading) {
     return (
@@ -366,7 +367,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
             <FileText className="h-8 w-8 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">لم يتم العثور على الفاتورة</p>
             <Button onClick={() => router.push(`/${locale}/admin/invoices`)} className="mt-4">
-              العودة للفواتير
+              <span className="hidden md:inline"> العودة للفواتير</span>
             </Button>
           </div>
         </div>
@@ -386,7 +387,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
               onClick={() => router.push(`/${locale}/admin/invoices`)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              العودة
+              <span className="hidden md:inline"> العودة</span>
             </Button>
             <div>
               <h1 className="text-3xl font-bold">تفاصيل الفاتورة</h1>
@@ -437,7 +438,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
                   ) : (
                     <Download className="h-4 w-4 mr-2" />
                   )}
-                  تحميل PDF
+                <span className="hidden md:inline">   تحميل PDF</span>
                 </Button>
                 
                 {/* {invoice.paymentStatus === "PENDING" && (
@@ -469,6 +470,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
                     <FileText className="h-5 w-5" />
                     معلومات الفاتورة
                   </CardTitle>
+                  
                   <Badge className={getStatusColor(invoice.paymentStatus)}>
                     <div className="flex items-center gap-1">
                       {getStatusIcon(invoice.paymentStatus)}

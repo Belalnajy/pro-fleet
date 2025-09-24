@@ -143,6 +143,7 @@ export default function CustomsClearanceInvoiceDetailsPage({ params: pageParams 
       case "PARTIAL":
         return "bg-orange-100 text-orange-800"
       case "INSTALLMENT":
+      case "installment":
         return "bg-purple-100 text-purple-800"
       case "PENDING":
         return "bg-yellow-100 text-yellow-800"
@@ -160,18 +161,26 @@ export default function CustomsClearanceInvoiceDetailsPage({ params: pageParams 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
       case "paid":
+      case "PAID":
         return <CheckCircle className="h-4 w-4" />
       case "partial":
+      case "PARTIAL":
         return <CreditCard className="h-4 w-4" />
+
       case "installment":
+      case "INSTALLMENT":
         return <DollarSign className="h-4 w-4" />
       case "pending":
+      case "PENDING":
         return <Clock className="h-4 w-4" />
       case "sent":
+      case "SENT":
         return <Mail className="h-4 w-4" />
       case "overdue":
+      case "OVERDUE":
         return <AlertTriangle className="h-4 w-4" />
       case "cancelled":
+      case "CANCELLED":
         return <X className="h-4 w-4" />
       default:
         return <FileText className="h-4 w-4" />
@@ -234,7 +243,7 @@ export default function CustomsClearanceInvoiceDetailsPage({ params: pageParams 
               onClick={() => router.push(`/${locale}/customs-broker/invoices`)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              العودة للفواتير
+              <span className="hidden md:inline"> العودة للفواتير</span>
             </Button>
             <div>
               <h1 className="text-3xl font-bold">فاتورة التخليص الجمركي</h1>
@@ -254,7 +263,7 @@ export default function CustomsClearanceInvoiceDetailsPage({ params: pageParams 
               ) : (
                 <Download className="h-4 w-4 mr-2" />
               )}
-              تحميل PDF
+              <span className="hidden md:inline">   تحميل PDF</span>
             </Button>
           </div>
         </div>

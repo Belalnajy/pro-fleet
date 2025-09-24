@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useTranslation } from "@/hooks/useTranslation"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
-import { PaymentManagement } from "@/components/invoices/payment-management"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -63,6 +63,8 @@ interface Invoice {
   currency: string
   taxRate: number
   notes?: string | null
+  // Invoice type identifier
+  invoiceType?: 'REGULAR' | 'CLEARANCE'
   trip: {
     fromCity: string
     toCity: string
@@ -140,8 +142,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
   const [loading, setLoading] = useState(true)
   const [selectedClearanceInvoice, setSelectedClearanceInvoice] = useState<ClearanceInvoice | null>(null)
   const [showClearanceDetails, setShowClearanceDetails] = useState(false)
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
-  const [showPaymentManagement, setShowPaymentManagement] = useState(false)
+
 
   useEffect(() => {
     if (status === "loading") return
@@ -268,66 +269,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
     setSelectedClearanceInvoice(null)
   }
 
-  const handleManagePayments = (invoice: Invoice) => {
-    setSelectedInvoice(invoice)
-    setShowPaymentManagement(true)
-  }
 
-  const closePaymentManagement = () => {
-    setShowPaymentManagement(false)
-    setSelectedInvoice(null)
-  }
-
-  const handlePaymentAdded = (updatedInvoice: any) => {
-    // Update the invoice in the list
-    setInvoices(prev => prev.map(inv => 
-      inv.id === updatedInvoice.id ? { ...inv, ...updatedInvoice } : inv
-    ))
-    // Refresh the list to get latest data
-    fetchInvoices()
-  }
-
-  const handleManageClearancePayments = (invoice: ClearanceInvoice) => {
-    // Convert ClearanceInvoice to Invoice format for PaymentManagement
-    const convertedInvoice: Invoice = {
-      id: invoice.id,
-      invoiceNumber: invoice.invoiceNumber,
-      tripId: invoice.tripId,
-      tripNumber: invoice.tripNumber,
-      subtotal: invoice.subtotal,
-      taxAmount: invoice.taxAmount,
-      customsFees: invoice.customsFee + invoice.additionalFees,
-      totalAmount: invoice.totalAmount,
-      status: invoice.status,
-      dueDate: invoice.dueDate,
-      paidDate: invoice.paidDate,
-      amountPaid: invoice.amountPaid,
-      remainingAmount: invoice.remainingAmount,
-      installmentCount: invoice.installmentCount,
-      installmentsPaid: invoice.installmentsPaid,
-      installmentAmount: invoice.installmentAmount,
-      nextInstallmentDate: invoice.nextInstallmentDate,
-      payments: invoice.payments,
-      createdAt: invoice.createdAt,
-      updatedAt: invoice.updatedAt,
-      currency: invoice.currency,
-      taxRate: invoice.taxRate,
-      notes: invoice.notes,
-      trip: invoice.trip,
-      customsBroker: invoice.customsBroker
-    }
-    setSelectedInvoice(convertedInvoice)
-    setShowPaymentManagement(true)
-  }
-
-  const handleClearancePaymentAdded = (updatedInvoice: any) => {
-    // Update the clearance invoice in the list
-    setClearanceInvoices(prev => prev.map(inv => 
-      inv.id === updatedInvoice.id ? { ...inv, ...updatedInvoice } : inv
-    ))
-    // Refresh the list to get latest data
-    fetchClearanceInvoices()
-  }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -371,7 +313,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
         return "bg-yellow-100 text-yellow-800"
       case "INSTALLMENT":
       case "installment":
-        return "bg-blue-100 text-blue-800"  
+        return "bg-purple-100 text-purple-800"
       case "IN_TRANSIT":
       case "inTransit":
         return "bg-yellow-100 text-yellow-800"
@@ -656,7 +598,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleManagePayments(invoice)}
+                            onClick={() => router.push(`/${locale}/customer/payments/record?invoiceId=${invoice.id}&type=regular`)}
                           >
                             <DollarSign className="h-4 w-4 mr-1" />
                             إدارة المدفوعات
@@ -773,7 +715,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handleManageClearancePayments(invoice)}
+                                onClick={() => router.push(`/${locale}/customer/payments/record?invoiceId=${invoice.id}&type=clearance`)}
                               >
                                 <DollarSign className="h-4 w-4 mr-1" />
                                 إدارة المدفوعات
@@ -1062,52 +1004,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Payment Management Dialog */}
-      <Dialog open={showPaymentManagement} onOpenChange={setShowPaymentManagement}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold">
-              إدارة مدفوعات الفاتورة {selectedInvoice?.invoiceNumber}
-            </DialogTitle>
-            <DialogDescription>
-              إدارة المدفوعات والأقساط للفاتورة
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedInvoice && (
-            <PaymentManagement
-              invoice={{
-                id: selectedInvoice.id,
-                invoiceNumber: selectedInvoice.invoiceNumber,
-                total: selectedInvoice.totalAmount,
-                amountPaid: selectedInvoice.amountPaid,
-                remainingAmount: selectedInvoice.remainingAmount,
-                paymentStatus: selectedInvoice.status,
-                installmentCount: selectedInvoice.installmentCount,
-                installmentsPaid: selectedInvoice.installmentsPaid,
-                installmentAmount: selectedInvoice.installmentAmount,
-                nextInstallmentDate: selectedInvoice.nextInstallmentDate,
-                payments: selectedInvoice.payments
-              }}
-              onPaymentAdded={(updatedInvoice) => {
-                // Determine if this is a clearance invoice or regular invoice
-                if (selectedInvoice.customsFees > 0) {
-                  handleClearancePaymentAdded(updatedInvoice)
-                } else {
-                  handlePaymentAdded(updatedInvoice)
-                }
-              }}
-              apiEndpoint={selectedInvoice.customsFees > 0 ? "/api/customer/clearance-invoices" : "/api/customer/invoices"}
-            />
-          )}
-          
-          <div className="flex justify-end pt-4 border-t">
-            <Button variant="outline" onClick={closePaymentManagement}>
-              إغلاق
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
     </DashboardLayout>
   )
 }

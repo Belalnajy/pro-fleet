@@ -232,7 +232,12 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
       case "SENT":
       case "sent":
         return "bg-blue-100 text-blue-800"
-        
+      case "INSTALLMENT":
+      case "installment":
+        return "bg-purple-100 text-purple-800"
+  case "PARTIAL":
+      case "partial":
+        return "bg-orange-100 text-orange-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -242,15 +247,50 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'PENDING':
+      case 'pending':
         return t('pendingStatus')
       case 'SENT':
+      case 'sent':
         return t('sentStatus')
       case 'PAID':
+      case 'paid':
         return t('paidStatus')
+      case 'PARTIAL':
+      case 'partial':
+        return t('partialStatus')
+      case 'INSTALLMENT':
+      case 'installment':
+        return t('installmentStatus')
       case 'OVERDUE':
+      case 'overdue':
         return t('overdueStatus')
       case 'CANCELLED':
+      case 'cancelled':
         return t('cancelled')
+      case 'DELIVERED':
+      case 'delivered':
+        return t('delivered')
+      case 'IN_PROGRESS':
+      case 'inProgress':
+        return t('inProgress')
+      case 'ASSIGNED':
+      case 'assigned':
+        return t('assigned')
+      case 'EN_ROUTE_PICKUP':
+      case 'enRoutePickup':
+        return t('enRoutePickup')
+      case 'AT_PICKUP':
+      case 'atPickup':
+        return t('atPickup')
+      case 'PICKED_UP':
+      case 'pickedUp':
+        return t('pickedUp')
+      case 'IN_TRANSIT':
+      case 'inTransit':
+        return t('inTransit')
+      case 'AT_DESTINATION':
+      case 'atDestination':
+        return t('atDestination')
       default:
         return status
     }
@@ -290,12 +330,12 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
       title={t("accountantDashboard")}
       subtitle={t("financialOverview")}
       actions={
-        <div className="flex space-x-2">
-          {/* <Button variant="outline">
+        <div className="flex flex-col sm:flex-row gap-2">
+          {/* <Button variant="outline" className="w-full sm:w-auto">
             <Download className="h-4 w-4 mr-2" />
             {t("exportReports")}
           </Button> */}
-          <Button onClick={() => router.push(`/${locale}/accountant/invoices`)}>
+          <Button onClick={() => router.push(`/${locale}/accountant/invoices`)} className="w-full sm:w-auto">
             <FileText className="h-4 w-4 mr-2" />
             {t("generateInvoice")}
           </Button>
@@ -303,14 +343,14 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
       }
     >
       {/* Financial Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("totalRevenue")}</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t("totalRevenue")}</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {t("currency")} {stats.totalRevenue.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -321,11 +361,11 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("totalExpenses")}</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t("totalExpenses")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {t("currency")} {stats.totalExpenses.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -336,11 +376,11 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("netProfit")}</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t("netProfit")}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-xl sm:text-2xl font-bold">
               {t("currency")} {stats.netProfit.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -351,11 +391,11 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t("pendingInvoices")}</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">{t("pendingInvoices")}</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.pendingInvoices}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats.pendingInvoices}</div>
             <p className="text-xs text-muted-foreground">
               {stats.overdueInvoices} {t("overdue")}
             </p>
@@ -363,16 +403,16 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1  gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6">
         {/* Recent Invoices */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
-                <CardTitle>{t("recentInvoices")}</CardTitle>
-                <CardDescription>{t("latestBillingActivities")}</CardDescription>
+                <CardTitle className="text-lg sm:text-xl">{t("recentInvoices")}</CardTitle>
+                <CardDescription className="text-sm">{t("latestBillingActivities")}</CardDescription>
               </div>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="self-start sm:self-auto">
                 {t("viewAll")}
               </Button>
             </div>
@@ -380,35 +420,44 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
           <CardContent>
             <div className="space-y-4">
               {recentInvoices.slice(0, 5).map((invoice) => (
-                <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <FileText className="h-8 w-8 text-primary" />
-                    <div>
-                      <h3 className="font-semibold">{invoice.invoiceNumber}</h3>
-                      <div className="text-sm text-muted-foreground">
+                <div key={invoice.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <FileText className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-sm sm:text-base truncate">{invoice.invoiceNumber}</h3>
+                      <div className="text-xs sm:text-sm text-muted-foreground truncate">
                         {invoice.customer} • {t("trip")}: {invoice.tripId}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-xs sm:text-sm text-muted-foreground">
                         {t("dueDate")}: {new Date(invoice.dueDate).toLocaleDateString()}
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right">
-                      <div className="font-semibold">{t("currency")} {invoice.amount.toLocaleString()}</div>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="text-left sm:text-right">
+                      <div className="font-semibold text-sm sm:text-base">{t("currency")} {invoice.amount.toLocaleString()}</div>
                       <Badge className={getStatusColor(invoice.status)}>
-                        <div className="flex items-center space-x-1">
+                        <div className="flex items-center gap-1">
                           {getStatusIcon(invoice.status)}
-                          <span>{getStatusText(invoice.status)}</span>
+                          <span className="text-xs">{getStatusText(invoice.status)}</span>
                         </div>
                       </Badge>
                     </div>
-                    <div className="flex space-x-1">
+                    <div className="flex gap-1 justify-end">
                       <Button variant="outline" size="sm" onClick={() => handleViewInvoice(invoice.id)}>
                         <Eye className="h-3 w-3" />
                       </Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}>
-                        <Download className="h-3 w-3" />
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
+                        disabled={actionLoading[`pdf-${invoice.id}`]}
+                      >
+                        {actionLoading[`pdf-${invoice.id}`] ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Download className="h-3 w-3" />
+                        )}
                       </Button>
                     </div>
                   </div>

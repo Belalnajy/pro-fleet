@@ -29,7 +29,8 @@ import {
   Clock,
   AlertTriangle,
   X,
-  Loader2
+  Loader2,
+  CreditCard
 } from "lucide-react"
 import { PaymentManagement } from "@/components/invoices/payment-management"
 
@@ -303,7 +304,9 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
       case "SENT":
       case "sent":
         return "bg-blue-100 text-blue-800"
-        
+      case "INSTALLMENT":
+      case "installment":
+        return "bg-purple-100 text-purple-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -322,6 +325,8 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
         return <AlertTriangle className="h-4 w-4" />
       case "cancelled":
         return <X className="h-4 w-4" />
+      case "installment":
+        return <CreditCard className="h-4 w-4" />
       default:
         return <FileText className="h-4 w-4" />
     }
@@ -368,7 +373,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
             <FileText className="h-8 w-8 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600">لم يتم العثور على الفاتورة</p>
             <Button onClick={() => router.push(`/${locale}/accountant/invoices`)} className="mt-4">
-              العودة للفواتير
+              <span className="hidden md:inline"> العودة للفواتير</span>
             </Button>
           </div>
         </div>
@@ -388,7 +393,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
               onClick={() => router.push(`/${locale}/accountant/invoices`)}
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              العودة
+              <span className="hidden md:inline"> العودة</span>
             </Button>
             <div>
               <h1 className="text-3xl font-bold">تفاصيل الفاتورة</h1>
@@ -420,7 +425,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
               </>
             ) : (
               <>
-                <Button
+                {/* <Button
                   variant="outline"
                   onClick={() => setIsEditing(true)}
                   disabled={!!actionLoading}
@@ -428,7 +433,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
                   <Edit className="h-4 w-4 mr-2" />
                   تعديل
                 </Button>
-                
+                 */}
                 <Button
                   variant="outline"
                   onClick={handleDownloadPDF}
@@ -439,7 +444,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
                   ) : (
                     <Download className="h-4 w-4 mr-2" />
                   )}
-                  تحميل PDF
+               <span className="hidden md:inline">   تحميل PDF</span>
                 </Button>
                 
                 {/* {invoice.paymentStatus === "PENDING" && (

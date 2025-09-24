@@ -140,7 +140,7 @@ export default function HomePage({ params }: LocalePageProps) {
             <div className="flex items-center space-x-2 rtl:space-x-reverse">
               {/* Terms and Conditions Link */}
               <Link href={`/${locale}/terms`} className="hidden sm:block">
-                <Button variant="ghost" size="sm" className="text-sm text-muted-foreground hover:text-primary">
+                <Button variant="ghost" size="sm" className="text-sm text-muted-foreground hover:text-black">
                   <FileCheck className="h-4 w-4 mr-2 rtl:mr-0 rtl:ml-2" />
                   {t('termsAndConditions')}
                 </Button>

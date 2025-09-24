@@ -84,7 +84,6 @@ export function CreateInvoiceModal({
     subtotal: 0,
     taxRate: 15, // Default 15% VAT
     taxAmount: 0,
-    customsFees: 0,
     total: 0,
     dueDate: '',
     notes: ''
@@ -93,14 +92,14 @@ export function CreateInvoiceModal({
   // Calculate totals when amounts change
   useEffect(() => {
     const taxAmount = (formData.subtotal * formData.taxRate) / 100
-    const total = formData.subtotal + taxAmount + formData.customsFees
+    const total = formData.subtotal + taxAmount // Regular invoices don't have customs fees
     
     setFormData(prev => ({
       ...prev,
       taxAmount: Math.round(taxAmount * 100) / 100,
       total: Math.round(total * 100) / 100
     }))
-  }, [formData.subtotal, formData.taxRate, formData.customsFees])
+  }, [formData.subtotal, formData.taxRate])
 
   // Reset form when modal opens
   useEffect(() => {
@@ -113,7 +112,6 @@ export function CreateInvoiceModal({
         subtotal: 0,
         taxRate: 15,
         taxAmount: 0,
-        customsFees: 0,
         total: 0,
         dueDate: '',
         notes: ''
@@ -234,7 +232,6 @@ export function CreateInvoiceModal({
         customsBrokerId: formData.customsBrokerId || null,
         subtotal: formData.subtotal,
         taxAmount: formData.taxAmount,
-        customsFees: formData.customsFees,
         dueDate: formData.dueDate,
         notes: formData.notes || null
       }
@@ -275,7 +272,6 @@ export function CreateInvoiceModal({
         subtotal: 0,
         taxRate: 15,
         taxAmount: 0,
-        customsFees: 0,
         total: 0,
         dueDate: '',
         notes: ''
@@ -515,23 +511,7 @@ export function CreateInvoiceModal({
                             />
                           </div>
 
-                          {/* Customs Fees */}
-                          <div className="space-y-2">
-                            <Label htmlFor="customsFees" className="text-sm font-medium">{t('customsFees')}</Label>
-                            <Input
-                              id="customsFees"
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              value={formData.customsFees}
-                              onChange={(e) => setFormData(prev => ({ 
-                                ...prev, 
-                                customsFees: parseFloat(e.target.value) || 0 
-                              }))}
-                              placeholder="0.00"
-                              className="text-sm"
-                            />
-                          </div>
+
 
                           {/* Total (calculated) */}
                           <div className="space-y-2">

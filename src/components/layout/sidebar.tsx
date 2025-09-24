@@ -135,9 +135,14 @@ export function Sidebar({ className }: SidebarProps) {
             icon: Package,
           },
           {
-            title: "Invoices & Payments",
+            title: "Invoices",
             href: `/${locale}/customer/invoices`,
             icon: FileText,
+          },
+          {
+            title: "Payments",
+            href: `/${locale}/customer/payments`,
+            icon: CreditCard,
           },
           {
             title: "Tracking",

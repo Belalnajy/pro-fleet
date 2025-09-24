@@ -61,16 +61,9 @@ export function LogoUpload({ currentLogo, onLogoUpdate }: LogoUploadProps) {
       const result = await response.json();
 
       if (response.ok) {
-        toast.success('تم رفع الشعار بنجاح! سيظهر في جميع أنحاء الموقع.');
+        toast.success('تم رفع الشعار بنجاح!');
         onLogoUpdate(result.logoPath);
         setPreviewUrl(null);
-        
-        // Show upload location info
-        if (result.logoPath.includes('cloudinary')) {
-          toast.info('تم الرفع إلى Cloudinary (التخزين السحابي)');
-        } else {
-          toast.info('تم الرفع إلى التخزين المحلي');
-        }
       } else {
         toast.error(result.error || 'فشل في رفع الشعار');
         setPreviewUrl(null);
@@ -100,26 +93,37 @@ export function LogoUpload({ currentLogo, onLogoUpdate }: LogoUploadProps) {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Label className="text-sm font-medium">شعار الشركة</Label>
       
-      {/* Current Logo Display */}
-      <div className="flex items-center space-x-4 rtl:space-x-reverse">
-        <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+      {/* Current Logo Display - Responsive */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50 flex-shrink-0">
           {currentLogo ? (
             <img 
               src={currentLogo} 
-              alt="Current Logo" 
+              alt="شعار" 
               className="w-full h-full object-contain rounded-lg"
             />
           ) : (
-            <ImageIcon className="w-8 h-8 text-gray-400" />
+            <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
           )}
         </div>
         
-        <div className="flex-1">
-          <p className="text-sm text-gray-600 mb-2">
-            الشعار الحالي: {currentLogo || 'لم يتم تحديد شعار'}
+        <div className="flex-1 w-full">
+          <p className="text-xs sm:text-sm text-gray-600 mb-2 break-all">
+            <span className="hidden sm:inline">الشعار الحالي: </span>
+            <span className="sm:hidden">الشعار: </span>
+            <span className="font-mono text-xs">
+              {currentLogo ? (
+                <span className="block sm:inline">
+                  <span className="sm:hidden">{currentLogo.length > 30 ? '...' + currentLogo.slice(-30) : currentLogo}</span>
+                  <span className="hidden sm:inline">{currentLogo.length > 50 ? '...' + currentLogo.slice(-50) : currentLogo}</span>
+                </span>
+              ) : (
+                'غير محدد'
+              )}
+            </span>
           </p>
           
           <Button
@@ -127,27 +131,34 @@ export function LogoUpload({ currentLogo, onLogoUpdate }: LogoUploadProps) {
             variant="outline"
             onClick={handleUploadClick}
             disabled={isUploading}
-            className="flex items-center space-x-2 rtl:space-x-reverse"
+            className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm h-8 sm:h-10"
           >
-            <Upload className="w-4 h-4" />
-            <span>{isUploading ? 'جارٍ الرفع...' : 'رفع شعار جديد'}</span>
+            <Upload className="w-3 h-3 sm:w-4 sm:h-4" />
+            <span className="sm:hidden">{isUploading ? 'رفع...' : 'رفع'}</span>
+            <span className="hidden sm:inline">{isUploading ? 'جارٍ الرفع...' : 'رفع شعار جديد'}</span>
           </Button>
         </div>
       </div>
 
-      {/* Preview */}
+      {/* Preview - Responsive */}
       {previewUrl && (
-        <div className="flex items-center space-x-4 rtl:space-x-reverse p-4 bg-blue-50 rounded-lg">
-          <div className="w-16 h-16 border border-blue-200 rounded-lg overflow-hidden">
+        <div className="flex items-center gap-3 p-3 sm:p-4 bg-blue-50 rounded-lg">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 border border-blue-200 rounded-lg overflow-hidden flex-shrink-0">
             <img 
               src={previewUrl} 
-              alt="Preview" 
+              alt="معاينة" 
               className="w-full h-full object-contain"
             />
           </div>
-          <div className="flex-1">
-            <p className="text-sm text-blue-700">معاينة الشعار الجديد</p>
-            <p className="text-xs text-blue-600">جارٍ الرفع...</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs sm:text-sm text-blue-700 font-medium">
+              <span className="sm:hidden">معاينة</span>
+              <span className="hidden sm:inline">معاينة الشعار الجديد</span>
+            </p>
+            <p className="text-xs text-blue-600">
+              <span className="sm:hidden">رفع...</span>
+              <span className="hidden sm:inline">جارٍ الرفع...</span>
+            </p>
           </div>
           <Button
             type="button"
@@ -155,8 +166,9 @@ export function LogoUpload({ currentLogo, onLogoUpdate }: LogoUploadProps) {
             size="sm"
             onClick={clearPreview}
             disabled={isUploading}
+            className="h-8 w-8 p-0 flex-shrink-0"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3 h-3 sm:w-4 sm:h-4" />
           </Button>
         </div>
       )}
@@ -170,9 +182,10 @@ export function LogoUpload({ currentLogo, onLogoUpdate }: LogoUploadProps) {
         className="hidden"
       />
 
-      {/* Help Text */}
-      <p className="text-xs text-gray-500">
-        الأنواع المدعومة: JPEG, PNG, SVG, WebP | الحد الأقصى: 5 ميجابايت
+      {/* Help Text - Responsive */}
+      <p className="text-xs text-gray-500 leading-relaxed">
+        <span className="sm:hidden">JPEG, PNG, SVG, WebP | حد أقصى: 5MB</span>
+        <span className="hidden sm:inline">الأنواع المدعومة: JPEG, PNG, SVG, WebP | الحد الأقصى: 5 ميجابايت</span>
       </p>
     </div>
   );

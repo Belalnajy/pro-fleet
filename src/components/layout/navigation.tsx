@@ -31,6 +31,7 @@ import {
   MapPin,
   Navigation as NavigationIcon,
   Truck,
+  CreditCard,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -50,7 +51,7 @@ export function Navigation({ className }: NavigationProps) {
 
     const baseItems = [
       {
-        href: `/${language}/dashboard`,
+        href: `/${language}/${session.user.role.toLowerCase()}`,
         label: t("dashboard"),
         icon: LayoutDashboard,
       },
@@ -114,6 +115,11 @@ export function Navigation({ className }: NavigationProps) {
             label: t("invoices"),
             icon: FileText,
           },
+          {
+            href: `/${language}/customer/payments`,
+            label: t("payments"),
+            icon: CreditCard,
+          },
         ]
       case "DRIVER":
         return [
@@ -170,10 +176,30 @@ export function Navigation({ className }: NavigationProps) {
   const navItems = getNavItems()
 
   const isActive = (href: string) => {
-    if (href === `/${language}/dashboard`) {
-      return pathname === href || pathname === `/${language}`
+    // Get the current user's dashboard path
+    const dashboardPath = `/${language}/${session?.user?.role?.toLowerCase()}`
+    
+    // Normalize paths by removing trailing slashes
+    const normalizedPathname = pathname.replace(/\/$/, '') || '/';
+    const normalizedHref = href.replace(/\/$/, '') || '/';
+    
+    // If this is the dashboard link
+    if (normalizedHref === dashboardPath) {
+      // Only active if we're exactly on the dashboard page
+      return normalizedPathname === dashboardPath || normalizedPathname === `/${language}` || normalizedPathname === '/'
     }
-    return pathname.startsWith(href)
+    
+    // For other routes, check exact match first, then prefix match
+    if (normalizedPathname === normalizedHref) {
+      return true
+    }
+    
+    // Check if current path starts with the href (for sub-routes)
+    if (normalizedPathname.startsWith(normalizedHref + '/')) {
+      return true
+    }
+    
+    return false
   }
 
   if (!session) {

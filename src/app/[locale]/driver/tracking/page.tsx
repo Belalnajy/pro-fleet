@@ -712,7 +712,7 @@ export default function DriverTrackingPage({ params }: { params: Promise<{ local
                     }}
                   >
                     <Truck className="h-4 w-4 mr-2" />
-                    العودة إلى الرحلات
+                    <span className="hidden md:inline"> العودة إلى الرحلات</span>
                   </Button>
                 )}
               </div>

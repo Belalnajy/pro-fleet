@@ -110,7 +110,11 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
       const response = await fetch("/api/driver/trips");
       
       if (!response.ok) {
-        throw new Error("Failed to fetch current trip");
+        if (response.status === 404) {
+          setCurrentTrip(null);
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -118,24 +122,47 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
       let selectedTrip = null;
       
       if (tripId) {
+        // البحث عن رحلة محددة بـ ID
         selectedTrip = Array.isArray(data) 
           ? data.find((trip: DriverTrip) => trip.id === tripId)
-          : (data.id === tripId ? data : null);
+          : (data?.id === tripId ? data : null);
+          
+        if (!selectedTrip) {
+          console.log(`Trip with ID ${tripId} not found or not accessible`);
+        }
       } else {
         // البحث عن أي رحلة نشطة (ليست مُسلمة أو ملغية)
         const activeStatuses = ["PENDING", "ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
         selectedTrip = Array.isArray(data) 
           ? data.find((trip: DriverTrip) => activeStatuses.includes(trip.status))
-          : (activeStatuses.includes(data?.status) ? data : null);
+          : (data?.status && activeStatuses.includes(data.status) ? data : null);
+          
+        if (!selectedTrip && Array.isArray(data) && data.length > 0) {
+          console.log('No active trips found. Available trips:', data.map(t => ({ id: t.id, status: t.status })));
+        }
       }
       
       setCurrentTrip(selectedTrip || null);
+      
+      // إظهار رسالة معلوماتية إذا لم توجد رحلة
+      if (!selectedTrip) {
+        toast({
+          title: "ℹ️ لا توجد رحلة نشطة",
+          description: tripId 
+            ? "الرحلة المطلوبة غير متاحة للتتبع حالياً"
+            : "لا توجد رحلات نشطة للتتبع المباشر",
+          variant: "default"
+        });
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      const errorMessage = err instanceof Error ? err.message : "خطأ غير معروف";
+      setError(errorMessage);
+      console.error('Error fetching current trip:', err);
+      
       toast({
         variant: "destructive",
         title: "❌ خطأ في تحميل الرحلة",
-        description: "فشل في تحميل بيانات الرحلة الحالية"
+        description: "تعذر الاتصال بالخادم. تحقق من اتصال الإنترنت وحاول مرة أخرى."
       });
     } finally {
       setLoading(false);
@@ -437,7 +464,86 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
           </Alert>
         )}
 
-        {currentTrip ? (
+        {/* No Trip Available State */}
+        {!currentTrip && !loading && (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] text-center space-y-4 sm:space-y-6 px-4">
+            <div className="relative">
+              <Truck className="h-16 w-16 sm:h-20 sm:w-20 lg:h-24 lg:w-24 text-muted-foreground/50" />
+              <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-yellow-100 rounded-full p-1.5 sm:p-2">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600" />
+              </div>
+            </div>
+            
+            <div className="space-y-2 sm:space-y-3 max-w-sm sm:max-w-md">
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground">لا توجد رحلة للتتبع</h2>
+              <p className="text-sm sm:text-base lg:text-lg text-muted-foreground">
+                {tripId 
+                  ? "الرحلة المطلوبة غير موجودة أو تم إنهاؤها"
+                  : "لا توجد رحلات نشطة للتتبع المباشر"
+                }
+              </p>
+              <div className="text-xs sm:text-sm text-muted-foreground space-y-1 text-right">
+                <p>• تأكد من وجود رحلة مُعيّنة لك</p>
+                <p>• تحقق من حالة الرحلة (يجب أن تكون نشطة)</p>
+                <p>• تواصل مع الإدارة في حالة وجود مشكلة</p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full max-w-sm sm:max-w-md">
+              <Button 
+                onClick={() => router.push(`/${locale}/driver`)}
+                className="flex items-center justify-center gap-2 text-sm sm:text-base h-9 sm:h-10"
+              >
+                <Navigation className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">العودة للوحة التحكم</span>
+                <span className="sm:hidden">لوحة التحكم</span>
+              </Button>
+              
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  setLoading(true);
+                  fetchCurrentTrip();
+                }}
+                disabled={loading}
+                className="flex items-center justify-center gap-2 text-sm sm:text-base h-9 sm:h-10"
+              >
+                <RefreshCw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">إعادة تحميل</span>
+                <span className="sm:hidden">تحديث</span>
+              </Button>
+            </div>
+            
+            {/* Quick Actions */}
+            <Card className="w-full max-w-sm sm:max-w-md">
+              <CardHeader className="pb-2 sm:pb-3">
+                <CardTitle className="text-sm sm:text-base">إجراءات سريعة</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 sm:space-y-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start text-xs sm:text-sm h-8 sm:h-9"
+                  onClick={() => router.push(`/${locale}/driver/trips`)}
+                >
+                  <Truck className="h-3 w-3 sm:h-4 sm:w-4 mr-2" />
+                  عرض جميع الرحلات
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start text-xs sm:text-sm h-8 sm:h-9"
+                  onClick={() => window.location.href = 'tel:+966500000000'}
+                >
+                  📞 اتصال بالدعم الفني
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {currentTrip && (
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Trip Info */}
             <div className="lg:col-span-1 space-y-6">
@@ -517,7 +623,7 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex flex-col gap-3">
-                    {!isTracking ? (
+                    {/* {!isTracking ? (
                       <Button 
                         onClick={startTracking}
                         className="w-full bg-green-600 hover:bg-green-700"
@@ -536,7 +642,7 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                         إيقاف التتبع
                       </Button>
                     )}
-                    
+                     */}
                     {!["DELIVERED", "CANCELLED"].includes(currentTrip.status) && (
                       <Button
                         onClick={() => updateTripStatus("DELIVERED")}
@@ -665,34 +771,6 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
               </Card>
             </div>
           </div>
-        ) : (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Truck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {tripId ? "لم يتم العثور على الرحلة" : "لا توجد رحلة نشطة"}
-              </h3>
-              <p className="text-gray-500 mb-4">
-                {tripId 
-                  ? "الرحلة المطلوبة غير موجودة أو لا تنتمي إليك"
-                  : "لم يتم تعيين أي رحلة لك حالياً"
-                }
-              </p>
-              <div className="flex gap-2 justify-center">
-                <Button onClick={fetchCurrentTrip}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  تحقق من الرحلات الجديدة
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => router.push(`/${locale}/driver/trips`)}
-                >
-                  <Truck className="h-4 w-4 mr-2" />
-                  العودة إلى الرحلات
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         )}
       </div>
     </DashboardLayout>

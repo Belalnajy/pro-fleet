@@ -264,8 +264,8 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
             onClick={() => {
               const activeTrip = trips.find(trip => trip.status === TripStatus.IN_PROGRESS);
               const url = activeTrip 
-                ? `/${locale}/driver/tracking?tripId=${activeTrip.id}`
-                : `/${locale}/driver/tracking`;
+                ? `/${locale}/driver/live-tracking?tripId=${activeTrip.id}`
+                : `/${locale}/driver/live-tracking`;
               router.push(url);
             }}>
             <Navigation className="h-4 w-4 mr-2" />
@@ -489,7 +489,7 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
                     
                     {trip.status === TripStatus.IN_PROGRESS && (
                       <Button 
-                        onClick={() => router.push(`/${locale}/driver/tracking?tripId=${trip.id}`)}
+                        onClick={() => router.push(`/${locale}/driver/live-tracking?tripId=${trip.id}`)}
                         variant="outline" 
                         size="sm"
                         className="flex-1 sm:flex-none min-w-[100px] relative"
@@ -667,7 +667,7 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
                   <Button 
                     onClick={() => {
                       setShowDetailsModal(false)
-                      router.push(`/${language}/driver/tracking?tripId=${selectedTrip.id}`)
+                      router.push(`/${language}/driver/live-tracking?tripId=${selectedTrip.id}`)
                     }}
                     className="flex-1"
                   >

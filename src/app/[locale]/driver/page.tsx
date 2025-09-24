@@ -231,81 +231,151 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
       title={t('driverDashboard')}
       subtitle={`${t('welcomeBack')}, ${driverInfo.name}!`}
     >
+      {/* Active Trip Notification */}
+      {currentTrip && (
+        <div className="mb-4 p-3 sm:p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>
+          <div className="flex-1">
+            <p className="text-sm sm:text-base font-medium text-green-800">
+              <span className="hidden sm:inline">لديك رحلة نشطة الآن - التتبع التلقائي مفعل</span>
+              <span className="sm:hidden">رحلة نشطة - تتبع مفعل</span>
+            </p>
+            <p className="text-xs sm:text-sm text-green-600 mt-1">
+              <span className="hidden sm:inline">رحلة رقم {currentTrip.tripNumber} - {currentTrip.fromCity?.name} ← {currentTrip.toCity?.name}</span>
+              <span className="sm:hidden">{currentTrip.tripNumber}</span>
+            </p>
+          </div>
+          <Button
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 text-xs sm:text-sm h-8 sm:h-9"
+            onClick={() => router.push(`/${locale}/driver/live-tracking?tripId=${currentTrip.id}`)}
+          >
+            <Navigation className="h-3 w-3 sm:h-4 sm:w-4" />
+            <span className="hidden sm:inline">بدء التتبع</span>
+            <span className="sm:hidden">تتبع</span>
+          </Button>
+        </div>
+      )}
+      
       {/* Current Trip */}
       {currentTrip && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>{t('currentTrip')}</CardTitle>
-            <CardDescription>{t('tripCurrentlyInProgress')}</CardDescription>
+        <Card className="mb-4 sm:mb-6">
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-base sm:text-lg">{t('currentTrip')}</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">{t('tripCurrentlyInProgress')}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">{currentTrip.tripNumber}</h3>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                <h3 className="text-base sm:text-lg font-semibold break-all">{currentTrip.tripNumber}</h3>
                 <Badge className={getStatusColor(currentTrip.status)}>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-1">
                     {getStatusIcon(currentTrip.status)}
-                    <span>{getStatusText(currentTrip.status)}</span>
+                    <span className="text-xs sm:text-sm">{getStatusText(currentTrip.status)}</span>
                   </div>
                 </Badge>
               </div>
 
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span>{t('from')} {currentTrip.fromCity?.name}</span>
-                <span>→</span>
-                <span>{t('to')} {currentTrip.toCity?.name}</span>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="break-all">{t('from')} {currentTrip.fromCity?.name}</span>
+                </div>
+                <span className="hidden sm:inline">→</span>
+                <span className="sm:hidden text-center w-full">↓</span>
+                <span className="break-all">{t('to')} {currentTrip.toCity?.name}</span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">{t('customer')}</label>
-                  <p className="font-semibold">{currentTrip.customer?.name || t('na')}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('customer')}</label>
+                  <p className="text-sm sm:text-base font-semibold break-all">{currentTrip.customer?.name || t('na')}</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">{t('vehicle')}</label>
-                  <p className="font-semibold">{currentTrip.vehicle?.vehicleType?.name || currentTrip.vehicle?.vehicleType?.nameAr} ({currentTrip.vehicle?.capacity})</p>
+                <div className="space-y-1 sm:space-y-2">
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('vehicle')}</label>
+                  <p className="text-sm sm:text-base font-semibold break-all">{currentTrip.vehicle?.vehicleType?.name || currentTrip.vehicle?.vehicleType?.nameAr} ({currentTrip.vehicle?.capacity})</p>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-muted-foreground">{t('temperature')}</label>
-                  <p className="font-semibold">{currentTrip.temperature?.option} ({currentTrip.temperature?.value}{currentTrip.temperature?.unit})</p>
+                <div className="space-y-1 sm:space-y-2 sm:col-span-2 lg:col-span-1">
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('temperature')}</label>
+                  <p className="text-sm sm:text-base font-semibold break-all">{currentTrip.temperature?.option} ({currentTrip.temperature?.value}{currentTrip.temperature?.unit})</p>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>{t('started')}: {new Date(currentTrip.actualStartDate!).toLocaleString()}</span>
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="break-all">{t('started')}: {new Date(currentTrip.actualStartDate!).toLocaleString()}</span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/80">
-                  <Navigation className="h-4 w-4 mr-2" />
-                  {t('startNavigation')}
+              <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
+                <Button 
+                  className="bg-primary text-primary-foreground hover:bg-primary/80 text-xs sm:text-sm h-8 sm:h-10"
+                  onClick={() => {
+                    if (currentTrip?.fromCity?.name && currentTrip?.toCity?.name) {
+                      const query = `${currentTrip.fromCity.name} to ${currentTrip.toCity.name}`;
+                      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+                      window.open(mapsUrl, '_blank');
+                      toast({
+                        title: "🗺️ تم فتح خرائط جوجل",
+                        description: `المسار: ${currentTrip.fromCity.name} → ${currentTrip.toCity.name}`
+                      });
+                    } else {
+                      toast({
+                        variant: "destructive",
+                        title: "❌ خطأ",
+                        description: "لا يمكن فتح الخرائط - بيانات المسار غير متوفرة"
+                      });
+                    }
+                  }}
+                >
+                  <Navigation className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('startNavigation')}</span>
+                  <span className="sm:hidden">تنقل</span>
                 </Button>
                 <Button 
                   variant="outline"
-                  className="border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950/20"
+                  className="border-green-200 text-green-700 hover:bg-green-50 dark:border-green-800 dark:text-green-400 dark:hover:bg-green-950/20 text-xs sm:text-sm h-8 sm:h-10"
+                  onClick={() => {
+                    if (currentTrip?.customer?.phone) {
+                      window.open(`tel:${currentTrip.customer.phone}`, '_self');
+                      toast({
+                        title: "📞 جاري الاتصال...",
+                        description: `اتصال بـ ${currentTrip.customer.name} - ${currentTrip.customer.phone}`
+                      });
+                    } else {
+                      toast({
+                        variant: "destructive",
+                        title: "❌ رقم الهاتف غير متوفر",
+                        description: "لا يوجد رقم هاتف لهذا العميل"
+                      });
+                    }
+                  }}
                 >
-                  <Phone className="h-4 w-4 mr-2" />
-                  {t('contactCustomer')}
+                  <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('contactCustomer')}</span>
+                  <span className="sm:hidden">اتصال</span>
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/20" 
+                  className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/20 text-xs sm:text-sm h-8 sm:h-10" 
                   onClick={() => {
                     setSelectedTrip(currentTrip)
                     setShowDetailsModal(true)
                   }}
                 >
-                  <Eye className="h-4 w-4 mr-2" />
-                  {t('viewDetails')}
+                  <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">{t('viewDetails')}</span>
+                  <span className="sm:hidden">عرض</span>
                 </Button>
                 <Button 
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm h-8 sm:h-10"
                   onClick={() => router.push(`/${locale}/driver/live-tracking?tripId=${currentTrip.id}`)}
                 >
-                  <MapPin className="h-4 w-4 mr-2" />
-                  🚀 التتبع المباشر
+                  <Navigation className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">بدء التتبع المباشر</span>
+                  <span className="sm:hidden">التتبع</span>
+                  {currentTrip.status === 'IN_PROGRESS' && (
+                    <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  )}
                 </Button>
               </div>
             </div>
@@ -315,87 +385,139 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
 
       {/* Available Trips */}
       <Card>
-        <CardHeader>
-          <CardTitle>{t('availableTrips')}</CardTitle>
-          <CardDescription>{t('tripsAssignedOrAvailable')}</CardDescription>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg">{t('availableTrips')}</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">{t('tripsAssignedOrAvailable')}</CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center h-32">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <div className="flex items-center justify-center h-24 sm:h-32">
+              <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {availableTrips.length === 0 ? (
-                <div className="text-center py-8">
-                  <Truck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">{t('noTripsAvailable')}</p>
+                <div className="text-center py-6 sm:py-8">
+                  <Truck className="h-8 w-8 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+                  <p className="text-sm sm:text-base text-muted-foreground">{t('noTripsAvailable')}</p>
                 </div>
               ) : (
                 availableTrips.map((trip) => (
-                  <div key={trip.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center space-x-4">
-                      <Truck className="h-8 w-8 text-primary" />
-                      <div>
-                        <h3 className="font-semibold">{trip.tripNumber}</h3>
-                        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{trip.fromCity?.name}</span>
-                          <span>→</span>
-                          <span>{trip.toCity?.name}</span>
+                  <div key={trip.id} className="flex flex-col lg:flex-row gap-3 lg:gap-4 p-3 sm:p-4 border rounded-lg">
+                    {/* Trip Info */}
+                    <div className="flex items-start gap-3 flex-1">
+                      <Truck className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0 mt-1" />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm sm:text-base font-semibold break-all mb-1">{trip.tripNumber}</h3>
+                        
+                        {/* Route */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-2">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                            <span className="break-all">{trip.fromCity?.name}</span>
+                          </div>
+                          <span className="hidden sm:inline">→</span>
+                          <span className="sm:hidden">↓</span>
+                          <span className="break-all">{trip.toCity?.name}</span>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {trip.customer?.name} • {trip.vehicle?.vehicleType?.name || trip.vehicle?.vehicleType?.nameAr} ({trip.vehicle?.capacity}) • {trip.temperature?.option}
+                        
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-2">
+                          <div className="break-all">
+                            <span className="font-medium">العميل:</span> {trip.customer?.name}
+                          </div>
+                          <div className="break-all">
+                            <span className="font-medium">المركبة:</span> {trip.vehicle?.vehicleType?.name || trip.vehicle?.vehicleType?.nameAr} ({trip.vehicle?.capacity})
+                          </div>
+                          <div className="break-all">
+                            <span className="font-medium">الحرارة:</span> {trip.temperature?.option}
+                          </div>
+                          <div className="break-all">
+                            <span className="font-medium">{t('scheduled')}:</span> {new Date(trip.scheduledDate).toLocaleDateString()}
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {t('scheduled')}: {new Date(trip.scheduledDate).toLocaleDateString()}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
+                        
+                        {/* Price */}
+                        <div className="text-xs sm:text-sm font-medium text-primary">
                           {t('price')}: {t('sar')} {trip.price?.toLocaleString()}
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                      <Badge className={getStatusColor(trip.status)}>
-                        <div className="flex items-center space-x-1">
+                    
+                    {/* Status and Actions */}
+                    <div className="flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-2 sm:gap-3 lg:gap-2">
+                      <Badge className={`${getStatusColor(trip.status)} justify-center sm:justify-start lg:justify-center`}>
+                        <div className="flex items-center gap-1">
                           {getStatusIcon(trip.status)}
-                          <span>{getStatusText(trip.status)}</span>
+                          <span className="text-xs">{getStatusText(trip.status)}</span>
                         </div>
                       </Badge>
-                      <div className="flex space-x-2">
+                      
+                      <div className="flex flex-col sm:flex-row lg:flex-col gap-2 sm:gap-1 lg:gap-2">
                         {trip.status === "PENDING" && (
                           <>
                             <Button 
                               size="sm" 
-                              className="bg-green-600 hover:bg-green-700 text-white"
+                              className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm h-7 sm:h-8"
                               onClick={() => handleTripAction(trip.id, "accept")}
                               disabled={actionLoading === trip.id}
                             >
-                              {actionLoading === trip.id ? t('loading') : t('accept')}
+                              {actionLoading === trip.id ? (
+                                <span className="text-xs">تحميل...</span>
+                              ) : (
+                                <>
+                                  <span className="hidden sm:inline">{t('accept')}</span>
+                                  <span className="sm:hidden">قبول</span>
+                                </>
+                              )}
                             </Button>
                             <Button 
                               variant="outline" 
                               size="sm"
-                              className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/20"
+                              className="border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-950/20 text-xs sm:text-sm h-7 sm:h-8"
                               onClick={() => handleTripAction(trip.id, "decline")}
                               disabled={actionLoading === trip.id}
                             >
-                              {actionLoading === trip.id ? t('loading') : t('decline')}
+                              {actionLoading === trip.id ? (
+                                <span className="text-xs">تحميل...</span>
+                              ) : (
+                                <>
+                                  <span className="hidden sm:inline">{t('decline')}</span>
+                                  <span className="sm:hidden">رفض</span>
+                                </>
+                              )}
                             </Button>
                           </>
                         )}
                         <Button 
                           variant="outline" 
                           size="sm"
-                          className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/20"
+                          className="border-blue-200 text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400 dark:hover:bg-blue-950/20 text-xs sm:text-sm h-7 sm:h-8"
                           onClick={() => {
                             setSelectedTrip(trip)
                             setShowDetailsModal(true)
                           }}
                         >
-                          <Eye className="h-4 w-4 mr-2" />
-                          {t('viewDetails')}
+                          <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                          <span className="hidden sm:inline">{t('viewDetails')}</span>
+                          <span className="sm:hidden">عرض</span>
                         </Button>
+                        
+                        {/* Live Tracking Button for Active Trips */}
+                        {(trip.status === 'IN_PROGRESS' || trip.status === 'ASSIGNED' || trip.status === 'EN_ROUTE_PICKUP' || trip.status === 'AT_PICKUP' || trip.status === 'PICKED_UP' || trip.status === 'IN_TRANSIT' || trip.status === 'AT_DESTINATION') && (
+                          <Button 
+                            size="sm"
+                            className="bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-1 text-xs sm:text-sm h-7 sm:h-8"
+                            onClick={() => router.push(`/${locale}/driver/live-tracking?tripId=${trip.id}`)}
+                          >
+                            <Navigation className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline">التتبع المباشر</span>
+                            <span className="sm:hidden">تتبع</span>
+                            {trip.status === 'IN_PROGRESS' && (
+                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -408,28 +530,28 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
       
       {/* Trip Details Modal */}
       <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
-        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">{t('tripDetails')}</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+        <DialogContent className="max-w-4xl w-[95vw] sm:w-[90vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="pb-3 sm:pb-4">
+            <DialogTitle className="text-sm sm:text-base lg:text-lg text-foreground break-all">{t('tripDetails')}</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-muted-foreground break-all">
               {t('viewTripDetails')} {selectedTrip?.tripNumber}
             </DialogDescription>
           </DialogHeader>
           
           {selectedTrip && (
-            <div className="space-y-6 p-1">
+            <div className="space-y-4 sm:space-y-6 p-1">
               {/* Trip Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">{t('tripNumber')}</label>
-                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{selectedTrip.tripNumber}</p>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('tripNumber')}</label>
+                  <p className="text-sm sm:text-base font-medium text-foreground bg-muted/50 p-2 rounded-md break-all">{selectedTrip.tripNumber}</p>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">{t('status')}</label>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('status')}</label>
                   <div className="mt-1">
                     <Badge className={getStatusColor(selectedTrip.status)}>
                       {getStatusIcon(selectedTrip.status)}
-                      <span className="ml-1">{getStatusText(selectedTrip.status)}</span>
+                      <span className="ml-1 text-xs sm:text-sm">{getStatusText(selectedTrip.status)}</span>
                     </Badge>
                   </div>
                 </div>
@@ -437,17 +559,20 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
               
               {/* Route Info */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">{t('route')}</label>
-                <div className="p-3 bg-muted/30 rounded-lg border">
-                  <div className="flex items-center gap-3">
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('route')}</label>
+                <div className="p-2 sm:p-3 bg-muted/30 rounded-lg border">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 bg-emerald-500 rounded-full shadow-sm"></div>
-                      <span className="font-medium text-foreground">{selectedTrip.fromCity?.name}</span>
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-emerald-500 rounded-full shadow-sm flex-shrink-0"></div>
+                      <span className="text-sm sm:text-base font-medium text-foreground break-all">{selectedTrip.fromCity?.name}</span>
                     </div>
-                    <div className="flex-1 border-t-2 border-dashed border-muted-foreground/30"></div>
+                    <div className="hidden sm:block flex-1 border-t-2 border-dashed border-muted-foreground/30"></div>
+                    <div className="sm:hidden w-full text-center">
+                      <div className="w-0.5 h-4 bg-muted-foreground/30 mx-auto"></div>
+                    </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">{selectedTrip.toCity?.name}</span>
-                      <div className="w-3 h-3 bg-red-500 rounded-full shadow-sm"></div>
+                      <span className="text-sm sm:text-base font-medium text-foreground break-all">{selectedTrip.toCity?.name}</span>
+                      <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full shadow-sm flex-shrink-0"></div>
                     </div>
                   </div>
                 </div>
@@ -455,20 +580,20 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
               
               {/* Customer Info */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">{t('customerInfo')}</label>
-                <div className="p-4 bg-card border rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <p className="font-semibold text-foreground">{selectedTrip.customer?.name}</p>
+                <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('customerInfo')}</label>
+                <div className="p-3 sm:p-4 bg-card border rounded-lg">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="space-y-1 flex-1 min-w-0">
+                      <p className="text-sm sm:text-base font-semibold text-foreground break-all">{selectedTrip.customer?.name}</p>
                       {selectedTrip.customer?.phone && (
-                        <p className="text-sm text-muted-foreground font-mono">{selectedTrip.customer.phone}</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground font-mono break-all">{selectedTrip.customer.phone}</p>
                       )}
                     </div>
                     {selectedTrip.customer?.phone && (
                       <Button 
                         size="sm" 
                         variant="default"
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm h-7 sm:h-8 w-full sm:w-auto"
                         onClick={() => {
                           window.open(`tel:${selectedTrip.customer.phone}`, '_self')
                           toast({
@@ -477,8 +602,9 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
                           })
                         }}
                       >
-                        <Phone className="h-4 w-4 mr-2" />
-                        {t('call')}
+                        <Phone className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">{t('call')}</span>
+                        <span className="sm:hidden">اتصال</span>
                       </Button>
                     )}
                   </div>
@@ -486,27 +612,27 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
               </div>
               
               {/* Vehicle & Temperature */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">{t('vehicleAndTemperature')}</label>
-                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{selectedTrip.vehicle?.vehicleType?.name || selectedTrip.vehicle?.vehicleType?.nameAr} - {selectedTrip.vehicle?.capacity}</p>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('vehicleAndTemperature')}</label>
+                  <p className="text-sm sm:text-base font-medium text-foreground bg-muted/50 p-2 rounded-md break-all">{selectedTrip.vehicle?.vehicleType?.name || selectedTrip.vehicle?.vehicleType?.nameAr} - {selectedTrip.vehicle?.capacity}</p>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">{t('temperature')}</label>
-                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{selectedTrip.temperature?.option} ({selectedTrip.temperature?.value}°{selectedTrip.temperature?.unit})</p>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('temperature')}</label>
+                  <p className="text-sm sm:text-base font-medium text-foreground bg-muted/50 p-2 rounded-md break-all">{selectedTrip.temperature?.option} ({selectedTrip.temperature?.value}°{selectedTrip.temperature?.unit})</p>
                 </div>
               </div>
               
               {/* Dates */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1">
-                  <label className="text-sm font-medium text-muted-foreground">{t('scheduledDate')}</label>
-                  <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{new Date(selectedTrip.scheduledDate).toLocaleDateString('ar-SA')}</p>
+                  <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('scheduledDate')}</label>
+                  <p className="text-sm sm:text-base font-medium text-foreground bg-muted/50 p-2 rounded-md break-all">{new Date(selectedTrip.scheduledDate).toLocaleDateString('ar-SA')}</p>
                 </div>
                 {selectedTrip.actualStartDate && (
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-muted-foreground">{t('startDate')}</label>
-                    <p className="font-medium text-foreground bg-muted/50 p-2 rounded-md">{new Date(selectedTrip.actualStartDate).toLocaleDateString('ar-SA')}</p>
+                    <label className="text-xs sm:text-sm font-medium text-muted-foreground">{t('startDate')}</label>
+                    <p className="text-sm sm:text-base font-medium text-foreground bg-muted/50 p-2 rounded-md break-all">{new Date(selectedTrip.actualStartDate).toLocaleDateString('ar-SA')}</p>
                   </div>
                 )}
               </div>
@@ -542,7 +668,7 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
                   <Button 
                     onClick={() => {
                       setShowDetailsModal(false)
-                      router.push(`/${locale}/driver/tracking?tripId=${selectedTrip.id}`)
+                      router.push(`/${locale}/driver/live-tracking?tripId=${selectedTrip.id}`)
                     }}
                     className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                   >

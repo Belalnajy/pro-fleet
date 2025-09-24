@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db as prisma } from "@/lib/db"
+import { generateClearanceInvoiceNumber } from "@/lib/invoice-number-generator"
 
 export async function GET(request: NextRequest) {
   try {
@@ -210,9 +211,9 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      // Generate clearance invoice number
+      // Generate clearance invoice number with new format: PRO-CLR- + YYYYMMDD + sequential number
       const clearanceInvoiceCount = await tx.customsClearanceInvoice.count()
-      const clearanceInvoiceNumber = `CI-${String(clearanceInvoiceCount + 1).padStart(6, '0')}`
+      const clearanceInvoiceNumber = generateClearanceInvoiceNumber(clearanceInvoiceCount)
 
       // Calculate invoice amounts
       const subtotal = totalFees

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { db as prisma } from "@/lib/db"
 import { TripStatus } from "@prisma/client"
+import { generateTripNumber } from "@/lib/trip-number-generator"
 
 interface LocationData {
   lat: number
@@ -66,7 +67,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique trip number
-    const tripNumber = `TRP-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
+    const tripCount = await prisma.trip.count()
+    const tripNumber = generateTripNumber(tripCount)
 
     // Determine customer ID (for admin creating trips for customers vs customers creating their own)
     let finalCustomerId = customerId

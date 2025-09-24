@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { generateTripNumber } from "@/lib/trip-number-generator"
 
 export async function GET(request: NextRequest) {
   try {
@@ -114,9 +115,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate trip number
+    // Generate trip number with new format: PRO + YYYYMMDD + sequential number
     const tripCount = await db.trip.count()
-    const tripNumber = `TWB:${String(tripCount + 1).padStart(4, "0")}`
+    const tripNumber = generateTripNumber(tripCount)
 
     // Use provided data or get defaults
     let finalTemperatureId = temperatureId

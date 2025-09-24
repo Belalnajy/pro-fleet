@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { generateInvoiceNumber } from "@/lib/invoice-number-generator";
 import { UserRole, TripStatus } from "@prisma/client";
 
 // PATCH - Update trip status
@@ -131,7 +132,7 @@ export async function PATCH(
         if (!existingInvoice) {
           // Generate invoice number
           const invoiceCount = await db.invoice.count();
-          const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(6, '0')}`;
+          const invoiceNumber = generateInvoiceNumber(invoiceCount);
 
           // Calculate invoice amounts
           const subtotal = updatedTrip.price;
@@ -143,7 +144,6 @@ export async function PATCH(
           const invoiceData: any = {
             invoiceNumber,
             tripId: id,
-            customsFee: 0,
             taxRate,
             taxAmount,
             subtotal,
@@ -151,6 +151,10 @@ export async function PATCH(
             currency: 'SAR', // Default currency
             paymentStatus: 'PENDING',
             dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+            // Payment tracking fields
+            amountPaid: 0,
+            remainingAmount: total,
+            installmentsPaid: 0,
             createdAt: new Date(),
             updatedAt: new Date()
           }

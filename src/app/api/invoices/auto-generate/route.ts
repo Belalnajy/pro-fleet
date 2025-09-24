@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/lib/db"
+import { generateInvoiceNumber } from "@/lib/invoice-number-generator"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
 
 // POST - Auto-generate invoice when trip is delivered
 export async function POST(req: NextRequest) {
@@ -75,7 +76,8 @@ export async function POST(req: NextRequest) {
     const total = subtotal + taxAmount + customsFee
 
     // Generate invoice number
-    const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`
+    const invoiceCount = await db.invoice.count()
+    const invoiceNumber = generateInvoiceNumber(invoiceCount)
     
     // Set due date (30 days from delivery)
     const dueDate = new Date(trip.deliveredDate!)

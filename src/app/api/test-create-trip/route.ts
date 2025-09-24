@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { generateTripNumber } from "@/lib/trip-number-generator"
 
 export async function POST(req: NextRequest) {
   try {
@@ -76,9 +77,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Generate trip number
+    // Generate trip number with new format: PRO + YYYYMMDD + sequential number
     const tripCount = await db.trip.count()
-    const tripNumber = `TWB:${String(tripCount + 1).padStart(4, '0')}`
+    const tripNumber = generateTripNumber(tripCount)
     console.log("Generated trip number:", tripNumber)
 
     const trip = await db.trip.create({

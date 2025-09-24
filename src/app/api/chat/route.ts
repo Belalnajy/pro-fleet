@@ -88,10 +88,16 @@ export async function POST(req: NextRequest) {
     const userMessage = message.toLowerCase().trim()
     let botResponse = chatbotResponses.default
 
-    // Check for trip number pattern (TWB:XXXX)
-    const tripNumberMatch = userMessage.match(/twb:?(\d+)/i)
-    if (tripNumberMatch) {
-      const tripNumber = `TWB:${tripNumberMatch[1]}`
+    // Check for trip number pattern (PRO format only)
+    let tripNumber: string | null = null
+    
+    // Check for PRO format (PRO-20241224-001)
+    const proMatch = userMessage.match(/pro[\-\s]?(\d{8})[\-\s]?(\d{3})/i)
+    if (proMatch) {
+      tripNumber = `PRO-${proMatch[1]}-${proMatch[2]}`
+    }
+    
+    if (tripNumber) {
       
       // Look up the trip
       const trip = await db.trip.findFirst({

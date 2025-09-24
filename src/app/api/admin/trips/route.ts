@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import { db } from "@/lib/db"
+import { generateTripNumber } from "@/lib/trip-number-generator";
 import { UserRole } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
@@ -160,9 +161,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Generate trip number
+    // Generate trip number with new format: PRO + YYYYMMDD + sequential number
     const tripCount = await db.trip.count();
-    const tripNumber = `TWB:${String(tripCount + 1).padStart(4, "0")}`;
+    const tripNumber = generateTripNumber(tripCount);
 
     // 💾 LOG: Trip creation data before saving
     const tripData = {

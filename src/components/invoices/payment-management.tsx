@@ -72,19 +72,64 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
   }, [invoice])
 
   useEffect(() => {
-    if (invoice.payments) {
-      setPayments(invoice.payments)
-    } else {
-      fetchPayments()
-    }
+    console.log('PaymentManagement received invoice:', invoice)
+    setCurrentInvoice(invoice)
+    // Always fetch payments from API to get the latest data
+    fetchPayments()
   }, [invoice.id])
 
   const fetchPayments = async () => {
     try {
+      console.log('Fetching payments for invoice:', invoice.id, 'from:', `${apiEndpoint}/${invoice.id}/payments`)
       const response = await fetch(`${apiEndpoint}/${invoice.id}/payments`)
       if (response.ok) {
         const data = await response.json()
-        setPayments(data.payments || [])
+        console.log('Payments response:', data)
+        const payments = data.payments || []
+        setPayments(payments)
+        
+        // Update current invoice data based on actual payments
+        const totalPaid = payments.reduce((sum: number, payment: any) => sum + payment.amount, 0)
+        
+        // Calculate installments paid more accurately
+        let installmentsPaid = 0
+        console.log('Calculating installments:', {
+          paymentStatus: currentInvoice.paymentStatus,
+          installmentAmount: currentInvoice.installmentAmount,
+          installmentCount: currentInvoice.installmentCount,
+          totalPaid: totalPaid,
+          paymentsLength: payments.length
+        })
+        
+        if (currentInvoice.paymentStatus === 'INSTALLMENT' && currentInvoice.installmentAmount) {
+          // Simple approach: count installments based on total paid vs installment amount
+          const installmentAmount = currentInvoice.installmentAmount
+          const calculated = totalPaid / installmentAmount
+          const floored = Math.floor(calculated + 0.01)
+          const final = Math.min(floored, currentInvoice.installmentCount || 0)
+          
+          console.log('Installment calculation:', {
+            calculated: calculated,
+            floored: floored,
+            final: final
+          })
+          
+          installmentsPaid = final
+        } else if (currentInvoice.paymentStatus === 'INSTALLMENT') {
+          // If no installment amount set, count each payment as an installment
+          installmentsPaid = Math.min(payments.length, currentInvoice.installmentCount || 0)
+          console.log('Using payment count as installments:', installmentsPaid)
+        }
+        
+        const updatedInvoice = {
+          ...currentInvoice,
+          amountPaid: totalPaid,
+          remainingAmount: currentInvoice.total - totalPaid,
+          installmentsPaid: installmentsPaid
+        }
+        setCurrentInvoice(updatedInvoice)
+      } else {
+        console.log('Failed to fetch payments, status:', response.status)
       }
     } catch (error) {
       console.error('Error fetching payments:', error)
@@ -97,9 +142,27 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
       return
     }
 
+    if (!paymentForm.paymentMethod) {
+      toast.error('يرجى اختيار طريقة الدفع')
+      return
+    }
+
     if (parseFloat(paymentForm.amount) > currentInvoice.remainingAmount) {
       toast.error('المبلغ أكبر من المبلغ المتبقي')
       return
+    }
+
+    // Additional validation for installment payments
+    if (currentInvoice.paymentStatus === 'INSTALLMENT' && currentInvoice.installmentAmount) {
+      const paymentAmount = parseFloat(paymentForm.amount)
+      if (paymentAmount !== currentInvoice.installmentAmount && paymentAmount !== currentInvoice.remainingAmount) {
+        const confirmPayment = window.confirm(
+          `قيمة القسط المحددة هي ${currentInvoice.installmentAmount.toFixed(2)} ريال. \nهل تريد المتابعة بمبلغ ${paymentAmount.toFixed(2)} ريال؟`
+        )
+        if (!confirmPayment) {
+          return
+        }
+      }
     }
 
     setLoading(true)
@@ -170,7 +233,11 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
         toast.success('تم إعداد خطة الأقساط بنجاح')
       } else {
         const error = await response.json()
-        toast.error(error.error || 'فشل في إعداد خطة الأقساط')
+        if (error.error === 'Installment plan already exists') {
+          toast.error('خطة الأقساط موجودة بالفعل لهذه الفاتورة')
+        } else {
+          toast.error(error.error || 'فشل في إعداد خطة الأقساط')
+        }
       }
     } catch (error) {
       toast.error('حدث خطأ أثناء إعداد خطة الأقساط')
@@ -280,14 +347,19 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
           </div>
 
           {/* Installment Info */}
-          {currentInvoice.paymentStatus === 'INSTALLMENT' && (
+          {(currentInvoice.paymentStatus === 'INSTALLMENT' || (currentInvoice.installmentCount && currentInvoice.installmentCount > 0)) && (
             <div className="mt-6">
               <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-purple-500 rounded-full">
-                    <Calendar className="h-5 w-5 text-white" />
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-500 rounded-full">
+                      <Calendar className="h-5 w-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-purple-900">خطة الأقساط</h3>
                   </div>
-                  <h3 className="text-lg font-semibold text-purple-900">خطة الأقساط</h3>
+                  <div className="text-sm font-medium text-purple-600">
+                    {currentInvoice.paymentStatus === 'INSTALLMENT' ? 'نشطة' : 'معدة'}
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
@@ -434,13 +506,15 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
                 />
               </div>
               <Button onClick={handleAddPayment} disabled={loading} className="w-full">
-                {loading ? 'جاري الإضافة...' : 'إضافة الدفعة'}
+                {loading ? 'جاري الإضافة...' : 
+                  (currentInvoice.paymentStatus === 'INSTALLMENT' ? 'دفع القسط' : 'إضافة الدفعة')
+                }
               </Button>
             </div>
           </DialogContent>
         </Dialog>
 
-        {currentInvoice.paymentStatus !== 'INSTALLMENT' && currentInvoice.paymentStatus !== 'PAID' && (
+        {currentInvoice.paymentStatus !== 'INSTALLMENT' && currentInvoice.paymentStatus !== 'PAID' && !currentInvoice.installmentCount && (
           <Dialog open={installmentDialogOpen} onOpenChange={setInstallmentDialogOpen}>
             <DialogTrigger asChild>
               <Button variant="outline">

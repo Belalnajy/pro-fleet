@@ -113,6 +113,11 @@ export function Navigation({ className }: NavigationProps) {
             icon: NavigationIcon,
           },
           {
+            href: `/${language}/customer/notifications`,
+            label: "الإشعارات",
+            icon: Bell,
+          },
+          {
             href: `/${language}/customer/invoices`,
             label: t("invoices"),
             icon: FileText,

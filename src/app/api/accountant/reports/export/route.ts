@@ -245,7 +245,7 @@ export async function GET(req: NextRequest) {
         invoice.trip ? `${invoice.trip.fromCity?.name} ← ${invoice.trip.toCity?.name}` : "غير محدد",
         invoice.total.toString(),
         (invoice.amountPaid || 0).toString(),
-        (invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0))).toString(),
+        (invoice.remainingAmount || (invoice.total - (invoice.amountPaid || 0))).toString(),
         getPaymentStatusInArabic(invoice.paymentStatus),
         (invoice.installmentCount || 0).toString(),
         (invoice.installmentsPaid || 0).toString(),

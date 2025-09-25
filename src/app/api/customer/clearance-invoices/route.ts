@@ -86,11 +86,12 @@ export async function GET(request: NextRequest) {
         taxAmount: invoice.taxAmount,
         totalAmount: invoice.total,
         status: invoice.paymentStatus,
+        paymentStatus: invoice.paymentStatus, // أضف paymentStatus أيضاً
         dueDate: invoice.dueDate.toISOString(),
         paidDate: invoice.paidDate?.toISOString() || null,
         // Payment tracking fields
         amountPaid: invoice.amountPaid || 0,
-        remainingAmount: invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0)),
+        remainingAmount: invoice.remainingAmount || (invoice.total - (invoice.amountPaid || 0)),
         installmentCount: invoice.installmentCount || null,
         installmentsPaid: invoice.installmentsPaid || 0,
         installmentAmount: invoice.installmentAmount || null,

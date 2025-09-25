@@ -20,7 +20,8 @@ import {
   DollarSign,
   Wrench,
   User,
-  LogOut
+  LogOut,
+  Bell
 } from "lucide-react"
 import { UserRole } from "@prisma/client"
 
@@ -96,6 +97,11 @@ export function Sidebar({ className }: SidebarProps) {
             icon: Home,
           },
           {
+            title: "Trip Requests",
+            href: `/${locale}/driver/trip-requests`,
+            icon: Bell,
+          },
+          {
             title: "My Trips",
             href: `/${locale}/driver/trips`,
             icon: Truck,
@@ -133,6 +139,11 @@ export function Sidebar({ className }: SidebarProps) {
             title: "My Trips",
             href: `/${locale}/customer/my-trips`,
             icon: Package,
+          },
+          {
+            title: "Notifications",
+            href: `/${locale}/customer/notifications`,
+            icon: Bell,
           },
           {
             title: "Invoices",

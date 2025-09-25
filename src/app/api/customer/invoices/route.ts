@@ -90,11 +90,12 @@ export async function GET(request: NextRequest) {
         customsFees: 0, // Regular invoices don't have customs fees directly
         totalAmount: invoiceWithRelations.total,
         status: invoiceWithRelations.paymentStatus,
+        paymentStatus: invoiceWithRelations.paymentStatus, // أضف paymentStatus أيضاً
         dueDate: invoiceWithRelations.dueDate.toISOString(),
         paidDate: invoiceWithRelations.paidDate?.toISOString() || null,
         // Payment tracking fields
         amountPaid: invoiceWithRelations.amountPaid || 0,
-        remainingAmount: invoiceWithRelations.remainingAmount !== null ? invoiceWithRelations.remainingAmount : (invoiceWithRelations.total - (invoiceWithRelations.amountPaid || 0)),
+        remainingAmount: invoiceWithRelations.remainingAmount || (invoiceWithRelations.total - (invoiceWithRelations.amountPaid || 0)),
         installmentCount: invoiceWithRelations.installmentCount || null,
         installmentsPaid: invoiceWithRelations.installmentsPaid || 0,
         installmentAmount: invoiceWithRelations.installmentAmount || null,

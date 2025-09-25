@@ -50,7 +50,7 @@ export async function GET(
       }
     });
 
-    return NextResponse.json(payments);
+    return NextResponse.json({ payments });
   } catch (error) {
     console.error("Error fetching payment history:", error);
     return NextResponse.json(

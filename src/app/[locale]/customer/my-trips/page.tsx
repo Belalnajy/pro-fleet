@@ -28,6 +28,7 @@ import {
   Navigation,
   Thermometer,
   X,
+  Bell,
   Timer,
   Shield,
 } from "lucide-react"
@@ -113,10 +114,12 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
   }
 
   const handleCancelTrip = (trip: Trip) => {
-    if (trip.status !== TripStatus.PENDING) {
+    // Allow cancellation for PENDING, DRIVER_REQUESTED, and ASSIGNED statuses
+    const cancellableStatuses = ['PENDING', 'DRIVER_REQUESTED', 'ASSIGNED']
+    if (!cancellableStatuses.includes(trip.status)) {
       toast({
-        title: t('cannotCancelTrip'),
-        description: t('onlyPendingTripsCanBeCancelled'),
+        title: "لا يمكن إلغاء الرحلة",
+        description: "لا يمكن إلغاء الرحلة بعد بدء التنفيذ",
         variant: "destructive",
       })
       return
@@ -139,7 +142,10 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
       if (response.ok) {
         toast({
           title: data.isFreeCancel ? t('tripCancelledSuccessfully') : t('tripCancelledWithFee'),
-          description: data.message,
+          description: data.isFreeCancel 
+            ? data.message 
+            : `${data.message}\n📄 تم إنشاء فاتورة برسوم الإلغاء. يمكنك مراجعتها في صفحة الفواتير.`,
+          duration: data.isFreeCancel ? 3000 : 6000, // Show longer for paid cancellation
         })
         // Refresh trips list
         fetchTrips()
@@ -177,7 +183,16 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
     switch (status) {
       case TripStatus.PENDING:
         return "bg-yellow-100 text-yellow-800"
+      case 'DRIVER_REQUESTED' as any:
+        return "bg-orange-100 text-orange-800"
+      case TripStatus.ASSIGNED:
+        return "bg-blue-100 text-blue-800"
       case TripStatus.IN_PROGRESS:
+      case TripStatus.EN_ROUTE_PICKUP:
+      case TripStatus.AT_PICKUP:
+      case TripStatus.PICKED_UP:
+      case TripStatus.IN_TRANSIT:
+      case TripStatus.AT_DESTINATION:
         return "bg-blue-100 text-blue-800"
       case TripStatus.DELIVERED:
         return "bg-green-100 text-green-800"
@@ -192,7 +207,16 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
     switch (status) {
       case TripStatus.PENDING:
         return <Clock className="h-4 w-4" />
+      case 'DRIVER_REQUESTED' as any:
+        return <Bell className="h-4 w-4" />
+      case TripStatus.ASSIGNED:
+        return <Truck className="h-4 w-4" />
       case TripStatus.IN_PROGRESS:
+      case TripStatus.EN_ROUTE_PICKUP:
+      case TripStatus.AT_PICKUP:
+      case TripStatus.PICKED_UP:
+      case TripStatus.IN_TRANSIT:
+      case TripStatus.AT_DESTINATION:
         return <Truck className="h-4 w-4" />
       case TripStatus.DELIVERED:
         return <CheckCircle className="h-4 w-4" />
@@ -206,9 +230,23 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
   const getStatusText = (status: TripStatus) => {
     switch (status) {
       case TripStatus.PENDING:
-        return t('PENDING')
+        return "في الانتظار"
+      case 'DRIVER_REQUESTED' as any:
+        return "تم إرسال طلب للسائق"
+      case TripStatus.ASSIGNED:
+        return "تم تعيين السائق"
       case TripStatus.IN_PROGRESS:
         return t('IN_PROGRESS')
+      case TripStatus.EN_ROUTE_PICKUP:
+        return t('enRoutePickup')
+      case TripStatus.AT_PICKUP:
+        return t('atPickup')
+      case TripStatus.PICKED_UP:
+        return t('pickedUp')
+      case TripStatus.IN_TRANSIT:
+        return t('inTransit')
+      case TripStatus.AT_DESTINATION:
+        return t('atDestination')
       case TripStatus.DELIVERED:
         return t('DELIVERED')
       case TripStatus.CANCELLED:
@@ -221,7 +259,15 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
   const stats = {
     total: trips.length,
     pending: trips.filter(t => t.status === TripStatus.PENDING).length,
-    inProgress: trips.filter(t => t.status === TripStatus.IN_PROGRESS).length,
+    inProgress: trips.filter(t => [
+      TripStatus.ASSIGNED,
+      TripStatus.IN_PROGRESS,
+      TripStatus.EN_ROUTE_PICKUP,
+      TripStatus.AT_PICKUP,
+      TripStatus.PICKED_UP,
+      TripStatus.IN_TRANSIT,
+      TripStatus.AT_DESTINATION
+    ].includes(t.status as any)).length,
     delivered: trips.filter(t => t.status === TripStatus.DELIVERED).length,
     cancelled: trips.filter(t => t.status === TripStatus.CANCELLED).length,
     totalSpent: trips.reduce((sum, trip) => sum + (trip.price || 0), 0),
@@ -313,7 +359,7 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
             <div className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={t('searchTripsPlaceholder')}
+                placeholder={t('searchTripNumberCity')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
@@ -321,7 +367,7 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder={t('filterByStatusPlaceholder')} />
+                <SelectValue placeholder={t('filterByStatus')} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t('allStatus')}</SelectItem>
@@ -373,18 +419,18 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
                          {trip.fromCity?.name || t('unknown')} → {trip.toCity?.name || t('unknown')}
                        </span>
                     </div>
-                    {/* Free Cancellation Timer */}
-                    {trip.status === TripStatus.PENDING && (
+                    {/* Free Cancellation Timer - Show for all cancellable statuses */}
+                    {['PENDING', 'DRIVER_REQUESTED', 'ASSIGNED'].includes(trip.status) && (
                       <div className="mt-2">
                         {canCancelFree(trip.createdAt) ? (
                           <div className="flex items-center gap-1 text-green-600 text-xs">
                             <Timer className="h-3 w-3" />
-                            <span>{t('freeCancellation')}: {getTimeRemaining(trip.createdAt)} {t('minutes')}</span>
+                            <span>إلغاء مجاني: {getTimeRemaining(trip.createdAt)} دقيقة متبقية</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-1 text-orange-600 text-xs">
                             <AlertTriangle className="h-3 w-3" />
-                            <span>{t('cancellationFee')}: {t('currency')} {getCancellationFee(trip.price || 0, trip.createdAt).toLocaleString()}</span>
+                            <span>رسوم الإلغاء: {getCancellationFee(trip.price || 0, trip.createdAt).toLocaleString()} ريال</span>
                           </div>
                         )}
                       </div>
@@ -462,10 +508,18 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                     <Navigation className="h-4 w-4" />
-                    <span>{t('vehicle')}: {trip.vehicle?.capacity || t('na')}</span>
+                    <span>{t('vehicle')}: {trip.vehicle?.type || t('na')} - {trip.vehicle?.capacity || t('na')}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    {trackingEnabled && trip.status === 'IN_PROGRESS' && (
+                    {trackingEnabled && [
+                      TripStatus.ASSIGNED,
+                      TripStatus.IN_PROGRESS,
+                      TripStatus.EN_ROUTE_PICKUP,
+                      TripStatus.AT_PICKUP,
+                      TripStatus.PICKED_UP,
+                      TripStatus.IN_TRANSIT,
+                      TripStatus.AT_DESTINATION
+                    ].includes(trip.status as any) && (
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -475,7 +529,7 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
                         {t('trackTrip')}
                       </Button>
                     )}
-                    {trip.status === TripStatus.PENDING && (
+                    {['PENDING', 'DRIVER_REQUESTED', 'ASSIGNED'].includes(trip.status) && (
                       <Button 
                         variant="outline" 
                         size="sm"
@@ -483,7 +537,7 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <X className="h-4 w-4 mr-2" />
-                        {t('cancelTrip')}
+                        إلغاء الرحلة
                       </Button>
                     )}
                     <Button variant="outline" size="sm">
@@ -544,6 +598,9 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
                     <p className="text-sm">{t('cancellationFeeWillApply')}</p>
                     <p className="font-semibold">
                       {t('cancellationFee')}: {t('currency')} {getCancellationFee(selectedTripForCancel.price || 0, selectedTripForCancel.createdAt || new Date()).toLocaleString()}
+                    </p>
+                    <p className="text-sm mt-2 bg-orange-50 p-2 rounded">
+                      📄 سيتم إنشاء فاتورة برسوم الإلغاء يجب دفعها خلال 30 يوماً
                     </p>
                   </div>
                 )}

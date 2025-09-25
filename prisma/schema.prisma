@@ -24,6 +24,7 @@ model User {
   subscriptions        Subscription[]
   customerTrips        Trip[]         @relation("CustomerTrips")
   customsClearances    CustomsClearance[]
+  notifications        Notification[]
 
   @@map("users")
 }
@@ -43,6 +44,7 @@ model Driver {
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   trips           Trip[]
   vehicleTypes    DriverVehicleType[]
+  tripRequests    TripRequest[]
 
   @@map("drivers")
 }
@@ -202,6 +204,7 @@ model Trip {
   updatedAt       DateTime           @updatedAt
   invoice         Invoice?
   trackingLogs    TrackingLog[]
+  tripRequests    TripRequest[]
   customer        User               @relation("CustomerTrips", fields: [customerId], references: [id])
   driver          Driver?            @relation(fields: [driverId], references: [id])
   fromCity        City               @relation("TripsFrom", fields: [fromCityId], references: [id])
@@ -497,6 +500,9 @@ enum UserRole {
 
 enum TripStatus {
   PENDING          // في انتظار البدء
+  DRIVER_REQUESTED // تم إرسال طلب للسائق
+  DRIVER_ACCEPTED  // السائق وافق على الرحلة
+  DRIVER_REJECTED  // السائق رفض الرحلة
   ASSIGNED         // تم تعيين السائق
   IN_PROGRESS      // بدأت الرحلة (للتوافق مع البيانات القديمة)
   EN_ROUTE_PICKUP  // في الطريق لنقطة الاستلام
@@ -569,4 +575,62 @@ model DriverVehicleType {
 
   @@unique([driverId, vehicleTypeId])
   @@map("driver_vehicle_types")
+}
+
+// Notification System
+model Notification {
+  id          String            @id @default(cuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?             // Additional data for the notification
+  isRead      Boolean           @default(false)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Trip Requests for Drivers
+model TripRequest {
+  id          String              @id @default(cuid())
+  tripId      String
+  driverId    String
+  status      TripRequestStatus   @default(PENDING)
+  requestedAt DateTime            @default(now())
+  respondedAt DateTime?
+  expiresAt   DateTime            // Request expires after X minutes
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  trip        Trip                @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  driver      Driver              @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, driverId])
+  @@map("trip_requests")
+}
+
+enum NotificationType {
+  TRIP_STATUS_UPDATE
+  TRIP_ASSIGNED
+  TRIP_CANCELLED
+  INVOICE_CREATED
+  INVOICE_PAID
+  PAYMENT_RECEIVED
+  DRIVER_ASSIGNED
+  DRIVER_ACCEPTED
+  DRIVER_REJECTED
+  SYSTEM_ANNOUNCEMENT
+  CUSTOMS_UPDATE
+  TRIP_REQUEST_RECEIVED
+  TRIP_REQUEST_EXPIRED
+}
+
+enum TripRequestStatus {
+  PENDING   // في انتظار رد السائق
+  ACCEPTED  // السائق وافق
+  REJECTED  // السائق رفض
+  EXPIRED   // انتهت صلاحية الطلب
 }

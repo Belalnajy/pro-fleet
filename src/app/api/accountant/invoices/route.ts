@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       paidDate: invoice.paidDate,
       // Payment tracking fields
       amountPaid: invoice.amountPaid || 0,
-      remainingAmount: invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0)),
+      remainingAmount: invoice.remainingAmount || (invoice.total - (invoice.amountPaid || 0)),
       installmentCount: invoice.installmentCount,
       installmentsPaid: invoice.installmentsPaid || 0,
       installmentAmount: invoice.installmentAmount,

@@ -95,7 +95,7 @@ export async function GET(
       paidDate: invoice.paidDate?.toISOString() || null,
       // New payment tracking fields
       amountPaid: invoice.amountPaid || 0,
-      remainingAmount: invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0)),
+      remainingAmount: invoice.remainingAmount || (invoice.total - (invoice.amountPaid || 0)),
       installmentCount: invoice.installmentCount,
       installmentsPaid: invoice.installmentsPaid || 0,
       installmentAmount: invoice.installmentAmount,

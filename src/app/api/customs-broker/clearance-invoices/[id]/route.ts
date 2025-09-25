@@ -79,7 +79,7 @@ export async function GET(
       paidDate: invoice.paidDate?.toISOString(),
       // Payment tracking fields
       amountPaid: invoice.amountPaid || 0,
-      remainingAmount: invoice.remainingAmount !== null ? invoice.remainingAmount : (invoice.total - (invoice.amountPaid || 0)),
+      remainingAmount: invoice.remainingAmount || (invoice.total - (invoice.amountPaid || 0)),
       installmentCount: invoice.installmentCount,
       installmentsPaid: invoice.installmentsPaid,
       installmentAmount: invoice.installmentAmount,
@@ -200,7 +200,7 @@ export async function PUT(
       paidDate: updatedInvoice.paidDate?.toISOString(),
       // Payment tracking fields
       amountPaid: updatedInvoice.amountPaid || 0,
-      remainingAmount: updatedInvoice.remainingAmount !== null ? updatedInvoice.remainingAmount : (updatedInvoice.total - (updatedInvoice.amountPaid || 0)),
+      remainingAmount: updatedInvoice.remainingAmount || (updatedInvoice.total - (updatedInvoice.amountPaid || 0)),
       installmentCount: updatedInvoice.installmentCount,
       installmentsPaid: updatedInvoice.installmentsPaid,
       installmentAmount: updatedInvoice.installmentAmount,

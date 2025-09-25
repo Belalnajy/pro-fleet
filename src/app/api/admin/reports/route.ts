@@ -379,7 +379,7 @@ export async function GET(req: NextRequest) {
       cancelledInvoices: invoices.filter(inv => inv.paymentStatus === 'CANCELLED').length,
       totalAmount: invoices.reduce((sum, inv) => sum + inv.total, 0),
       paidAmount: invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0),
-      remainingAmount: invoices.reduce((sum, inv) => sum + (inv.remainingAmount !== null ? inv.remainingAmount : (inv.total - (inv.amountPaid || 0))), 0),
+      remainingAmount: invoices.reduce((sum, inv) => sum + (inv.remainingAmount || (inv.total - (inv.amountPaid || 0))), 0),
       collectionRate: invoices.length > 0 ? Math.round((invoices.filter(inv => inv.paymentStatus === 'PAID').length / invoices.length) * 100 * 100) / 100 : 0
     }
 

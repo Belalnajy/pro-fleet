@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { prisma } from '@/lib/prisma'
+import { setupInstallmentPlan, calculatePaymentStatus, PaymentStatus } from '@/lib/payment-calculator'
 
 // POST - Set up installment plan for an invoice
 export async function POST(
@@ -54,18 +55,35 @@ export async function POST(
       )
     }
 
-    // Calculate installment amount
+    // حساب خطة الأقساط باستخدام الدالة المساعدة
     const remainingAmount = invoice.total - (invoice.amountPaid || 0)
-    const installmentAmount = Math.round((remainingAmount / installmentCount) * 100) / 100
+    const installmentPlan = setupInstallmentPlan(
+      remainingAmount,
+      installmentCount,
+      new Date(firstInstallmentDate)
+    )
 
-    // Update invoice with installment plan
+    // حساب حالة المدفوعات الجديدة
+    const paymentCalculation = calculatePaymentStatus(
+      {
+        total: invoice.total,
+        dueDate: invoice.dueDate,
+        installmentCount,
+        installmentAmount: installmentPlan.installmentAmount,
+        currentAmountPaid: invoice.amountPaid || 0,
+        currentPaymentStatus: invoice.paymentStatus as PaymentStatus
+      },
+      [] // لا توجد مدفوعات جديدة هنا
+    )
+
+    // تحديث الفاتورة بخطة الأقساط
     const updatedInvoice = await prisma.invoice.update({
       where: { id },
       data: {
         paymentStatus: 'INSTALLMENT',
         installmentCount,
-        installmentAmount,
-        nextInstallmentDate: new Date(firstInstallmentDate),
+        installmentAmount: installmentPlan.installmentAmount,
+        nextInstallmentDate: installmentPlan.nextInstallmentDate,
         remainingAmount
       },
       include: {
@@ -97,9 +115,10 @@ export async function POST(
       message: 'Installment plan set successfully',
       installmentDetails: {
         totalInstallments: installmentCount,
-        installmentAmount,
+        installmentAmount: installmentPlan.installmentAmount,
         remainingAmount,
-        nextDueDate: firstInstallmentDate
+        nextDueDate: installmentPlan.nextInstallmentDate,
+        installmentSchedule: installmentPlan.installmentSchedule
       }
     })
   } catch (error) {

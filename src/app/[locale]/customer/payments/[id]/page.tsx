@@ -178,15 +178,22 @@ export default function PaymentDetailsPage({ params }: { params: Promise<{ local
   }
 
   const getStatusBadge = (status: string) => {
+    console.log('Payment Status in [id] page:', status) // للتشخيص
     const statusConfig = {
-      PAID: { variant: "default" as const, label: "مدفوع", icon: CheckCircle },
-      PARTIAL: { variant: "secondary" as const, label: "مدفوع جزئياً", icon: Clock },
-      PENDING: { variant: "outline" as const, label: "معلق", icon: AlertCircle },
+      PAID: { variant: "default" as const, label: "مدفوعة", icon: CheckCircle },
+      PARTIAL: { variant: "secondary" as const, label: "مدفوعة جزئياً", icon: Clock },
+      PENDING: { variant: "outline" as const, label: "في الانتظار", icon: AlertCircle },
       SENT: { variant: "outline" as const, label: "مرسل", icon: FileText },
-      INSTALLMENT: { variant: "secondary" as const, label: "أقساط", icon: Calendar },
+      INSTALLMENT: { variant: "secondary" as const, label: "نظام أقساط", icon: Calendar },
+      OVERDUE: { variant: "destructive" as const, label: "متأخرة", icon: AlertCircle },
+      CANCELLED: { variant: "destructive" as const, label: "ملغية", icon: AlertCircle },
     }
     
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.PENDING
+    const config = statusConfig[status as keyof typeof statusConfig] || { 
+      variant: "secondary" as const, 
+      label: status || "غير محدد", 
+      icon: AlertCircle 
+    }
     const Icon = config.icon
     
     return (

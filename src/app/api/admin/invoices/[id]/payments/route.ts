@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { calculatePaymentStatus, validatePaymentAmount, PaymentStatus } from "@/lib/payment-calculator";
 
 // GET - Get payment history for an invoice
 export async function GET(
@@ -103,50 +104,40 @@ export async function POST(
       );
     }
 
-    // Check if payment amount exceeds remaining balance
-    if (amount > currentRemainingAmount) {
+    // التحقق من صحة مبلغ الدفعة باستخدام الدالة المساعدة
+    const paymentValidation = validatePaymentAmount(
+      amount,
+      {
+        total: invoice.total,
+        dueDate: invoice.dueDate,
+        installmentCount: invoice.installmentCount,
+        installmentAmount: invoice.installmentAmount,
+        currentAmountPaid: currentAmountPaid,
+        currentPaymentStatus: invoice.paymentStatus as PaymentStatus
+      },
+      invoice.payments.map(p => ({ amount: p.amount, paymentDate: p.paymentDate }))
+    );
+
+    if (!paymentValidation.isValid) {
       return NextResponse.json(
-        { error: "Payment amount exceeds remaining balance" },
+        { error: paymentValidation.error },
         { status: 400 }
       );
     }
-    const newAmountPaid = currentAmountPaid + amount;
-    const remainingAmount = Math.max(0, invoice.total - newAmountPaid);
 
-    // Calculate installment tracking if applicable
-    let installmentsPaid = invoice.installmentsPaid || 0;
-    let nextInstallmentDate = invoice.nextInstallmentDate;
-
-    if (invoice.installmentCount && invoice.installmentAmount) {
-      // Calculate how many installments have been paid based on amount
-      installmentsPaid = Math.floor(newAmountPaid / invoice.installmentAmount);
-      installmentsPaid = Math.min(installmentsPaid, invoice.installmentCount);
-
-      // Calculate next installment date if not fully paid
-      if (
-        installmentsPaid < invoice.installmentCount &&
-        newAmountPaid < invoice.total
-      ) {
-        const currentDate = new Date();
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        nextInstallmentDate = currentDate;
-      } else {
-        nextInstallmentDate = null;
-      }
-    }
-
-    // Determine new payment status
-    let newPaymentStatus = invoice.paymentStatus;
-    if (newAmountPaid >= invoice.total) {
-      newPaymentStatus = "PAID" as any;
-    } else if (newAmountPaid > 0) {
-      // Check if this is part of an installment plan
-      if (invoice.installmentCount && invoice.installmentCount > 0) {
-        newPaymentStatus = "INSTALLMENT";
-      } else {
-        newPaymentStatus = "PARTIAL";
-      }
-    }
+    // حساب حالة المدفوعات الجديدة
+    const paymentCalculation = calculatePaymentStatus(
+      {
+        total: invoice.total,
+        dueDate: invoice.dueDate,
+        installmentCount: invoice.installmentCount,
+        installmentAmount: invoice.installmentAmount,
+        currentAmountPaid: currentAmountPaid,
+        currentPaymentStatus: invoice.paymentStatus as PaymentStatus
+      },
+      invoice.payments.map(p => ({ amount: p.amount, paymentDate: p.paymentDate })),
+      amount
+    );
 
     // Create the payment record
     const payment = await prisma.payment.create({
@@ -160,17 +151,16 @@ export async function POST(
       }
     });
 
-    // Update invoice with new payment totals
+    // تحديث الفاتورة بالحالة الجديدة المحسوبة
     const updatedInvoice = await prisma.invoice.update({
       where: { id },
       data: {
-        amountPaid: newAmountPaid,
-        remainingAmount,
-        paymentStatus: newPaymentStatus,
-        paidDate:
-          newAmountPaid >= invoice.total ? new Date() : invoice.paidDate,
-        installmentsPaid,
-        nextInstallmentDate
+        amountPaid: paymentCalculation.amountPaid,
+        remainingAmount: paymentCalculation.remainingAmount,
+        paymentStatus: paymentCalculation.paymentStatus,
+        paidDate: paymentCalculation.isFullyPaid ? new Date() : invoice.paidDate,
+        installmentsPaid: paymentCalculation.installmentsPaid,
+        nextInstallmentDate: paymentCalculation.nextInstallmentDate
       },
       include: {
         payments: {

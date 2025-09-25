@@ -14,14 +14,16 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Mock payment details based on ID
+    // Mock payment details based on ID - with different scenarios
+    const isInstallmentPayment = id.includes('installment') || Math.random() > 0.5
+    
     const mockPaymentDetails = {
       id,
-      amount: 1000,
+      amount: isInstallmentPayment ? 915.18 : 1000,
       paymentMethod: "bank_transfer",
       paymentDate: "2025-01-20T10:00:00Z",
       reference: "REF-001",
-      notes: "دفعة أولى",
+      notes: isInstallmentPayment ? "قسط شهري" : "دفعة أولى",
       status: "PAID",
       createdAt: "2025-01-20T10:00:00Z",
       invoice: {
@@ -30,9 +32,9 @@ export async function GET(
         invoiceType: "REGULAR" as const,
         tripNumber: "TRP-001",
         total: 2746.2,
-        paidAmount: 1000,
-        remainingAmount: 1746.2,
-        paymentStatus: "PARTIAL",
+        paidAmount: isInstallmentPayment ? 915.18 : 1000,
+        remainingAmount: isInstallmentPayment ? 1831.02 : 1746.2,
+        paymentStatus: isInstallmentPayment ? "INSTALLMENT" : "PARTIAL",
         dueDate: "2025-02-20T00:00:00Z",
         route: {
           from: "الرياض",

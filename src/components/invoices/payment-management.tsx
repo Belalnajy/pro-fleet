@@ -46,6 +46,14 @@ interface PaymentManagementProps {
 }
 
 export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: PaymentManagementProps) {
+  console.log('PaymentManagement received invoice:', {
+    id: invoice.id,
+    installmentCount: invoice.installmentCount,
+    installmentsPaid: invoice.installmentsPaid,
+    installmentAmount: invoice.installmentAmount,
+    paymentStatus: invoice.paymentStatus
+  })
+  
   const [currentInvoice, setCurrentInvoice] = useState<Invoice>(invoice)
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
@@ -88,46 +96,20 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
         const payments = data.payments || []
         setPayments(payments)
         
-        // Update current invoice data based on actual payments
-        const totalPaid = payments.reduce((sum: number, payment: any) => sum + payment.amount, 0)
-        
-        // Calculate installments paid more accurately
-        let installmentsPaid = 0
-        console.log('Calculating installments:', {
-          paymentStatus: currentInvoice.paymentStatus,
-          installmentAmount: currentInvoice.installmentAmount,
-          installmentCount: currentInvoice.installmentCount,
-          totalPaid: totalPaid,
-          paymentsLength: payments.length
+        // Don't recalculate payment data - trust the backend data
+        // The invoice data from the API should already have correct payment information
+        console.log('Payments fetched:', {
+          paymentsCount: payments.length,
+          currentInvoiceData: {
+            amountPaid: currentInvoice.amountPaid,
+            remainingAmount: currentInvoice.remainingAmount,
+            installmentsPaid: currentInvoice.installmentsPaid,
+            paymentStatus: currentInvoice.paymentStatus
+          }
         })
         
-        if (currentInvoice.paymentStatus === 'INSTALLMENT' && currentInvoice.installmentAmount) {
-          // Simple approach: count installments based on total paid vs installment amount
-          const installmentAmount = currentInvoice.installmentAmount
-          const calculated = totalPaid / installmentAmount
-          const floored = Math.floor(calculated + 0.01)
-          const final = Math.min(floored, currentInvoice.installmentCount || 0)
-          
-          console.log('Installment calculation:', {
-            calculated: calculated,
-            floored: floored,
-            final: final
-          })
-          
-          installmentsPaid = final
-        } else if (currentInvoice.paymentStatus === 'INSTALLMENT') {
-          // If no installment amount set, count each payment as an installment
-          installmentsPaid = Math.min(payments.length, currentInvoice.installmentCount || 0)
-          console.log('Using payment count as installments:', installmentsPaid)
-        }
-        
-        const updatedInvoice = {
-          ...currentInvoice,
-          amountPaid: totalPaid,
-          remainingAmount: currentInvoice.total - totalPaid,
-          installmentsPaid: installmentsPaid
-        }
-        setCurrentInvoice(updatedInvoice)
+        // Keep the original invoice data as it comes from the backend
+        // Only update if we need to refresh from server
       } else {
         console.log('Failed to fetch payments, status:', response.status)
       }
@@ -180,20 +162,44 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
 
       if (response.ok) {
         const data = await response.json()
-        setPayments(prev => [data.payment, ...prev])
-        // Update local state immediately
-        setCurrentInvoice(data.invoice)
-        // Also notify parent component
-        onPaymentAdded(data.invoice)
+        // Don't manually add payment to list - fetchPayments will handle this
+        
+        // Fetch updated invoice data from the main invoice API to get correct payment calculations
+        try {
+          const invoiceResponse = await fetch(`${apiEndpoint}/${invoice.id}`)
+          if (invoiceResponse.ok) {
+            const invoiceData = await invoiceResponse.json()
+            const updatedInvoice = invoiceData.invoice || invoiceData
+            setCurrentInvoice(updatedInvoice)
+            // Also notify parent component with updated data
+            onPaymentAdded(updatedInvoice)
+          } else {
+            // Fallback to the payment response data if invoice fetch fails
+            setCurrentInvoice(data.invoice)
+            onPaymentAdded(data.invoice)
+          }
+        } catch (error) {
+          console.error('Error fetching updated invoice:', error)
+          // Fallback to the payment response data
+          setCurrentInvoice(data.invoice)
+          onPaymentAdded(data.invoice)
+        }
+        
+        // Refresh payments list to show the new payment
+        await fetchPayments()
+        
         setPaymentForm({ amount: '', paymentMethod: '', reference: '', notes: '' })
         setPaymentDialogOpen(false)
-        toast.success('تم إضافة الدفعة بنجاح')
+        const isInstallment = currentInvoice.installmentCount && currentInvoice.installmentCount > 0
+        toast.success(isInstallment ? 'تم دفع القسط بنجاح' : 'تم إضافة الدفعة بنجاح')
       } else {
         const error = await response.json()
-        toast.error(error.error || 'فشل في إضافة الدفعة')
+        const isInstallment = currentInvoice.installmentCount && currentInvoice.installmentCount > 0
+        toast.error(error.error || (isInstallment ? 'فشل في دفع القسط' : 'فشل في إضافة الدفعة'))
       }
     } catch (error) {
-      toast.error('حدث خطأ أثناء إضافة الدفعة')
+      const isInstallment = currentInvoice.installmentCount && currentInvoice.installmentCount > 0
+      toast.error(isInstallment ? 'حدث خطأ أثناء دفع القسط' : 'حدث خطأ أثناء إضافة الدفعة')
     } finally {
       setLoading(false)
     }
@@ -224,10 +230,31 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
 
       if (response.ok) {
         const data = await response.json()
-        // Update local state immediately
-        setCurrentInvoice(data.invoice)
-        // Also notify parent component
-        onPaymentAdded(data.invoice)
+        
+        // Fetch updated invoice data from the main invoice API to get correct payment calculations
+        try {
+          const invoiceResponse = await fetch(`${apiEndpoint}/${invoice.id}`)
+          if (invoiceResponse.ok) {
+            const invoiceData = await invoiceResponse.json()
+            const updatedInvoice = invoiceData.invoice || invoiceData
+            setCurrentInvoice(updatedInvoice)
+            // Also notify parent component with updated data
+            onPaymentAdded(updatedInvoice)
+          } else {
+            // Fallback to the installment response data if invoice fetch fails
+            setCurrentInvoice(data.invoice)
+            onPaymentAdded(data.invoice)
+          }
+        } catch (error) {
+          console.error('Error fetching updated invoice:', error)
+          // Fallback to the installment response data
+          setCurrentInvoice(data.invoice)
+          onPaymentAdded(data.invoice)
+        }
+        
+        // Refresh payments list in case installment setup affects payment display
+        await fetchPayments()
+        
         setInstallmentForm({ installmentCount: '', firstInstallmentDate: '' })
         setInstallmentDialogOpen(false)
         toast.success('تم إعداد خطة الأقساط بنجاح')
@@ -402,16 +429,16 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
             <DialogTrigger asChild>
               <Button disabled={currentInvoice.remainingAmount <= 0}>
                 <CreditCard className="h-4 w-4 mr-2" />
-                {currentInvoice.paymentStatus === 'INSTALLMENT' ? 'دفع قسط' : 'إضافة دفعة'}
+                {(currentInvoice.installmentCount && currentInvoice.installmentCount > 0) ? 'دفع قسط' : 'إضافة دفعة'}
               </Button>
             </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {currentInvoice.paymentStatus === 'INSTALLMENT' ? 'دفع قسط' : 'إضافة دفعة جديدة'}
+                {(currentInvoice.installmentCount && currentInvoice.installmentCount > 0) ? 'دفع قسط' : 'إضافة دفعة جديدة'}
               </DialogTitle>
               <DialogDescription>
-                {currentInvoice.paymentStatus === 'INSTALLMENT' ? 
+                {(currentInvoice.installmentCount && currentInvoice.installmentCount > 0) ? 
                   'قم بدفع قسط من الفاتورة أو أي مبلغ آخر' : 
                   'أضف دفعة جديدة لهذه الفاتورة'
                 }
@@ -419,7 +446,7 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
             </DialogHeader>
             <div className="space-y-4">
               {/* Installment Info */}
-              {currentInvoice.paymentStatus === 'INSTALLMENT' && (
+              {(currentInvoice.installmentCount && currentInvoice.installmentCount > 0) && (
                 <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                   <div className="text-sm text-blue-800 mb-2">
                     <strong>معلومات القسط:</strong>
@@ -507,7 +534,7 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
               </div>
               <Button onClick={handleAddPayment} disabled={loading} className="w-full">
                 {loading ? 'جاري الإضافة...' : 
-                  (currentInvoice.paymentStatus === 'INSTALLMENT' ? 'دفع القسط' : 'إضافة الدفعة')
+                  ((currentInvoice.installmentCount && currentInvoice.installmentCount > 0) ? 'دفع القسط' : 'إضافة الدفعة')
                 }
               </Button>
             </div>

@@ -32,6 +32,7 @@ import {
   Navigation as NavigationIcon,
   Truck,
   CreditCard,
+  Bell,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -91,6 +92,7 @@ export function Navigation({ className }: NavigationProps) {
             label: t("tracking"),
             icon: MapPin,
           },
+     
           {
             href: `/${language}/admin/settings`,
             label: t("settings"),
@@ -124,6 +126,12 @@ export function Navigation({ className }: NavigationProps) {
       case "DRIVER":
         return [
           ...baseItems,
+          {
+            href: `/${language}/driver/trip-requests`,
+            label: "طلبات الرحلات",
+            icon: Bell  ,
+            
+          },
           {
             href: `/${language}/driver/trips`,
             label: t("myTrips"),

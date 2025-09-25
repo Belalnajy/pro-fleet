@@ -138,9 +138,7 @@ export async function GET(request: NextRequest) {
       notes: payment.notes,
       status: payment.invoice.paymentStatus,
       total: payment.invoice.total,
-      remainingAmount: payment.invoice.remainingAmount !== null 
-        ? payment.invoice.remainingAmount 
-        : (payment.invoice.total - (payment.invoice.amountPaid || 0)),
+      remainingAmount: payment.invoice.remainingAmount || (payment.invoice.total - (payment.invoice.amountPaid || 0)),
       driver: payment.invoice.trip.driver ? {
         name: payment.invoice.trip.driver.user.name
       } : null,
@@ -165,9 +163,7 @@ export async function GET(request: NextRequest) {
       notes: payment.notes,
       status: payment.invoice.paymentStatus,
       total: payment.invoice.total,
-      remainingAmount: payment.invoice.remainingAmount !== null 
-        ? payment.invoice.remainingAmount 
-        : (payment.invoice.total - (payment.invoice.amountPaid || 0)),
+      remainingAmount: payment.invoice.remainingAmount || (payment.invoice.total - (payment.invoice.amountPaid || 0)),
       driver: payment.invoice.clearance.invoice.trip.driver ? {
         name: payment.invoice.clearance.invoice.trip.driver.user.name
       } : null,

@@ -107,6 +107,10 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
         invoiceType: 'REGULAR' as const,
         total: inv.totalAmount || inv.total || 0,
         tripNumber: inv.tripNumber || inv.trip?.tripNumber || 'N/A',
+        paymentStatus: inv.paymentStatus || 'PENDING', // احتفظ بحالة الدفع
+        installmentCount: inv.installmentCount || 0,
+        installmentsPaid: inv.installmentsPaid || 0,
+        installmentAmount: inv.installmentAmount || 0,
         route: inv.trip ? {
           from: inv.trip.fromCity || 'N/A',
           to: inv.trip.toCity || 'N/A'
@@ -117,6 +121,10 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
         invoiceType: 'CLEARANCE' as const,
         total: inv.totalAmount || inv.total || 0,
         tripNumber: inv.tripNumber || inv.trip?.tripNumber || 'N/A',
+        paymentStatus: inv.paymentStatus || 'PENDING', // احتفظ بحالة الدفع
+        installmentCount: inv.installmentCount || 0,
+        installmentsPaid: inv.installmentsPaid || 0,
+        installmentAmount: inv.installmentAmount || 0,
         route: inv.trip ? {
           from: inv.trip.fromCity || 'N/A',
           to: inv.trip.toCity || 'N/A'
@@ -125,6 +133,14 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
       
       const allInvoices = [...regularInvoices, ...clearanceInvoices]
         .filter(inv => inv.remainingAmount > 0)
+      
+      console.log('Fetched invoices with payment status:', allInvoices.map(inv => ({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        paymentStatus: inv.paymentStatus,
+        installmentCount: inv.installmentCount,
+        installmentsPaid: inv.installmentsPaid
+      })))
       
       setInvoices(allInvoices)
     } catch (error) {
@@ -172,14 +188,17 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
   }
 
   const getStatusBadge = (status: string) => {
+    console.log('Payment Status:', status) // للتشخيص
     const statusMap = {
-      'PENDING': { label: 'معلقة', variant: 'secondary' as const },
+      'PENDING': { label: 'في الانتظار', variant: 'secondary' as const },
       'PAID': { label: 'مدفوعة', variant: 'default' as const },
       'OVERDUE': { label: 'متأخرة', variant: 'destructive' as const },
-      'INSTALLMENT': { label: 'أقساط', variant: 'outline' as const },
+      'INSTALLMENT': { label: 'نظام أقساط', variant: 'outline' as const },
+      'PARTIAL': { label: 'مدفوعة جزئياً', variant: 'secondary' as const },
+      'CANCELLED': { label: 'ملغية', variant: 'destructive' as const },
     }
     
-    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status, variant: 'secondary' as const }
+    const statusInfo = statusMap[status as keyof typeof statusMap] || { label: status || 'غير محدد', variant: 'secondary' as const }
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
   }
 
@@ -321,9 +340,24 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
           </Card>
 
           {/* Payment Management */}
+          {(() => {
+            console.log('Customer Invoice Data:', {
+              id: selectedInvoice.id,
+              installmentCount: selectedInvoice.installmentCount,
+              installmentsPaid: selectedInvoice.installmentsPaid,
+              installmentAmount: selectedInvoice.installmentAmount,
+              paymentStatus: selectedInvoice.paymentStatus
+            })
+            return null
+          })()}
           <PaymentManagement
             key={selectedInvoice.id} // Force re-mount when invoice changes
-            invoice={selectedInvoice}
+            invoice={{
+              ...selectedInvoice,
+              installmentCount: selectedInvoice.installmentCount || 0,
+              installmentsPaid: selectedInvoice.installmentsPaid || 0,
+              installmentAmount: selectedInvoice.installmentAmount || 0,
+            }}
             onPaymentAdded={(updatedInvoice) => {
               // Update the selected invoice
               setSelectedInvoice(updatedInvoice)
@@ -341,9 +375,10 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
                 // Remove from list since it's fully paid
                 setInvoices(prev => prev.filter(inv => inv.id !== updatedInvoice.id))
               } else {
+                const isInstallment = updatedInvoice.installmentCount && updatedInvoice.installmentCount > 0
                 toast({
                   title: "تم بنجاح",
-                  description: "تم تسجيل الدفعة بنجاح",
+                  description: isInstallment ? "تم تسجيل القسط بنجاح" : "تم تسجيل الدفعة بنجاح",
                 })
               }
             }}
@@ -360,8 +395,8 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
   // Show invoice selection list
   return (
     <DashboardLayout
-      title="تسجيل دفعة"
-      subtitle="اختر الفاتورة التي تريد تسجيل دفعة لها"
+      title="تسجيل دفعة / قسط"
+      subtitle="اختر الفاتورة التي تريد تسجيل دفعة أو قسط لها"
       actions={
         <Button onClick={() => router.back()} variant="outline" size="sm">
           <ArrowLeft className="h-4 w-4 mr-2" />
@@ -376,7 +411,7 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
             الفواتير المتاحة للدفع
           </CardTitle>
           <CardDescription>
-            اختر الفاتورة التي تريد تسجيل دفعة لها
+            اختر الفاتورة التي تريد تسجيل دفعة أو قسط لها
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

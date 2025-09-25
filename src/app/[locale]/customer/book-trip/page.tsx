@@ -105,12 +105,16 @@ export default function BookTrip({ params }: BookTripProps) {
     cargoWeight: "",
     cargoValue: "",
     temperatureRequirement: "ambient",
+    temperatureId: "", // إضافة معرف درجة الحرارة
     specialInstructions: "",
     scheduledPickupDate: "",
-    estimatedDeliveryDate: "",
     vehicleTypeId: "",
+    vehicleId: "", // إضافة معرف المركبة المحددة
     customsBrokerId: "none",
     driverId: null as string | null,
+    price: "", // إضافة السعر
+    currency: "SAR", // إضافة العملة
+    notes: "", // إضافة الملاحظات
     originLocation: null as LocationData | null,
     destinationLocation: null as LocationData | null
   })
@@ -464,10 +468,24 @@ export default function BookTrip({ params }: BookTripProps) {
         toCityId: finalToCityId,
         scheduledDate: tripForm.scheduledPickupDate,
         temperatureId: temperatureId,
-        vehicleTypeId: vehicleTypeId, // Send vehicle type ID instead of vehicle ID
-        driverId: tripForm.driverId, // Include selected driver ID
-        price: estimatedPrice || 500,
-        notes: `Cargo: ${tripForm.cargoType}, Weight: ${tripForm.cargoWeight}kg, Value: ${tripForm.cargoValue} SAR. Pickup: ${tripForm.pickupAddress || (tripForm.originLocation?.address || 'Custom Location')}, Delivery: ${tripForm.deliveryAddress || (tripForm.destinationLocation?.address || 'Custom Location')}. Special Instructions: ${tripForm.specialInstructions}${tripForm.originLocation ? ` Origin: ${tripForm.originLocation.lat}, ${tripForm.originLocation.lng}` : ''}${tripForm.destinationLocation ? ` Destination: ${tripForm.destinationLocation.lat}, ${tripForm.destinationLocation.lng}` : ''}. Customs Broker: ${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد' : 'غير محدد'}. Driver: ${tripForm.driverId ? availableDrivers.find(d => d.id === tripForm.driverId)?.user?.name || 'غير محدد' : 'غير محدد'}`
+        vehicleTypeId: vehicleTypeId,
+        vehicleId: tripForm.vehicleId || null, // إضافة معرف المركبة المحددة
+        driverId: tripForm.driverId,
+        customsBrokerId: tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? tripForm.customsBrokerId : null,
+        price: tripForm.price ? parseFloat(tripForm.price) : estimatedPrice || 500,
+        currency: tripForm.currency || 'SAR',
+        cargoType: tripForm.cargoType,
+        cargoWeight: tripForm.cargoWeight ? parseFloat(tripForm.cargoWeight) : null,
+        cargoValue: tripForm.cargoValue ? parseFloat(tripForm.cargoValue) : null,
+        specialInstructions: tripForm.specialInstructions,
+        notes: tripForm.notes || '',
+        // إضافة معلومات المواقع المخصصة
+        originLat: tripForm.originLocation?.lat || null,
+        originLng: tripForm.originLocation?.lng || null,
+        destinationLat: tripForm.destinationLocation?.lat || null,
+        destinationLng: tripForm.destinationLocation?.lng || null,
+        // معلومات إضافية للملاحظات
+        additionalNotes: `${tripForm.originLocation ? `نقطة الاستلام: ${tripForm.originLocation.address || 'موقع مخصص'}` : ''}${tripForm.destinationLocation ? ` | نقطة التسليم: ${tripForm.destinationLocation.address || 'موقع مخصص'}` : ''}${tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? ` | المخلص الجمركي: ${customsBrokers.find(b => b.id === tripForm.customsBrokerId)?.name || 'غير محدد'}` : ''}${tripForm.driverId ? ` | السائق المطلوب: ${availableDrivers.find(d => d.id === tripForm.driverId)?.user?.name || 'غير محدد'}` : ''}`
       }
 
       console.log('🚛 Creating trip:', {
@@ -525,6 +543,13 @@ export default function BookTrip({ params }: BookTripProps) {
             description: translate("fromMapOrCities")
           })
           break
+        case 2:
+          toast({
+            variant: "destructive",
+            title: "يرجى ملء الحقول المطلوبة",
+            description: "نوع البضاعة والوزن ونوع المركبة مطلوبة"
+          })
+          break
         case 3:
           toast({
             variant: "destructive",
@@ -557,8 +582,8 @@ export default function BookTrip({ params }: BookTripProps) {
         const hasDestination = tripForm.toCityId || tripForm.destinationLocation
         return hasOrigin && hasDestination
       case 2:
-        // Step 2: Cargo details are optional, but if provided should be complete
-        return true // Make cargo details optional
+        // Step 2: Basic cargo and vehicle details are required
+        return !!(tripForm.cargoType && tripForm.cargoWeight && tripForm.vehicleTypeId)
       case 3:
         // Step 3: Only pickup date is required
         return !!tripForm.scheduledPickupDate
@@ -599,12 +624,16 @@ export default function BookTrip({ params }: BookTripProps) {
                     cargoWeight: "",
                     cargoValue: "",
                     temperatureRequirement: "ambient",
+                    temperatureId: "",
                     specialInstructions: "",
                     scheduledPickupDate: "",
-                    estimatedDeliveryDate: "",
                     vehicleTypeId: "",
+                    vehicleId: "",
                     customsBrokerId: "none",
                     driverId: null,
+                    price: "",
+                    currency: "SAR",
+                    notes: "",
                     originLocation: null,
                     destinationLocation: null
                   })
@@ -878,78 +907,189 @@ export default function BookTrip({ params }: BookTripProps) {
               </div>
             )}
 
-            {/* Step 2: Cargo Details */}
+            {/* Step 2: Cargo and Vehicle Details */}
             {step === 2 && (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="cargoType">{translate("cargoType")}</Label>
-                    <Input
-                      id="cargoType"
-                      value={tripForm.cargoType}
-                      onChange={(e) => setTripForm({...tripForm, cargoType: e.target.value})}
-                      placeholder={translate("enterCargoType")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="cargoWeight">{translate("cargoWeight")} (kg)</Label>
-                    <Input
-                      id="cargoWeight"
-                      type="number"
-                      value={tripForm.cargoWeight}
-                      onChange={(e) => setTripForm({...tripForm, cargoWeight: e.target.value})}
-                      placeholder={translate("enterCargoWeight")}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="cargoValue">{translate("cargoValue")} ({translate("currency")})</Label>
-                    <Input
-                      id="cargoValue"
-                      type="number"
-                      value={tripForm.cargoValue}
-                      onChange={(e) => setTripForm({...tripForm, cargoValue: e.target.value})}
-                      placeholder={translate("enterCargoValue")}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="temperatureRequirement">{translate("temperatureRequirement")}</Label>
-                    <Select
-                      value={tripForm.temperatureRequirement}
-                      onValueChange={(value) => setTripForm({...tripForm, temperatureRequirement: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ambient">{translate("ambient")}</SelectItem>
-                        <SelectItem value="cold_2">+2°C</SelectItem>
-                        <SelectItem value="cold_10">+10°C</SelectItem>
-                        <SelectItem value="frozen">-18°C</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="specialInstructions">{translate("specialInstructions")}</Label>
-                  <Textarea
-                    id="specialInstructions"
-                    value={tripForm.specialInstructions}
-                    onChange={(e) => setTripForm({...tripForm, specialInstructions: e.target.value})}
-                    placeholder={translate("enterSpecialInstructions")}
-                  />
-                </div>
-                {estimatedPrice > 0 && (
-                  <div className="bg-muted p-4 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">{translate("estimatedPrice")}:</span>
-                      <span className="text-lg font-bold text-primary">
-                        {(estimatedPrice || 0).toFixed(2)} {translate("currency")}
-                      </span>
+              <div className="space-y-6">
+                {/* Cargo Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold border-b pb-2">📦 معلومات البضاعة</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="cargoType">{translate("cargoType")} *</Label>
+                      <Input
+                        id="cargoType"
+                        value={tripForm.cargoType}
+                        onChange={(e) => setTripForm({...tripForm, cargoType: e.target.value})}
+                        placeholder={translate("enterCargoType")}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cargoWeight">{translate("cargoWeight")} (kg) *</Label>
+                      <Input
+                        id="cargoWeight"
+                        type="number"
+                        min="0"
+                        step="0.1"
+                        value={tripForm.cargoWeight}
+                        onChange={(e) => setTripForm({...tripForm, cargoWeight: e.target.value})}
+                        placeholder={translate("enterCargoWeight")}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cargoValue">{translate("cargoValue")} ({translate("currency")})</Label>
+                      <Input
+                        id="cargoValue"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={tripForm.cargoValue}
+                        onChange={(e) => setTripForm({...tripForm, cargoValue: e.target.value})}
+                        placeholder={translate("enterCargoValue")}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="temperatureRequirement">{translate("temperatureRequirement")} *</Label>
+                      <Select
+                        value={tripForm.temperatureId || tripForm.temperatureRequirement}
+                        onValueChange={(value) => {
+                          // إذا كان القيمة من القائمة المحفوظة، استخدم temperatureId
+                          const selectedTemp = temperatures.find(t => t.id === value)
+                          if (selectedTemp) {
+                            setTripForm({...tripForm, temperatureId: value, temperatureRequirement: selectedTemp.option.toLowerCase()})
+                          } else {
+                            // إذا كان من القيم الثابتة القديمة
+                            setTripForm({...tripForm, temperatureRequirement: value, temperatureId: ""})
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر درجة الحرارة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {temperatures.length > 0 ? (
+                            temperatures.map((temp) => (
+                              <SelectItem key={temp.id} value={temp.id}>
+                                {temp.option} ({temp.value}{temp.unit})
+                              </SelectItem>
+                            ))
+                          ) : (
+                            // Fallback للقيم الثابتة
+                            <>
+                              <SelectItem value="ambient">{translate("ambient")}</SelectItem>
+                              <SelectItem value="cold_2">+2°C</SelectItem>
+                              <SelectItem value="cold_10">+10°C</SelectItem>
+                              <SelectItem value="frozen">-18°C</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                )}
+                </div>
+
+                {/* Vehicle Selection */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold border-b pb-2">🚛 اختيار المركبة</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="vehicleType">نوع المركبة *</Label>
+                      <Select
+                        value={tripForm.vehicleTypeId}
+                        onValueChange={(value) => {
+                          setTripForm({...tripForm, vehicleTypeId: value, vehicleId: ""})
+                          // إعادة تحميل المركبات المتاحة
+                          fetchVehicles()
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="اختر نوع المركبة" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {vehicleTypes.map((type) => (
+                            <SelectItem key={type.id} value={type.id}>
+                              {type.name} - {type.capacity}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="vehicle">المركبة المحددة</Label>
+                      <Select
+                        value={tripForm.vehicleId}
+                        onValueChange={(value) => setTripForm({...tripForm, vehicleId: value})}
+                        disabled={!tripForm.vehicleTypeId}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={tripForm.vehicleTypeId ? "اختر المركبة" : "اختر نوع المركبة أولاً"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {vehicles
+                            .filter(v => !tripForm.vehicleTypeId || v.vehicleTypeId === tripForm.vehicleTypeId)
+                            .map((vehicle) => (
+                            <SelectItem key={vehicle.id} value={vehicle.id}>
+                              {vehicle.vehicleNumber} - {vehicle.vehicleType?.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        اختياري - سيتم تعيين مركبة تلقائياً إذا لم تختر
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Price Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold border-b pb-2">💰 معلومات السعر</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="price">السعر المقترح ({translate("currency")})</Label>
+                      <Input
+                        id="price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={tripForm.price}
+                        onChange={(e) => setTripForm({...tripForm, price: e.target.value})}
+                        placeholder="سيتم حساب السعر تلقائياً"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        اختياري - سيتم تحديد السعر النهائي من قبل الإدارة
+                      </p>
+                    </div>
+                    <div>
+                      <Label>السعر المقدر</Label>
+                      <div className="p-3 bg-muted rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">السعر المقدر:</span>
+                          <span className="text-lg font-bold text-primary">
+                            {(estimatedPrice || 0).toFixed(2)} {translate("currency")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Special Instructions */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold border-b pb-2">📝 تعليمات خاصة</h3>
+                  <div>
+                    <Label htmlFor="specialInstructions">{translate("specialInstructions")}</Label>
+                    <Textarea
+                      id="specialInstructions"
+                      value={tripForm.specialInstructions}
+                      onChange={(e) => setTripForm({...tripForm, specialInstructions: e.target.value})}
+                      placeholder={translate("enterSpecialInstructions")}
+                      rows={3}
+                      className="resize-none"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
@@ -964,15 +1104,6 @@ export default function BookTrip({ params }: BookTripProps) {
                       type="datetime-local"
                       value={tripForm.scheduledPickupDate}
                       onChange={(e) => setTripForm({...tripForm, scheduledPickupDate: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="estimatedDeliveryDate">{translate("estimatedDeliveryDate")}</Label>
-                    <Input
-                      id="estimatedDeliveryDate"
-                      type="datetime-local"
-                      value={tripForm.estimatedDeliveryDate}
-                      onChange={(e) => setTripForm({...tripForm, estimatedDeliveryDate: e.target.value})}
                     />
                   </div>
                 </div>
@@ -1020,13 +1151,22 @@ export default function BookTrip({ params }: BookTripProps) {
                     </div>
                   ) : (
                     <Select
-                      value={tripForm.driverId || ''}
-                      onValueChange={(value) => setTripForm({...tripForm, driverId: value || null})}
+                      value={tripForm.driverId || 'no-driver'}
+                      onValueChange={(value) => setTripForm({...tripForm, driverId: value === 'no-driver' ? null : value})}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="اختر السائق" />
+                        <SelectValue placeholder="اختر السائق">
+                          {tripForm.driverId && tripForm.driverId !== 'no-driver' ? (
+                            <span className="font-medium">
+                              {availableDrivers.find(d => d.id === tripForm.driverId)?.user?.name || 'سائق محدد'}
+                            </span>
+                          ) : tripForm.driverId === null ? (
+                            <span className="text-muted-foreground">بدون سائق (اختياري)</span>
+                          ) : null}
+                        </SelectValue>
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="no-driver">بدون سائق (اختياري)</SelectItem>
                         {availableDrivers.map((driver) => (
                           <SelectItem key={driver.id} value={driver.id}>
                             <div className="flex flex-col">
@@ -1049,28 +1189,81 @@ export default function BookTrip({ params }: BookTripProps) {
                     </Select>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    يتم عرض السائقين الذين يمكنهم قيادة نوع المركبة المحدد فقط
+                    اختياري - يتم عرض السائقين الذين يمكنهم قيادة نوع المركبة المحدد فقط
+                  </p>
+                </div>
+
+                {/* Additional Notes */}
+                <div>
+                  <Label htmlFor="notes">ملاحظات إضافية</Label>
+                  <Textarea
+                    id="notes"
+                    value={tripForm.notes}
+                    onChange={(e) => setTripForm({...tripForm, notes: e.target.value})}
+                    placeholder="أي ملاحظات أو تعليمات إضافية للرحلة"
+                    rows={3}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    اختياري - ملاحظات عامة حول الرحلة
                   </p>
                 </div>
                 
                 {/* Summary */}
                 <div className="bg-muted p-6 rounded-lg space-y-4">
                   <h3 className="font-semibold">{translate("tripSummary")}</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {/* معلومات المسار */}
+                    <div className="col-span-full">
                       <span className="text-muted-foreground">{translate("route")}:</span>
-                      <p className="font-medium">
+                      <p className="font-medium text-lg">
                         {cities.find(c => c.id === tripForm.fromCityId)?.name} → {cities.find(c => c.id === tripForm.toCityId)?.name}
                       </p>
                     </div>
+                    
+                    {/* معلومات البضاعة */}
                     <div>
-                      <span className="text-muted-foreground">{translate("cargo")}:</span>
-                      <p className="font-medium">{tripForm.cargoType} ({tripForm.cargoWeight} kg)</p>
+                      <span className="text-muted-foreground">نوع البضاعة:</span>
+                      <p className="font-medium">{tripForm.cargoType || '-'}</p>
                     </div>
+                    <div>
+                      <span className="text-muted-foreground">الوزن:</span>
+                      <p className="font-medium">{tripForm.cargoWeight ? `${tripForm.cargoWeight} كجم` : '-'}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">القيمة:</span>
+                      <p className="font-medium">{tripForm.cargoValue ? `${tripForm.cargoValue} ${tripForm.currency || 'SAR'}` : '-'}</p>
+                    </div>
+                    
+                    {/* معلومات المركبة */}
+                    <div>
+                      <span className="text-muted-foreground">نوع المركبة:</span>
+                      <p className="font-medium">
+                        {vehicleTypes.find(v => v.id === tripForm.vehicleTypeId)?.name || '-'}
+                      </p>
+                    </div>
+                    
+                    {/* معلومات درجة الحرارة */}
+                    <div>
+                      <span className="text-muted-foreground">درجة الحرارة:</span>
+                      <p className="font-medium">
+                        {temperatures.find(t => t.id === tripForm.temperatureId)?.option || '-'}
+                      </p>
+                    </div>
+                    
+                    {/* معلومات التواريخ */}
                     <div>
                       <span className="text-muted-foreground">{translate("pickupDate")}:</span>
                       <p className="font-medium">
-                        {tripForm.scheduledPickupDate ? new Date(tripForm.scheduledPickupDate).toLocaleString() : '-'}
+                        {tripForm.scheduledPickupDate ? new Date(tripForm.scheduledPickupDate).toLocaleString('ar-SA') : '-'}
+                      </p>
+                    </div>
+                    
+                    {/* معلومات السعر */}
+                    <div>
+                      <span className="text-muted-foreground">السعر المقترح:</span>
+                      <p className="font-medium text-blue-600">
+                        {tripForm.price ? `${tripForm.price} ${tripForm.currency || 'SAR'}` : '-'}
                       </p>
                     </div>
                     <div>
@@ -1079,6 +1272,8 @@ export default function BookTrip({ params }: BookTripProps) {
                         {(estimatedPrice || 0).toFixed(2)} {translate("currency")}
                       </p>
                     </div>
+                    
+                    {/* معلومات المخلص الجمركي */}
                     <div>
                       <span className="text-muted-foreground">{translate("customsBroker")}:</span>
                       <p className="font-medium">
@@ -1088,6 +1283,37 @@ export default function BookTrip({ params }: BookTripProps) {
                         }
                       </p>
                     </div>
+                    
+                    {/* معلومات السائق */}
+                    <div>
+                      <span className="text-muted-foreground">السائق:</span>
+                      <p className="font-medium">
+                        {tripForm.driverId ? 
+                          availableDrivers.find(d => d.id === tripForm.driverId)?.user?.name || 'سائق محدد' : 
+                          'بدون سائق (اختياري)'
+                        }
+                      </p>
+                    </div>
+                    
+                    {/* التعليمات الخاصة */}
+                    {tripForm.specialInstructions && (
+                      <div className="col-span-full">
+                        <span className="text-muted-foreground">التعليمات الخاصة:</span>
+                        <p className="font-medium bg-gray-50 p-2 rounded text-sm">
+                          {tripForm.specialInstructions}
+                        </p>
+                      </div>
+                    )}
+                    
+                    {/* الملاحظات الإضافية */}
+                    {tripForm.notes && (
+                      <div className="col-span-full">
+                        <span className="text-muted-foreground">ملاحظات إضافية:</span>
+                        <p className="font-medium bg-gray-50 p-2 rounded text-sm">
+                          {tripForm.notes}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

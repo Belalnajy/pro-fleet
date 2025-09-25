@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { calculatePaymentStatus, validatePaymentAmount, PaymentStatus } from "@/lib/payment-calculator";
 
 export async function GET(
   request: NextRequest,
@@ -111,18 +112,50 @@ export async function POST(
       );
     }
 
-    if (amount > remainingAmount) {
+    // جلب المدفوعات الحالية
+    const currentPayments = await db.payment.findMany({
+      where: { invoiceId },
+      select: { amount: true, paymentDate: true }
+    });
+
+    // التحقق من صحة مبلغ الدفعة
+    const paymentValidation = validatePaymentAmount(
+      amount,
+      {
+        total: invoice.total,
+        dueDate: invoice.dueDate,
+        installmentCount: invoice.installmentCount,
+        installmentAmount: invoice.installmentAmount,
+        currentAmountPaid: currentAmountPaid,
+        currentPaymentStatus: invoice.paymentStatus as PaymentStatus
+      },
+      currentPayments.map(p => ({ amount: p.amount, paymentDate: p.paymentDate }))
+    );
+
+    if (!paymentValidation.isValid) {
       return NextResponse.json(
-        {
-          error: "Payment amount exceeds remaining balance"
-        },
+        { error: paymentValidation.error },
         { status: 400 }
       );
     }
 
-    // Use transaction to ensure data consistency
+    // حساب حالة المدفوعات الجديدة
+    const paymentCalculation = calculatePaymentStatus(
+      {
+        total: invoice.total,
+        dueDate: invoice.dueDate,
+        installmentCount: invoice.installmentCount,
+        installmentAmount: invoice.installmentAmount,
+        currentAmountPaid: currentAmountPaid,
+        currentPaymentStatus: invoice.paymentStatus as PaymentStatus
+      },
+      currentPayments.map(p => ({ amount: p.amount, paymentDate: p.paymentDate })),
+      amount
+    );
+
+    // استخدام transaction لضمان تسق البيانات
     const result = await db.$transaction(async (tx) => {
-      // Create payment record
+      // إنشاء سجل الدفعة
       const payment = await tx.payment.create({
         data: {
           invoiceId: invoiceId,
@@ -135,24 +168,16 @@ export async function POST(
         }
       });
 
-      // Update invoice payment status
-      const newAmountPaid = currentAmountPaid + amount;
-      const newRemainingAmount = invoice.total - newAmountPaid;
-
-      let newPaymentStatus = invoice.paymentStatus;
-      if (newRemainingAmount <= 0) {
-        newPaymentStatus = "PAID";
-      } else if (newAmountPaid > 0) {
-        newPaymentStatus = "PARTIAL";
-      }
-
+      // تحديث حالة الفاتورة
       const updatedInvoice = await tx.invoice.update({
         where: { id: invoiceId },
         data: {
-          amountPaid: newAmountPaid,
-          remainingAmount: newRemainingAmount,
-          paymentStatus: newPaymentStatus,
-          paidDate: newPaymentStatus === "PAID" ? new Date() : null
+          amountPaid: paymentCalculation.amountPaid,
+          remainingAmount: paymentCalculation.remainingAmount,
+          paymentStatus: paymentCalculation.paymentStatus,
+          installmentsPaid: paymentCalculation.installmentsPaid,
+          nextInstallmentDate: paymentCalculation.nextInstallmentDate,
+          paidDate: paymentCalculation.isFullyPaid ? new Date() : invoice.paidDate
         }
       });
 

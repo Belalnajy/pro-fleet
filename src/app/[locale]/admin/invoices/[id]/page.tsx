@@ -24,7 +24,7 @@ import {
   MapPin,
   User,
   Truck,
-  DollarSign,
+  SaudiRiyal,
   CheckCircle,
   Clock,
   AlertTriangle,
@@ -567,7 +567,7 @@ export default function InvoiceDetailsPage({ params: pageParams }: { params: Pro
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
+                  <SaudiRiyal className="h-5 w-5" />
                   الملخص المالي
                 </CardTitle>
               </CardHeader>

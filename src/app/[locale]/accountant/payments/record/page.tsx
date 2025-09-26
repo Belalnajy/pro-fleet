@@ -16,7 +16,7 @@ import {
   ArrowLeft,
   Search,
   FileText,
-  DollarSign,
+  SaudiRiyal,
   Calendar,
   Loader2,
   CheckCircle
@@ -286,7 +286,7 @@ export default function RecordPaymentPage({ params }: { params: Promise<{ locale
                 <div className="space-y-2">
                   <Label htmlFor="amount">المبلغ المدفوع *</Label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <SaudiRiyal className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
                       id="amount"
                       type="number"

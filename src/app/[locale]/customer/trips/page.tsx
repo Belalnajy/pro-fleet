@@ -27,7 +27,7 @@ import {
   Clock,
   Truck,
   Package,
-  DollarSign,
+  SaudiRiyal,
   Eye,
   Navigation,
   CheckCircle,
@@ -568,7 +568,7 @@ export default function CustomerTrips({ params }: { params: Promise<{ locale: st
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t("totalSpent")}</CardTitle>
-              <DollarSign className="h-4 w-4 text-purple-600" />
+              <SaudiRiyal className="h-4 w-4 text-purple-600" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-purple-600">
@@ -932,7 +932,7 @@ export default function CustomerTrips({ params }: { params: Promise<{ locale: st
               {/* Price Information */}
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <h4 className="font-medium text-yellow-800 mb-3 flex items-center">
-                  <DollarSign className="h-4 w-4 mr-2" />
+                  <SaudiRiyal className="h-4 w-4 mr-2" />
                   معلومات السعر
                 </h4>
                 <div className="text-center">

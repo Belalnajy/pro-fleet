@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
-import { Calendar, CreditCard, DollarSign, Receipt, Clock, CheckCircle, FileText } from 'lucide-react'
+import { Calendar, CreditCard, SaudiRiyal, Receipt, Clock, CheckCircle, FileText } from 'lucide-react'
 import { format } from 'date-fns'
 import { ar } from 'date-fns/locale'
 
@@ -306,7 +306,7 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5" />
+            <SaudiRiyal className="h-5 w-5" />
             ملخص المدفوعات
           </CardTitle>
         </CardHeader>
@@ -346,7 +346,7 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
               <div className="flex items-center justify-center mb-2">
                 <div className="p-2 bg-blue-500 rounded-full">
-                  <DollarSign className="h-4 w-4 text-white" />
+                  <SaudiRiyal className="h-4 w-4 text-white" />
                 </div>
               </div>
               <div className="text-center">

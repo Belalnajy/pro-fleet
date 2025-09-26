@@ -20,7 +20,7 @@ import {
   Download,
   Eye,
   FileText,
-  DollarSign,
+  SaudiRiyal,
   Calendar,
   AlertCircle,
   CheckCircle,
@@ -600,7 +600,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
                             size="sm"
                             onClick={() => router.push(`/${locale}/customer/payments/record?invoiceId=${invoice.id}&type=regular`)}
                           >
-                            <DollarSign className="h-4 w-4 mr-1" />
+                            <SaudiRiyal className="h-4 w-4 mr-1" />
                             إدارة المدفوعات
                           </Button>
                         )}
@@ -717,7 +717,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
                                 size="sm"
                                 onClick={() => router.push(`/${locale}/customer/payments/record?invoiceId=${invoice.id}&type=clearance`)}
                               >
-                                <DollarSign className="h-4 w-4 mr-1" />
+                                <SaudiRiyal className="h-4 w-4 mr-1" />
                                 إدارة المدفوعات
                               </Button>
                             )}
@@ -872,7 +872,7 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
               <Card>
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <DollarSign className="h-5 w-5" />
+                    <SaudiRiyal className="h-5 w-5" />
                     التفاصيل المالية
                   </CardTitle>
                 </CardHeader>

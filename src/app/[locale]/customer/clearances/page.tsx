@@ -26,7 +26,7 @@ import {
   Truck,
   User,
   Calendar,
-  DollarSign
+  SaudiRiyal
 } from "lucide-react"
 
 interface ClearanceProps {
@@ -265,7 +265,7 @@ export default function CustomerClearancesPage({ params }: ClearanceProps) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">إجمالي الرسوم</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <SaudiRiyal className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalFees.toFixed(2)} ريال</div>
@@ -471,7 +471,7 @@ export default function CustomerClearancesPage({ params }: ClearanceProps) {
               {/* Financial Information */}
               <div className="border rounded-lg p-4">
                 <h3 className="font-medium mb-3 flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
+                  <SaudiRiyal className="h-4 w-4" />
                   المعلومات المالية
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

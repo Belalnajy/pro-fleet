@@ -16,7 +16,7 @@ import {
   Mail,
   ArrowLeft,
   Calendar,
-  DollarSign,
+  SaudiRiyal,
   CheckCircle,
   Clock,
   AlertTriangle,
@@ -169,7 +169,7 @@ export default function CustomsClearanceInvoiceDetailsPage({ params: pageParams 
 
       case "installment":
       case "INSTALLMENT":
-        return <DollarSign className="h-4 w-4" />
+        return <SaudiRiyal className="h-4 w-4" />
       case "pending":
       case "PENDING":
         return <Clock className="h-4 w-4" />
@@ -354,7 +354,7 @@ export default function CustomsClearanceInvoiceDetailsPage({ params: pageParams 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <DollarSign className="h-5 w-5" />
+                  <SaudiRiyal className="h-5 w-5" />
                   ملخص المدفوعات
                 </CardTitle>
               </CardHeader>

@@ -30,7 +30,7 @@ import * as XLSX from 'xlsx'
 import {
   Calculator,
   Search,
-  DollarSign,
+  SaudiRiyal,
   Package,
   FileText,
   Loader2,

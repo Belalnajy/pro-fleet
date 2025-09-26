@@ -11,7 +11,7 @@ import {
   ArrowLeft, 
   Calendar, 
   Clock, 
-  DollarSign,
+  SaudiRiyal,
   Users,
   Truck
 } from "lucide-react"
@@ -39,7 +39,7 @@ export function I18nExample() {
     {
       title: t('todayRevenue'),
       value: '45,678 ' + t('currency'),
-      icon: DollarSign,
+      icon: SaudiRiyal,
       change: '+8%'
     }
   ]

@@ -11,7 +11,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 import {
   Truck,
   Users,
-  DollarSign,
+  SaudiRiyal,
   FileText,
   TrendingUp,
   Clock,
@@ -165,7 +165,7 @@ export default function DashboardPage({ params }: { params: Promise<{ locale: st
             <CardTitle className="text-sm font-medium">
               {t("revenue")}
             </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <SaudiRiyal className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">

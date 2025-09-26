@@ -37,7 +37,7 @@ import {
   AlertTriangle,
   XCircle,
   Calendar,
-  DollarSign,
+  SaudiRiyal,
   Package,
   Loader2,
 } from "lucide-react"

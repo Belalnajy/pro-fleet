@@ -16,7 +16,7 @@ import {
   CheckCheck,
   Truck,
   FileText,
-  DollarSign,
+  SaudiRiyal,
   AlertTriangle,
   Info,
   Calendar,
@@ -153,7 +153,7 @@ export default function CustomerNotifications({ params }: { params: Promise<{ lo
       case 'INVOICE_PAID':
         return <FileText className="h-5 w-5 text-green-600" />
       case 'PAYMENT_RECEIVED':
-        return <DollarSign className="h-5 w-5 text-green-600" />
+        return <SaudiRiyal className="h-5 w-5 text-green-600" />
       case 'DRIVER_ASSIGNED':
       case 'DRIVER_ACCEPTED':
         return <Check className="h-5 w-5 text-green-600" />

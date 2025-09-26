@@ -45,10 +45,14 @@ const MapComponent = dynamic(
         return (
           <MapContainer
             center={position ? [position.lat, position.lng] : defaultCenter}
-            zoom={position ? 13 : 6}
+            zoom={position ? 15 : 6}
             style={{ height: "100%", width: "100%" }}
             className="z-10"
             ref={mapRef}
+            zoomControl={true}
+            touchZoom={true}
+            doubleClickZoom={true}
+            scrollWheelZoom={true}
           >
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -145,7 +149,7 @@ export function LocationPicker({
               const newPos = new L.LatLng(position.coords.latitude, position.coords.longitude)
               setPosition(newPos)
               if (mapRef.current) {
-                mapRef.current.flyTo(newPos, 13)
+                mapRef.current.flyTo(newPos, 15)
               }
               reverseGeocode(newPos)
             })
@@ -207,7 +211,7 @@ export function LocationPicker({
             setLocationName(searchQuery)
             setAddress(result.display_name)
             if (mapRef.current) {
-              mapRef.current.flyTo(newPos, 13)
+              mapRef.current.flyTo(newPos, 15)
             }
           })
         }
@@ -238,7 +242,7 @@ export function LocationPicker({
         setLocationName(location.name)
         setAddress(`${location.name} - ${location.nameEn}`)
         if (mapRef.current) {
-          mapRef.current.flyTo(newPos, 13)
+          mapRef.current.flyTo(newPos, 15)
         }
       })
     }
@@ -273,17 +277,17 @@ export function LocationPicker({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0">
-        <DialogHeader className="px-6 py-4 border-b">
-          <DialogTitle className="flex items-center gap-2 text-lg font-semibold">
-            <MapPin className="w-5 h-5 text-blue-600" />
+      <DialogContent className="w-[98vw] max-w-7xl h-[98vh] max-h-[98vh] overflow-y-auto md:overflow-hidden p-0">
+        <DialogHeader className="px-3 sm:px-6 py-3 sm:py-4 border-b">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
+            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             {title}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 h-[75vh]">
+        <div className="flex flex-col lg:grid lg:grid-cols-3 gap-0 h-[calc(98vh-170px)]">
           {/* Map Section */}
-          <div className="lg:col-span-2 relative bg-gray-100">
+          <div className="lg:col-span-2 relative bg-gray-100 h-[50vh] lg:h-full">
             <MapComponent 
               position={position}
               setPosition={setPosition}
@@ -295,52 +299,52 @@ export function LocationPicker({
             <Button
               onClick={getCurrentLocation}
               disabled={isLoading}
-              className="absolute top-4 right-4 z-[1000] shadow-lg bg-white text-gray-700 hover:bg-gray-50 border"
+              className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[1000] shadow-lg bg-white text-gray-700 hover:bg-gray-50 border"
               size="sm"
             >
-              <Navigation className="w-4 h-4 mr-2" />
-              موقعي الحالي
+              <Navigation className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="text-xs sm:text-sm">موقعي</span>
             </Button>
           </div>
 
           {/* Controls Section */}
-          <div className="bg-white border-l border-gray-200 p-4 space-y-4 overflow-y-auto">
+          <div className="bg-white border-t lg:border-t-0 lg:border-l border-gray-200 p-3 sm:p-4 space-y-3 sm:space-y-4 overflow-y-auto flex-1 lg:flex-none max-h-[40vh] lg:max-h-none">
             {/* Search */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-700">البحث عن موقع</Label>
-              <div className="flex gap-2">
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="text-xs sm:text-sm font-medium text-gray-700">البحث عن موقع</Label>
+              <div className="flex gap-1 sm:gap-2">
                 <Input
-                  placeholder="ابحث عن مدينة أو عنوان..."
+                  placeholder="ابحث عن مدينة..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && searchLocation()}
-                  className="flex-1"
+                  className="flex-1 text-sm"
                 />
                 <Button 
                   onClick={searchLocation} 
                   disabled={isLoading} 
                   size="sm"
-                  className="px-3"
+                  className="px-2 sm:px-3"
                 >
-                  <Search className="w-4 h-4" />
+                  <Search className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
               </div>
             </div>
 
             {/* Predefined Locations */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium text-gray-700">المدن الرئيسية</Label>
-              <div className="space-y-1 max-h-48 overflow-y-auto">
+            <div className="space-y-2 sm:space-y-3">
+              <Label className="text-xs sm:text-sm font-medium text-gray-700">المدن الرئيسية</Label>
+              <div className="grid grid-cols-2 lg:grid-cols-1 gap-1 sm:gap-2 max-h-32 sm:max-h-48 overflow-y-auto">
                 {filteredLocations.map((location) => (
                   <Button
                     key={location.nameEn}
                     variant="ghost"
                     size="sm"
                     onClick={() => selectPredefinedLocation(location)}
-                    className="w-full justify-start text-right hover:bg-blue-50 p-2 h-auto"
+                    className="w-full justify-start text-right hover:bg-blue-50 p-1 sm:p-2 h-auto text-xs sm:text-sm"
                   >
-                    <MapPin className="w-4 h-4 ml-2 text-blue-600" />
-                    <span className="text-sm">{location.name}</span>
+                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2 text-blue-600 flex-shrink-0" />
+                    <span className="truncate">{location.name}</span>
                   </Button>
                 ))}
               </div>
@@ -348,36 +352,36 @@ export function LocationPicker({
 
             {/* Location Details */}
             {position && (
-              <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="space-y-2 sm:space-y-4 p-2 sm:p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-2">
-                  <div className={`w-3 h-3 rounded-full ${type === 'origin' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                  <Label className="text-sm font-medium text-gray-700">
+                  <div className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full ${type === 'origin' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <Label className="text-xs sm:text-sm font-medium text-gray-700">
                     {type === 'origin' ? 'نقطة البداية' : 'نقطة النهاية'}
                   </Label>
                 </div>
                 
                 <div>
-                  <Label htmlFor="locationName" className="text-sm font-medium text-gray-700">اسم الموقع</Label>
+                  <Label htmlFor="locationName" className="text-xs sm:text-sm font-medium text-gray-700">اسم الموقع</Label>
                   <Input
                     id="locationName"
                     placeholder="أدخل اسم الموقع..."
                     value={locationName}
                     onChange={(e) => setLocationName(e.target.value)}
-                    className="mt-1"
+                    className="mt-1 text-sm"
                   />
                 </div>
 
                 <div>
                   <Label className="text-xs text-gray-500">الإحداثيات</Label>
                   <p className="text-xs font-mono text-gray-600 bg-white px-2 py-1 rounded border">
-                    {position.lat.toFixed(6)}, {position.lng.toFixed(6)}
+                    {position.lat.toFixed(4)}, {position.lng.toFixed(4)}
                   </p>
                 </div>
 
                 {address && (
                   <div>
-                    <Label className="text-xs text-gray-500">العنوان المكتشف</Label>
-                    <p className="text-xs text-gray-700 bg-white p-2 rounded border break-words">{address}</p>
+                    <Label className="text-xs text-gray-500">العنوان</Label>
+                    <p className="text-xs text-gray-700 bg-white p-2 rounded border break-words line-clamp-2">{address}</p>
                   </div>
                 )}
               </div>
@@ -385,16 +389,16 @@ export function LocationPicker({
           </div>
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t bg-gray-50">
-          <div className="flex gap-3 w-full">
-            <Button variant="outline" onClick={onClose} className="flex-1">
+        <DialogFooter className="px-3 sm:px-6  sm:py-1 border-t bg-gray-50 flex-shrink-0">
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+            <Button variant="outline" onClick={onClose} className="w-full sm:flex-1 h-12 text-sm font-medium">
               <X className="w-4 h-4 mr-2" />
               إلغاء
             </Button>
             <Button 
               onClick={confirmLocation} 
               disabled={!position}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="w-full sm:flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-sm font-medium"
             >
               <Check className="w-4 h-4 mr-2" />
               تأكيد الموقع

@@ -14,7 +14,7 @@ import {
   CreditCard,
   FileText,
   Calendar,
-  DollarSign,
+  SaudiRiyal,
   CheckCircle,
   Clock,
   AlertCircle,
@@ -471,7 +471,7 @@ export default function PaymentDetailsPage({ params }: { params: Promise<{ local
                 عرض جميع المدفوعات
               </Button>
               <Button variant="outline" onClick={() => router.push(`/${locale}/customer/payments/record?invoiceId=${payment.invoice.id}`)}>
-                <DollarSign className="h-4 w-4 mr-2" />
+                <SaudiRiyal className="h-4 w-4 mr-2" />
                 إضافة دفعة أخرى
               </Button>
             </div>

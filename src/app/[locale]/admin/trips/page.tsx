@@ -31,7 +31,7 @@ import {
   Download,
   User,
   Package,
-  DollarSign,
+  SaudiRiyal,
   Navigation,
   XCircle,
   Pause,
@@ -39,8 +39,10 @@ import {
   Plus,
   FileText,
   Loader2,
+  Dot,
 } from "lucide-react"
 import { TripStatus } from "@prisma/client"
+import { log } from "console"
 
 interface LocationData {
   lat: number
@@ -1020,25 +1022,22 @@ return (
 
     {/* New Trip Dialog */}
     <Dialog open={isDialogOpen} onOpenChange={(open) => { setIsDialogOpen(open); if (!open) resetForm() }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b pb-4">
-          <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              🚚
-            </div>
+      <DialogContent className="w-[95vw] max-w-6xl h-[95vh] max-h-[95vh] overflow-y-auto">
+        <DialogHeader className="border-b pb-3 sm:pb-4">
+          <DialogTitle className="text-lg sm:text-xl font-semibold">
             {t('newTrip')}
           </DialogTitle>
-          <DialogDescription className="text-gray-600">
+          <DialogDescription className="text-sm sm:text-base text-gray-600">
             {t('createTripDescription')}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6 py-6">
+        <div className="space-y-4 sm:space-y-6 py-4 sm:py-6">
           {/* Basic Information Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              💼 معلومات أساسية
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 border-b pb-2">
+              معلومات أساسية
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">{t('customer')} *</Label>
                 <Select value={tripForm.customerId} onValueChange={(v) => setTripForm(prev => ({ ...prev, customerId: v }))}>
@@ -1113,7 +1112,8 @@ return (
                   </SelectTrigger>
                   <SelectContent>
                     {vehicles.map((v) => (
-                      <SelectItem key={v.id} value={v.id}>{v.vehicleType?.capacity || v.vehicleNumber || v.id}</SelectItem>
+                      
+                      <SelectItem key={v.id} value={v.id}>{v.vehicleType?.capacity + " • " + v.vehicleNumber }</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1122,9 +1122,9 @@ return (
           </div>
           
           {/* Route Selection Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              🗺️ تحديد المسار
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 border-b pb-2">
+              تحديد المسار
             </h3>
             
             {/* Map-based Location Selection */}
@@ -1134,9 +1134,9 @@ return (
                 <span className="text-sm font-medium text-gray-700">اختيار من الخريطة (مفضل)</span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                 <LocationSelector
-                  label="🟢 {t('from')}"
+                  label={t('from')}
                   placeholder="اختر نقطة البداية من الخريطة"
                   value={tripForm.originLocation}
                   onChange={(location) => setTripForm(prev => ({ 
@@ -1149,7 +1149,7 @@ return (
                 />
                 
                 <LocationSelector
-                  label="🔴 {t('to')}"
+                  label={t('to')}
                   placeholder="اختر نقطة النهاية من الخريطة"
                   value={tripForm.destinationLocation}
                   onChange={(location) => setTripForm(prev => ({ 
@@ -1174,12 +1174,12 @@ return (
               {(tripForm.originLocation || tripForm.destinationLocation) && (
                 <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
                   <p className="text-xs text-amber-700 text-center">
-                    ⚠️ تم اختيار المواقع من الخريطة. لاستخدام المدن المحفوظة، قم بإلغاء اختيار المواقع من الخريطة أولاً.
+                    تم اختيار المواقع من الخريطة. لاستخدام المدن المحفوظة، قم بإلغاء اختيار المواقع من الخريطة أولاً.
                   </p>
                 </div>
               )}
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <Label className="text-right">{t('from')}</Label>
                 <Select 
@@ -1229,12 +1229,12 @@ return (
           </div>
 
           {/* Trip Details Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              📋 تفاصيل الرحلة
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 border-b pb-2">
+              تفاصيل الرحلة
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">{t('temperature')} *</Label>
                 <Select value={tripForm.temperatureId} onValueChange={(v) => setTripForm(prev => ({ ...prev, temperatureId: v }))}>
@@ -1288,7 +1288,7 @@ return (
                 </Select>
               </div>
             
-            <div className="md:col-span-2 space-y-2">
+            <div className="lg:col-span-2 space-y-2">
               <Label className="text-sm font-medium">{t('notes')}</Label>
               <Textarea 
                 value={tripForm.notes} 
@@ -1302,27 +1302,26 @@ return (
           </div>
         </div>
         {formError && (
-          <div className="mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700 flex items-center gap-2">
-              <span className="text-red-500">⚠️</span>
+          <div className="mx-4 sm:mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">
               {formError}
             </p>
           </div>
         )}
         
-        <DialogFooter className="border-t pt-4 px-6">
-          <div className="flex gap-3 w-full">
+        <DialogFooter className="border-t pt-3 sm:pt-4 px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full">
             <Button 
               variant="outline" 
               onClick={() => setIsDialogOpen(false)}
-              className="flex-1"
+              className="w-full sm:flex-1"
             >
               {t('cancel')}
             </Button>
             <Button 
               onClick={handleCreateTrip} 
               disabled={submitting}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700"
             >
               {submitting ? (
                 <>
@@ -1330,10 +1329,7 @@ return (
                   {t('creating')}
                 </>
               ) : (
-                <>
-                  <span className="mr-2">✓</span>
-                  {t('createTrip')}
-                </>
+                t('createTrip')
               )}
             </Button>
           </div>
@@ -1459,27 +1455,24 @@ return (
 
     {/* Edit Trip Dialog */}
     <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) { setEditTripId(null); resetForm() } }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="border-b pb-4">
-          <DialogTitle className="text-xl font-semibold flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <Edit className="h-4 w-4" />
-            </div>
+      <DialogContent className="w-[95vw] max-w-6xl h-[95vh] max-h-[95vh] overflow-y-auto">
+        <DialogHeader className="border-b pb-3 sm:pb-4">
+          <DialogTitle className="text-lg sm:text-xl font-semibold">
             تعديل الرحلة
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm sm:text-base">
             تحديث بيانات الرحلة المحددة
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-6 py-4">
+        <div className="space-y-4 sm:space-y-6 py-4">
           {/* Customer and Driver Selection */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              👥 اختيار العميل والسائق
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 border-b pb-2">
+              اختيار العميل والسائق
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">{t('customer')} *</Label>
                 <Select value={tripForm.customerId} onValueChange={(v) => setTripForm(prev => ({ ...prev, customerId: v }))}>
@@ -1550,9 +1543,9 @@ return (
           </div>
           
           {/* Vehicle Selection */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              🚛 اختيار المركبة
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 border-b pb-2">
+              اختيار المركبة
             </h3>
             
             <div className="space-y-2">
@@ -1571,12 +1564,12 @@ return (
           </div>
           
           {/* Route Selection */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              🗺️ تحديد المسار
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 border-b pb-2">
+              تحديد المسار
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <Label className="text-right">{t('from')}</Label>
                 <Select value={tripForm.fromCityId} onValueChange={(v) => setTripForm(prev => ({ ...prev, fromCityId: v }))}>
@@ -1607,12 +1600,12 @@ return (
           </div>
 
           {/* Trip Details */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-              📋 تفاصيل الرحلة
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-medium text-gray-900 border-b pb-2">
+              تفاصيل الرحلة
             </h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium">{t('temperature')} *</Label>
                 <Select value={tripForm.temperatureId} onValueChange={(v) => setTripForm(prev => ({ ...prev, temperatureId: v }))}>
@@ -1665,7 +1658,7 @@ return (
                 </Select>
               </div>
             
-              <div className="md:col-span-2 space-y-2">
+              <div className="lg:col-span-2 space-y-2">
                 <Label className="text-sm font-medium">{t('notes')}</Label>
                 <Textarea 
                   value={tripForm.notes} 
@@ -1680,27 +1673,26 @@ return (
         </div>
         
         {formError && (
-          <div className="mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700 flex items-center gap-2">
-              <span className="text-red-500">⚠️</span>
+          <div className="mx-4 sm:mx-6 mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-700">
               {formError}
             </p>
           </div>
         )}
         
-        <DialogFooter className="border-t pt-4 px-6">
-          <div className="flex gap-3 w-full">
+        <DialogFooter className="border-t pt-3 sm:pt-4 px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full">
             <Button 
               variant="outline" 
               onClick={() => setIsEditDialogOpen(false)}
-              className="flex-1"
+              className="w-full sm:flex-1"
             >
               {t('cancel')}
             </Button>
             <Button 
               onClick={handleUpdateTrip} 
               disabled={submitting}
-              className="flex-1 bg-blue-600 hover:bg-blue-700"
+              className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700"
             >
               {submitting ? (
                 <>
@@ -1708,10 +1700,7 @@ return (
                   جاري التحديث...
                 </>
               ) : (
-                <>
-                  <span className="mr-2">✓</span>
-                  تحديث الرحلة
-                </>
+                'تحديث الرحلة'
               )}
             </Button>
           </div>

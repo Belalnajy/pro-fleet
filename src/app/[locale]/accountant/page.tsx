@@ -11,7 +11,7 @@ import { useLanguage } from "@/components/providers/language-provider"
 import { useToast } from "@/hooks/use-toast"
 import {
   FileText,
-  DollarSign,
+  SaudiRiyal,
   TrendingUp,
   AlertTriangle,
   CheckCircle,
@@ -315,7 +315,7 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
   const getTransactionTypeIcon = (type: string) => {
     switch (type) {
       case "payment":
-        return <DollarSign className="h-4 w-4 text-green-600" />
+        return <SaudiRiyal className="h-4 w-4 text-green-600" />
       case "expense":
         return <TrendingUp className="h-4 w-4 text-red-600" />
       case "invoice":
@@ -347,7 +347,7 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs sm:text-sm font-medium">{t("totalRevenue")}</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <SaudiRiyal className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
@@ -535,7 +535,7 @@ const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
               <span>Generate Invoice</span>
             </Button>
             <Button className="h-20 flex-col" variant="outline">
-              <DollarSign className="h-6 w-6 mb-2" />
+              <SaudiRiyal className="h-6 w-6 mb-2" />
               <span>Record Payment</span>
             </Button>
             <Button className="h-20 flex-col" variant="outline">

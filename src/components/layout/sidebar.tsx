@@ -17,7 +17,7 @@ import {
   Package,
   CreditCard,
   FileSearch,
-  DollarSign,
+  SaudiRiyal,
   Wrench,
   User,
   LogOut,
@@ -119,7 +119,7 @@ export function Sidebar({ className }: SidebarProps) {
           {
             title: "Earnings",
             href: `/${locale}/driver/earnings`,
-            icon: DollarSign,
+            icon: SaudiRiyal,
           },
         ]
       

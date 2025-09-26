@@ -12,7 +12,7 @@ import { TrackingStatusIndicator } from "@/components/admin/tracking-status-indi
 import {
   Users,
   Truck,
-  DollarSign,
+  SaudiRiyal,
   FileText,
   TrendingUp,
   Settings,
@@ -119,7 +119,7 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
     {
       title: t("managePricing"),
       description: t("managePricingDesc"),
-      icon: DollarSign,
+      icon: SaudiRiyal,
       href: "/admin/pricing",
       color: "text-purple-600",
       bgColor: "bg-purple-50",
@@ -207,7 +207,7 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t("todayRevenue")}</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <SaudiRiyal className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
@@ -237,7 +237,7 @@ export default function AdminDashboard({ params }: { params: Promise<{ locale: s
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t("yearlyRevenue")}</CardTitle>
-            <DollarSign className="h-4 w-4 text-purple-600" />
+            <SaudiRiyal className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">

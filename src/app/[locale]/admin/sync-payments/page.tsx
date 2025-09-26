@@ -15,7 +15,7 @@ import {
   CreditCard,
   FileText,
   Calendar,
-  DollarSign
+  SaudiRiyal
 } from 'lucide-react'
 import { toast } from 'sonner'
 

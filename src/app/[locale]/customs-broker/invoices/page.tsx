@@ -41,7 +41,7 @@ import {
   ChevronRight,
   MoreVertical,
   Edit,
-  DollarSign,
+  SaudiRiyal,
   CreditCard
 } from "lucide-react"
 import { PaymentManagement } from "@/components/invoices/payment-management"
@@ -196,7 +196,7 @@ export default function CustomsBrokerInvoicesPage({ params }: { params: Promise<
       case "partial":
         return <CreditCard className="h-3 w-3" />
       case "installment":
-        return <DollarSign className="h-3 w-3" />
+        return <SaudiRiyal className="h-3 w-3" />
       case "pending":
         return <Clock className="h-3 w-3" />
       case "sent":
@@ -389,7 +389,7 @@ export default function CustomsBrokerInvoicesPage({ params }: { params: Promise<
                               onClick={() => handleManagePayments(invoice)}
                               title="إدارة المدفوعات"
                             >
-                              <DollarSign className="h-4 w-4" />
+                              <SaudiRiyal className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>

@@ -43,7 +43,7 @@ import {
   Edit,
   Trash2,
   Plus,
-  DollarSign
+  SaudiRiyal
 } from "lucide-react"
 import { CreateInvoiceModal } from "@/components/invoices/create-invoice-modal"
 import * as XLSX from 'xlsx'
@@ -746,7 +746,7 @@ export default function AccountantInvoicesPage({ params }: { params: Promise<{ l
                               </DropdownMenuItem> */}
                               {invoice.paymentStatus !== 'PAID' && invoice.paymentStatus !== 'CANCELLED' && (invoice.remainingAmount || 0) > 0 && (
                                 <DropdownMenuItem onClick={() => handleViewInvoice(invoice.id)}>
-                                  <DollarSign className="h-4 w-4 mr-2" />
+                                  <SaudiRiyal className="h-4 w-4 mr-2" />
                                   إدارة المدفوعات
                                 </DropdownMenuItem>
                               )}

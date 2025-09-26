@@ -13,7 +13,7 @@ import {
   Clock,
   MapPin,
   Truck,
-  DollarSign,
+  SaudiRiyal,
   CheckCircle,
   XCircle,
   AlertTriangle,

@@ -16,7 +16,7 @@ import {
   ArrowLeft,
   Search,
   FileText,
-  DollarSign,
+  SaudiRiyal,
   Calendar,
   Loader2,
   CheckCircle,

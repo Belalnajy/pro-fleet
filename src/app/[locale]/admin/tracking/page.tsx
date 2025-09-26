@@ -120,10 +120,10 @@ export default function AdminTrackingPage({ params }: { params: Promise<{ locale
 
       const data = await response.json();
       
-      // Filter for active trips (IN_PROGRESS) and trips with drivers
+      // Filter for active trips (not DELIVERED or CANCELLED) and trips with drivers
       const activeTripsData = Array.isArray(data) 
         ? data.filter((trip: AdminTrip) => 
-            trip.status === "IN_PROGRESS" && trip.driver
+            !["DELIVERED", "CANCELLED"].includes(trip.status) && trip.driver
           )
         : [];
       
@@ -410,7 +410,7 @@ export default function AdminTrackingPage({ params }: { params: Promise<{ locale
             <CardContent>
               <div className="text-2xl font-bold">10</div>
               <p className="text-xs text-muted-foreground">
-                ثوانِ بين التحديثات
+                {t("updateRateDescription")}
               </p>
             </CardContent>
           </Card>

@@ -277,7 +277,7 @@ export function LocationPicker({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[98vw] max-w-7xl h-[98vh] max-h-[98vh] overflow-y-auto md:overflow-hidden p-0">
+      <DialogContent className="w-[98vw] max-w-7xl h-[98vh] max-h-[98vh] overflow-y-auto  p-0">
         <DialogHeader className="px-3 sm:px-6 py-3 sm:py-4 border-b">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg font-semibold">
             <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />

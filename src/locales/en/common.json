@@ -137,5 +137,6 @@
   "driverManagement": "Driver Management",
   "manageDriverVehicleAssignments": "Manage driver vehicle type assignments",
   "systemStatus": "System Status",
-  "installmentStatus": "Installment"
+  "installmentStatus": "Installment",
+  "updateRateDescription": "Seconds between updates"
 }

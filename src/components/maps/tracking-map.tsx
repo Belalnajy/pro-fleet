@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
-import L from "leaflet";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -265,13 +264,27 @@ export function TrackingMap({
 
   useEffect(() => {
     fetchTrackingData();
-    // Load Leaflet CSS
+    // Load Leaflet CSS and initialize
     if (typeof window !== "undefined") {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-      setMapLoaded(true);
+      // Check if CSS is already loaded
+      const existingLink = document.querySelector('link[href*="leaflet.css"]');
+      if (!existingLink) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        document.head.appendChild(link);
+      }
+      
+      // Initialize Leaflet icons
+      import("leaflet").then((L) => {
+        delete (L.Icon.Default.prototype as any)._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+          iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+          shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+        });
+        setMapLoaded(true);
+      });
     }
   }, [tripId, showAllActiveTrips]);
 
@@ -371,6 +384,7 @@ export function TrackingMap({
   const createCustomIcon = (color: string = "red", emoji: string = "📍") => {
     if (typeof window === "undefined") return null;
     
+    // Use require for dynamic import in client-side only
     const L = require("leaflet");
     
     // Create a custom HTML icon with emoji and color
@@ -419,6 +433,11 @@ export function TrackingMap({
 
   // Create current location icon with pulsing circle like Google Maps
   const createCurrentLocationIcon = () => {
+    if (typeof window === "undefined") return null;
+    
+    // Use require for dynamic import in client-side only
+    const L = require("leaflet");
+    
     const iconHtml = `
       <div style="
         width: 20px;

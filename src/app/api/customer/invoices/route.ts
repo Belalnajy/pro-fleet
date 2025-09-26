@@ -15,11 +15,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch real invoices from the database
+    // Include both trip-based invoices and direct customer invoices (manual invoices)
     const invoices = await db.invoice.findMany({
       where: {
-        trip: {
-          customerId: session.user.id
-        }
+        OR: [
+          // Invoices with trips where the customer is the trip's customer
+          {
+            trip: {
+              customerId: session.user.id
+            }
+          },
+          // Direct customer invoices (manual invoices without a trip)
+          {
+            customerId: session.user.id,
+            tripId: null
+          }
+        ]
       },
       include: {
         trip: {

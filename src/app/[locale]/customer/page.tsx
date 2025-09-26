@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState, use } from "react"
+import { useEffect, useState, use, useCallback } from "react"
 import { DashboardLayout } from "@/components/layout/dashboard-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -49,48 +49,29 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
   const [invoices, setInvoices] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    if (status === "loading") return
-    if (!session || session.user.role !== "CUSTOMER") {
-      router.push(`/${locale}/auth/signin`)
-    } else {
-      fetchDashboardData()
-    }
-  }, [session, status, router])
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true)
-      console.log('🔄 Fetching customer dashboard data...')
-      console.log('Session user:', session?.user)
       
       // Fetch trips
       const tripsResponse = await fetch("/api/customer/trips")
-      console.log('Trips API response status:', tripsResponse.status)
       
       if (tripsResponse.ok) {
         const tripsData = await tripsResponse.json()
         setTrips(tripsData)
-        console.log("✅ Customer trips loaded:", tripsData)
-        console.log(`📊 Found ${tripsData.length} trips`)
       } else {
-        const errorData = await tripsResponse.json()
-        console.error('❌ Failed to fetch trips:', errorData)
+        console.error('Failed to fetch trips:', tripsResponse.status)
       }
       
       // Fetch real invoices from API
       try {
         const invoicesResponse = await fetch("/api/customer/invoices")
-        console.log('Invoices API response status:', invoicesResponse.status)
         
         if (invoicesResponse.ok) {
           const invoicesData = await invoicesResponse.json()
           setInvoices(invoicesData)
-          console.log("✅ Customer invoices loaded:", invoicesData)
-          console.log(`📄 Found ${invoicesData.length} invoices`)
         } else {
-          const errorData = await invoicesResponse.json()
-          console.error('❌ Failed to fetch invoices:', errorData)
+          console.error('Failed to fetch invoices:', invoicesResponse.status)
           setInvoices([])
         }
       } catch (error) {
@@ -103,7 +84,16 @@ export default function CustomerDashboard({ params }: CustomerDashboardProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (status === "loading") return
+    if (!session || session.user.role !== "CUSTOMER") {
+      router.push(`/${locale}/auth/signin`)
+    } else {
+      fetchDashboardData()
+    }
+  }, [session, status, locale, fetchDashboardData])
 
   if (status === "loading") {
     return (

@@ -30,6 +30,7 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
+  const [updatingNotification, setUpdatingNotification] = useState<string | null>(null);
 
   // جلب الإشعارات من API
   const fetchNotifications = async () => {
@@ -56,40 +57,41 @@ export function NotificationBell() {
     }
   }, [session]);
 
-  // WebSocket للإشعارات المباشرة
+  // WebSocket للإشعارات المباشرة (معطل مؤقتاً)
   useEffect(() => {
-    if (!session?.user?.id || session.user.role !== 'CUSTOMER') return;
+    // TODO: تفعيل WebSocket عند إنشاء endpoint
+    // if (!session?.user?.id || session.user.role !== 'CUSTOMER') return;
 
-    const ws = new WebSocket(`ws://localhost:3000/api/notifications/ws?userId=${session.user.id}`);
+    // const ws = new WebSocket(`ws://localhost:3000/api/notifications/ws?userId=${session.user.id}`);
     
-    ws.onmessage = (event) => {
-      try {
-        const notification: Notification = JSON.parse(event.data);
+    // ws.onmessage = (event) => {
+    //   try {
+    //     const notification: Notification = JSON.parse(event.data);
         
-        // إضافة الإشعار الجديد
-        setNotifications(prev => [notification, ...prev.slice(0, 19)]); // آخر 20 إشعار
-        setUnreadCount(prev => prev + 1);
+    //     // إضافة الإشعار الجديد
+    //     setNotifications(prev => [notification, ...prev.slice(0, 19)]); // آخر 20 إشعار
+    //     setUnreadCount(prev => prev + 1);
         
-        // عرض toast notification
-        toast({
-          title: notification.title,
-          description: notification.message,
-          duration: 5000,
-        });
+    //     // عرض toast notification
+    //     toast({
+    //       title: notification.title,
+    //       description: notification.message,
+    //       duration: 5000,
+    //     });
         
-        // صوت الإشعار (اختياري)
-        if ('Notification' in window && Notification.permission === 'granted') {
-          new Notification(notification.title, {
-            body: notification.message,
-            icon: '/logo.svg'
-          });
-        }
-      } catch (error) {
-        console.error('Error parsing notification:', error);
-      }
-    };
+    //     // صوت الإشعار (اختياري)
+    //     if ('Notification' in window && Notification.permission === 'granted') {
+    //       new Notification(notification.title, {
+    //         body: notification.message,
+    //         icon: '/logo.svg'
+    //       });
+    //     }
+    //   } catch (error) {
+    //     console.error('Error parsing notification:', error);
+    //   }
+    // };
 
-    return () => ws.close();
+    // return () => ws.close();
   }, [session, toast]);
 
   // طلب إذن الإشعارات
@@ -138,28 +140,82 @@ export function NotificationBell() {
   // تحديث حالة القراءة
   const markAsRead = async (notificationId: string) => {
     try {
-      await fetch(`/api/customer/notifications/${notificationId}/read`, {
-        method: 'POST'
+      // التحقق إذا كان الإشعار غير مقروء بالفعل
+      const notification = notifications.find(n => n.id === notificationId);
+      if (!notification || notification.isRead) {
+        return; // لا حاجة لتحديث إذا كان مقروءاً بالفعل
+      }
+
+      setUpdatingNotification(notificationId);
+
+      const response = await fetch(`/api/customer/notifications/${notificationId}/read`, {
+        method: 'PATCH'
       });
-      
-      setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-      );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+
+      if (response.ok) {
+        setNotifications(prev => 
+          prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
+        );
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        
+        // إشعار نجاح
+        toast({
+          title: "تم تحديد الإشعار كمقروء",
+          description: "تم تحديث حالة الإشعار بنجاح",
+          duration: 2000,
+        });
+        
+        // إعادة تحميل الإشعارات للتأكد من التزامن
+        setTimeout(() => {
+          fetchNotifications();
+        }, 500);
+      } else {
+        console.error('Failed to mark notification as read:', response.status);
+        toast({
+          title: "خطأ",
+          description: "فشل في تحديث حالة الإشعار",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
     } catch (error) {
       console.error('Error marking notification as read:', error);
+    } finally {
+      setUpdatingNotification(null);
     }
   };
 
   // تحديد جميع الإشعارات كمقروءة
   const markAllAsRead = async () => {
     try {
-      await fetch('/api/customer/notifications/mark-all-read', {
-        method: 'POST'
+      const response = await fetch('/api/customer/notifications/mark-all-read', {
+        method: 'PATCH'
       });
-      
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-      setUnreadCount(0);
+
+      if (response.ok) {
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+        setUnreadCount(0);
+        
+        // إشعار نجاح
+        toast({
+          title: "تم تحديد جميع الإشعارات كمقروءة",
+          description: "تم تحديث جميع الإشعارات بنجاح",
+          duration: 2000,
+        });
+        
+        // إعادة تحميل الإشعارات للتأكد من التزامن
+        setTimeout(() => {
+          fetchNotifications();
+        }, 500);
+      } else {
+        console.error('Failed to mark all notifications as read:', response.status);
+        toast({
+          title: "خطأ",
+          description: "فشل في تحديث الإشعارات",
+          variant: "destructive",
+          duration: 3000,
+        });
+      }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
@@ -237,8 +293,8 @@ export function NotificationBell() {
                       key={notification.id}
                       className={`p-4 hover:bg-gray-50 cursor-pointer border-l-4 ${getNotificationColor(notification.type)} ${
                         !notification.isRead ? 'bg-blue-50' : ''
-                      }`}
-                      onClick={() => !notification.isRead && markAsRead(notification.id)}
+                      } ${updatingNotification === notification.id ? 'opacity-50' : ''}`}
+                      onClick={() => markAsRead(notification.id)}
                     >
                       <div className="flex items-start space-x-3 space-x-reverse">
                         <div className="flex-shrink-0 mt-1">
@@ -250,8 +306,11 @@ export function NotificationBell() {
                             <p className={`text-sm font-medium ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
                               {notification.title}
                             </p>
-                            {!notification.isRead && (
+                            {!notification.isRead && updatingNotification !== notification.id && (
                               <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0"></div>
+                            )}
+                            {updatingNotification === notification.id && (
+                              <div className="w-4 h-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent flex-shrink-0"></div>
                             )}
                           </div>
                           

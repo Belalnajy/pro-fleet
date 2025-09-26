@@ -1,6 +1,6 @@
 "use client"
 
-import { ReactNode, Suspense } from "react"
+import { ReactNode, Suspense, memo } from "react"
 import { Navigation } from "./navigation"
 import { useLanguage } from "@/components/providers/language-provider"
 
@@ -11,12 +11,12 @@ interface DashboardLayoutProps {
   actions?: ReactNode
 }
 
-export function DashboardLayout({ 
+const DashboardLayoutComponent = ({ 
   children, 
   title, 
   subtitle, 
   actions 
-}: DashboardLayoutProps) {
+}: DashboardLayoutProps) => {
   const { t, dir } = useLanguage()
 
   return (
@@ -61,3 +61,5 @@ export function DashboardLayout({
     </div>
   )
 }
+
+export const DashboardLayout = memo(DashboardLayoutComponent)

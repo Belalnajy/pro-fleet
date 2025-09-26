@@ -8,58 +8,58 @@ datasource db {
 }
 
 model User {
-  id                   String         @id @default(cuid())
-  email                String         @unique
+  id                   String             @id @default(cuid())
+  email                String             @unique
   name                 String
   phone                String?
   password             String
   role                 UserRole
-  isActive             Boolean        @default(true)
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
+  isActive             Boolean            @default(true)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
   accountantProfile    Accountant?
   customerProfile      Customer?
   customsBrokerProfile CustomsBroker?
-  driverProfile        Driver?
-  subscriptions        Subscription[]
-  customerTrips        Trip[]         @relation("CustomerTrips")
   customsClearances    CustomsClearance[]
+  driverProfile        Driver?
   notifications        Notification[]
+  subscriptions        Subscription[]
+  customerTrips        Trip[]             @relation("CustomerTrips")
 
   @@map("users")
 }
 
 model Driver {
-  id              String   @id @default(cuid())
-  userId          String   @unique
+  id              String              @id @default(cuid())
+  userId          String              @unique
   nationality     String
   carPlateNumber  String
   carRegistration String
   licenseExpiry   DateTime
-  isAvailable     Boolean  @default(true)
+  isAvailable     Boolean             @default(true)
   currentLocation String?
-  trackingEnabled Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trips           Trip[]
+  trackingEnabled Boolean             @default(false)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
   vehicleTypes    DriverVehicleType[]
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   tripRequests    TripRequest[]
+  trips           Trip[]
 
   @@map("drivers")
 }
 
 model Customer {
-  id            String         @id @default(cuid())
-  userId        String         @unique
-  companyName   String?
-  address       String?
-  preferredLang String         @default("en")
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscriptions Subscription[]
+  id             String         @id @default(cuid())
+  userId         String         @unique
+  companyName    String?
+  address        String?
+  preferredLang  String         @default("en")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   savedAddresses SavedAddress[]
+  subscriptions  Subscription[]
 
   @@map("customers")
 }
@@ -75,25 +75,25 @@ model Accountant {
 }
 
 model CustomsBroker {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  licenseNumber String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trips         Trip[]
+  id                String                    @id @default(cuid())
+  userId            String                    @unique
+  licenseNumber     String?
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  user              User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   clearanceInvoices CustomsClearanceInvoice[]
+  trips             Trip[]
 
   @@map("customs_brokers")
 }
 
 model Vehicle {
   id            String           @id @default(cuid())
-  vehicleNumber String?
   isActive      Boolean          @default(true)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   vehicleTypeId String
+  vehicleNumber String?
   pricing       Pricing[]
   trips         Trip[]
   vehicleType   VehicleTypeModel @relation(fields: [vehicleTypeId], references: [id])
@@ -103,38 +103,38 @@ model Vehicle {
 }
 
 model City {
-  id          String    @id @default(cuid())
-  name        String
-  nameAr      String?
-  country     String
-  latitude    Float?
-  longitude   Float?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  pricingFrom Pricing[] @relation("PricingFrom")
-  pricingTo   Pricing[] @relation("PricingTo")
-  tripsFrom   Trip[]    @relation("TripsFrom")
-  tripsTo     Trip[]    @relation("TripsTo")
+  id             String         @id @default(cuid())
+  name           String
+  nameAr         String?
+  country        String
+  isActive       Boolean        @default(true)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  latitude       Float?
+  longitude      Float?
+  pricingFrom    Pricing[]      @relation("PricingFrom")
+  pricingTo      Pricing[]      @relation("PricingTo")
   savedAddresses SavedAddress[]
+  tripsFrom      Trip[]         @relation("TripsFrom")
+  tripsTo        Trip[]         @relation("TripsTo")
 
   @@unique([name, country])
   @@map("cities")
 }
 
 model VehicleTypeModel {
-  id                   String    @id @default(cuid())
-  name                 String    @unique
+  id                   String              @id @default(cuid())
+  name                 String              @unique
   nameAr               String?
   capacity             String?
   description          String?
-  isRefrigerated       Boolean   @default(false)
+  isRefrigerated       Boolean             @default(false)
   defaultTemperatureId String?
-  isActive             Boolean   @default(true)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  vehicles             Vehicle[]
+  isActive             Boolean             @default(true)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
   drivers              DriverVehicleType[]
+  vehicles             Vehicle[]
 
   @@map("vehicle_type_models")
 }
@@ -179,136 +179,131 @@ model Trip {
   fromCityId      String
   toCityId        String
   temperatureId   String
-  customsBrokerId String?
   scheduledDate   DateTime
   actualStartDate DateTime?
   deliveredDate   DateTime?
   status          TripStatus         @default(PENDING)
-  // Trip stage timestamps
-  assignedAt      DateTime?
-  enRoutePickupAt DateTime?
-  arrivedPickupAt DateTime?
-  pickedUpAt      DateTime?
-  inTransitAt     DateTime?
-  arrivedDestAt   DateTime?
-  deliveredAt     DateTime?
   price           Float
   currency        String             @default("SAR")
   notes           String?
-  // Custom coordinates for map-selected locations
-  originLat       Float?
-  originLng       Float?
-  destinationLat  Float?
-  destinationLng  Float?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
+  customsBrokerId String?
+  arrivedDestAt   DateTime?
+  arrivedPickupAt DateTime?
+  assignedAt      DateTime?
+  deliveredAt     DateTime?
+  destinationLat  Float?
+  destinationLng  Float?
+  enRoutePickupAt DateTime?
+  inTransitAt     DateTime?
+  originLat       Float?
+  originLng       Float?
+  pickedUpAt      DateTime?
   invoice         Invoice?
   trackingLogs    TrackingLog[]
   tripRequests    TripRequest[]
   customer        User               @relation("CustomerTrips", fields: [customerId], references: [id])
+  customsBroker   CustomsBroker?     @relation(fields: [customsBrokerId], references: [id])
   driver          Driver?            @relation(fields: [driverId], references: [id])
   fromCity        City               @relation("TripsFrom", fields: [fromCityId], references: [id])
   temperature     TemperatureSetting @relation(fields: [temperatureId], references: [id])
   toCity          City               @relation("TripsTo", fields: [toCityId], references: [id])
   vehicle         Vehicle            @relation(fields: [vehicleId], references: [id])
-  customsBroker   CustomsBroker?     @relation(fields: [customsBrokerId], references: [id])
 
   @@map("trips")
 }
 
-// Trip Invoice - for transportation services
 model Invoice {
-  id              String         @id @default(cuid())
-  invoiceNumber   String         @unique
-  tripId          String         @unique
-  subtotal        Float
-  taxRate         Float          @default(0.15)
-  taxAmount       Float
-  total           Float
-  currency        String         @default("SAR")
-  paymentStatus   PaymentStatus  @default(PENDING)
-  dueDate         DateTime
-  paidDate        DateTime?
-  // Payment tracking fields
-  amountPaid      Float          @default(0)
-  remainingAmount Float          @default(0)
-  installmentCount Int?          // Number of installments for INSTALLMENT status
-  installmentsPaid Int           @default(0)
+  id                  String             @id @default(cuid())
+  invoiceNumber       String             @unique
+  tripId              String?            @unique
+  taxRate             Float              @default(0.15)
+  taxAmount           Float
+  subtotal            Float
+  total               Float
+  currency            String             @default("SAR")
+  paymentStatus       PaymentStatus      @default(PENDING)
+  dueDate             DateTime
+  paidDate            DateTime?
+  notes               String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  amountPaid          Float              @default(0)
+  installmentAmount   Float?
+  installmentCount    Int?
+  installmentsPaid    Int                @default(0)
   nextInstallmentDate DateTime?
-  installmentAmount Float?
-  notes           String?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-  trip            Trip           @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  customsClearances CustomsClearance[]
-  payments        Payment[]      // Payment history
+  remainingAmount     Float              @default(0)
+  customerEmail       String?
+  customerId          String?
+  customerName        String?
+  customsClearances   CustomsClearance[]
+  trip                Trip?              @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  payments            Payment[]
 
   @@map("invoices")
 }
 
-// Customs Clearance Invoice - for customs services
 model CustomsClearanceInvoice {
-  id                String            @id @default(cuid())
-  invoiceNumber     String            @unique
-  clearanceId       String            @unique
-  customsBrokerId   String
-  customsFee        Float             @default(0)
-  additionalFees    Float             @default(0)
-  subtotal          Float
-  taxRate           Float             @default(0.15)
-  taxAmount         Float
-  total             Float
-  currency          String            @default("SAR")
-  paymentStatus     PaymentStatus     @default(PENDING)
-  dueDate           DateTime
-  paidDate          DateTime?
-  // Payment tracking fields
-  amountPaid        Float             @default(0)
-  remainingAmount   Float             @default(0)
-  installmentCount  Int?              // Number of installments for INSTALLMENT status
-  installmentsPaid  Int               @default(0)
+  id                  String             @id @default(cuid())
+  invoiceNumber       String             @unique
+  clearanceId         String             @unique
+  customsBrokerId     String
+  customsFee          Float              @default(0)
+  additionalFees      Float              @default(0)
+  subtotal            Float
+  taxRate             Float              @default(0.15)
+  taxAmount           Float
+  total               Float
+  currency            String             @default("SAR")
+  paymentStatus       PaymentStatus      @default(PENDING)
+  dueDate             DateTime
+  paidDate            DateTime?
+  amountPaid          Float              @default(0)
+  remainingAmount     Float              @default(0)
+  installmentCount    Int?
+  installmentsPaid    Int                @default(0)
   nextInstallmentDate DateTime?
-  installmentAmount Float?
-  notes             String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
-  clearance         CustomsClearance  @relation(fields: [clearanceId], references: [id], onDelete: Cascade)
-  customsBroker     CustomsBroker     @relation(fields: [customsBrokerId], references: [id])
-  payments          ClearancePayment[] // Payment history
+  installmentAmount   Float?
+  notes               String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  payments            ClearancePayment[]
+  clearance           CustomsClearance   @relation(fields: [clearanceId], references: [id], onDelete: Cascade)
+  customsBroker       CustomsBroker      @relation(fields: [customsBrokerId], references: [id])
 
   @@map("customs_clearance_invoices")
 }
 
-// Payment history for regular invoices
 model Payment {
-  id            String        @id @default(cuid())
+  id            String   @id @default(cuid())
   invoiceId     String
   amount        Float
-  paymentMethod String?       // "cash", "bank_transfer", "check", etc.
-  paymentDate   DateTime      @default(now())
-  reference     String?       // Reference number or transaction ID
+  paymentMethod String?
+  paymentDate   DateTime @default(now())
+  reference     String?
   notes         String?
-  createdBy     String?       // User who recorded the payment
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  invoice       Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdBy     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  invoice       Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@map("payments")
 }
 
-// Payment history for customs clearance invoices
 model ClearancePayment {
-  id            String                   @id @default(cuid())
+  id            String                  @id @default(cuid())
   invoiceId     String
   amount        Float
-  paymentMethod String?                  // "cash", "bank_transfer", "check", etc.
-  paymentDate   DateTime                 @default(now())
-  reference     String?                  // Reference number or transaction ID
+  paymentMethod String?
+  paymentDate   DateTime                @default(now())
+  reference     String?
   notes         String?
-  createdBy     String?                  // User who recorded the payment
-  createdAt     DateTime                 @default(now())
-  updatedAt     DateTime                 @updatedAt
-  invoice       CustomsClearanceInvoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdBy     String?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  invoice       CustomsClearanceInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@map("clearance_payments")
 }
@@ -381,8 +376,8 @@ model TrackingLog {
   timestamp DateTime @default(now())
   speed     Float?
   heading   Float?
-  notes     String?
   createdAt DateTime @default(now())
+  notes     String?
   trip      Trip     @relation(fields: [tripId], references: [id])
 
   @@map("tracking_logs")
@@ -413,45 +408,44 @@ model PasswordResetToken {
 }
 
 model SavedAddress {
-  id          String   @id @default(cuid())
-  customerId  String
-  label       String   // e.g., "Home", "Office", "Warehouse"
-  address     String
-  latitude    Float?
-  longitude   Float?
-  cityId      String?
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  city        City?    @relation(fields: [cityId], references: [id])
+  id         String   @id @default(cuid())
+  customerId String
+  label      String
+  address    String
+  latitude   Float?
+  longitude  Float?
+  cityId     String?
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  city       City?    @relation(fields: [cityId], references: [id])
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
   @@map("saved_addresses")
 }
 
 model CustomsClearance {
-  id                      String            @id @default(cuid())
-  clearanceNumber         String            @unique
-  invoiceId               String
-  customsBrokerId         String
-  status                  ClearanceStatus   @default(PENDING)
-  customsFee              Float             @default(0)
-  additionalFees          Float             @default(0)
-  totalFees               Float             @default(0)
-  // New fields for percentage-based calculations
-  customsFeeType          String            @default("FIXED") // 'FIXED' or 'PERCENTAGE'
-  customsFeePercentage    Float             @default(0)
-  additionalFeesType      String            @default("FIXED") // 'FIXED' or 'PERCENTAGE'
-  additionalFeesPercentage Float            @default(0)
-  estimatedCompletionDate DateTime?
-  actualCompletionDate    DateTime?
-  notes                   String?
-  createdAt               DateTime          @default(now())
-  updatedAt               DateTime          @updatedAt
-  invoice                 Invoice           @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
-  customsBroker           User              @relation(fields: [customsBrokerId], references: [id], onDelete: Restrict)
-  documents               CustomsDocument[]
-  clearanceInvoice        CustomsClearanceInvoice?
+  id                       String                   @id @default(cuid())
+  clearanceNumber          String                   @unique
+  invoiceId                String
+  customsBrokerId          String
+  status                   ClearanceStatus          @default(PENDING)
+  customsFee               Float                    @default(0)
+  additionalFees           Float                    @default(0)
+  totalFees                Float                    @default(0)
+  estimatedCompletionDate  DateTime?
+  actualCompletionDate     DateTime?
+  notes                    String?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  additionalFeesPercentage Float                    @default(0)
+  additionalFeesType       String                   @default("FIXED")
+  customsFeePercentage     Float                    @default(0)
+  customsFeeType           String                   @default("FIXED")
+  clearanceInvoice         CustomsClearanceInvoice?
+  customsBroker            User                     @relation(fields: [customsBrokerId], references: [id])
+  invoice                  Invoice                  @relation(fields: [invoiceId], references: [id])
+  documents                CustomsDocument[]
 
   @@map("customs_clearances")
 }
@@ -475,19 +469,65 @@ model CustomsDocument {
 }
 
 model CustomsTariff {
-  id            String   @id @default(cuid())
-  hsCode        String   @unique
-  description   String
-  descriptionAr String
-  category      String?  @default("other")
-  dutyRate      Float
-  vatRate       Float
-  additionalFees Float   @default(0)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(cuid())
+  hsCode         String   @unique
+  description    String
+  descriptionAr  String
+  dutyRate       Float
+  vatRate        Float
+  additionalFees Float    @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  category       String?  @default("other")
 
   @@map("customs_tariffs")
+}
+
+model DriverVehicleType {
+  id            String           @id @default(cuid())
+  driverId      String
+  vehicleTypeId String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  driver        Driver           @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  vehicleType   VehicleTypeModel @relation(fields: [vehicleTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([driverId, vehicleTypeId])
+  @@map("driver_vehicle_types")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model TripRequest {
+  id          String            @id @default(cuid())
+  tripId      String
+  driverId    String
+  status      TripRequestStatus @default(PENDING)
+  requestedAt DateTime          @default(now())
+  respondedAt DateTime?
+  expiresAt   DateTime
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  driver      Driver            @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  trip        Trip              @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, driverId])
+  @@map("trip_requests")
 }
 
 enum UserRole {
@@ -499,19 +539,19 @@ enum UserRole {
 }
 
 enum TripStatus {
-  PENDING          // في انتظار البدء
-  DRIVER_REQUESTED // تم إرسال طلب للسائق
-  DRIVER_ACCEPTED  // السائق وافق على الرحلة
-  DRIVER_REJECTED  // السائق رفض الرحلة
-  ASSIGNED         // تم تعيين السائق
-  IN_PROGRESS      // بدأت الرحلة (للتوافق مع البيانات القديمة)
-  EN_ROUTE_PICKUP  // في الطريق لنقطة الاستلام
-  AT_PICKUP        // وصل لنقطة الاستلام
-  PICKED_UP        // تم الاستلام
-  IN_TRANSIT       // في الطريق للوجهة
-  AT_DESTINATION   // وصل للوجهة
-  DELIVERED        // تم التسليم
-  CANCELLED        // ملغية
+  PENDING
+  IN_PROGRESS
+  DELIVERED
+  CANCELLED
+  ASSIGNED
+  EN_ROUTE_PICKUP
+  AT_PICKUP
+  PICKED_UP
+  IN_TRANSIT
+  AT_DESTINATION
+  DRIVER_REQUESTED
+  DRIVER_ACCEPTED
+  DRIVER_REJECTED
 }
 
 enum TemperatureOption {
@@ -528,13 +568,13 @@ enum SubscriptionType {
 }
 
 enum PaymentStatus {
-  PENDING      // في انتظار الدفع
-  SENT         // تم الإرسال
-  PAID         // مدفوعة بالكامل
-  PARTIAL      // دفع جزئي
-  INSTALLMENT  // دفع بالأقساط
-  OVERDUE      // متأخرة
-  CANCELLED    // ملغية
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  SENT
+  PARTIAL
+  INSTALLMENT
 }
 
 enum ClearanceStatus {
@@ -564,54 +604,6 @@ enum DocumentType {
   OTHER
 }
 
-model DriverVehicleType {
-  id            String           @id @default(cuid())
-  driverId      String
-  vehicleTypeId String
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  driver        Driver           @relation(fields: [driverId], references: [id], onDelete: Cascade)
-  vehicleType   VehicleTypeModel @relation(fields: [vehicleTypeId], references: [id], onDelete: Cascade)
-
-  @@unique([driverId, vehicleTypeId])
-  @@map("driver_vehicle_types")
-}
-
-// Notification System
-model Notification {
-  id          String            @id @default(cuid())
-  userId      String
-  type        NotificationType
-  title       String
-  message     String
-  data        Json?             // Additional data for the notification
-  isRead      Boolean           @default(false)
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
-}
-
-// Trip Requests for Drivers
-model TripRequest {
-  id          String              @id @default(cuid())
-  tripId      String
-  driverId    String
-  status      TripRequestStatus   @default(PENDING)
-  requestedAt DateTime            @default(now())
-  respondedAt DateTime?
-  expiresAt   DateTime            // Request expires after X minutes
-  notes       String?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
-  trip        Trip                @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  driver      Driver              @relation(fields: [driverId], references: [id], onDelete: Cascade)
-
-  @@unique([tripId, driverId])
-  @@map("trip_requests")
-}
-
 enum NotificationType {
   TRIP_STATUS_UPDATE
   TRIP_ASSIGNED
@@ -629,8 +621,8 @@ enum NotificationType {
 }
 
 enum TripRequestStatus {
-  PENDING   // في انتظار رد السائق
-  ACCEPTED  // السائق وافق
-  REJECTED  // السائق رفض
-  EXPIRED   // انتهت صلاحية الطلب
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
 }

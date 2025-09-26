@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { generateTripNumber } from "@/lib/trip-number-generator";
 import { UserRole } from "@prisma/client";
+import { getLocationDisplayName } from "@/lib/city-coordinates";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,20 +14,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url)
-    const status = searchParams.get('status')
-    const hasInvoice = searchParams.get('hasInvoice')
+    const { searchParams } = new URL(req.url);
+    const status = searchParams.get("status");
+    const hasInvoice = searchParams.get("hasInvoice");
 
     // Build where clause
-    const where: any = {}
-    
+    const where: any = {};
+
     if (status) {
-      where.status = status
+      where.status = status;
     }
 
     // Filter trips without invoices if requested
-    if (hasInvoice === 'false') {
-      where.invoice = null
+    if (hasInvoice === "false") {
+      where.invoice = null;
     }
 
     const trips = await db.trip.findMany({
@@ -86,8 +87,56 @@ export async function GET(req: NextRequest) {
       }
     });
 
+    // إضافة معلومات المواقع المخصصة
+    const tripsWithLocations = trips.map((trip) => ({
+      ...trip,
+      // إضافة المواقع المخصصة من الخريطة (مدن محفوظة أو مواقع مخصصة)
+      originLocation:
+        trip.originLat && trip.originLng
+          ? (() => {
+              const locationInfo = getLocationDisplayName(
+                trip.originLat,
+                trip.originLng
+              );
+              return {
+                lat: trip.originLat,
+                lng: trip.originLng,
+                address: locationInfo.isKnownCity
+                  ? locationInfo.name
+                  : `موقع مخصص: ${trip.originLat.toFixed(
+                      6
+                    )}, ${trip.originLng.toFixed(6)}`,
+                name: locationInfo.isKnownCity
+                  ? locationInfo.name
+                  : "موقع مخصص",
+                isKnownCity: locationInfo.isKnownCity
+              };
+            })()
+          : null,
+      destinationLocation:
+        trip.destinationLat && trip.destinationLng
+          ? (() => {
+              const locationInfo = getLocationDisplayName(
+                trip.destinationLat,
+                trip.destinationLng
+              );
+              return {
+                lat: trip.destinationLat,
+                lng: trip.destinationLng,
+                address: locationInfo.isKnownCity
+                  ? locationInfo.name
+                  : `موقع مخصص: ${trip.destinationLat.toFixed(
+                      6
+                    )}, ${trip.destinationLng.toFixed(6)}`,
+                name: locationInfo.name,
+                isKnownCity: locationInfo.isKnownCity
+              };
+            })()
+          : null
+    }));
+
     return NextResponse.json({
-      trips: trips
+      trips: tripsWithLocations
     });
   } catch (error) {
     console.error("Error fetching trips:", error);
@@ -107,9 +156,9 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    
+
     // 🔍 LOG: Trip creation request data
-    console.log('🔍 [TRIP CREATION] Request data received:', {
+    console.log("🔍 [TRIP CREATION] Request data received:", {
       customerId: body.customerId,
       driverId: body.driverId,
       vehicleId: body.vehicleId,
@@ -121,8 +170,8 @@ export async function POST(req: NextRequest) {
       price: body.price,
       notes: body.notes,
       hasCustomsBroker: !!body.customsBrokerId
-    })
-    
+    });
+
     const {
       customerId,
       driverId,
@@ -137,27 +186,27 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // Convert User ID to Driver ID if needed
-    let actualDriverId: string | null = null
+    let actualDriverId: string | null = null;
     if (driverId) {
       // First try as Driver ID
-      let driver = await db.driver.findUnique({ 
+      let driver = await db.driver.findUnique({
         where: { id: driverId },
         include: { user: true }
-      })
-      
+      });
+
       if (!driver) {
         // If not found, try as User ID
-        const user = await db.user.findUnique({ 
+        const user = await db.user.findUnique({
           where: { id: driverId },
           include: { driverProfile: true }
-        })
-        if (user && user.role === 'DRIVER' && user.driverProfile) {
-          actualDriverId = user.driverProfile.id
+        });
+        if (user && user.role === "DRIVER" && user.driverProfile) {
+          actualDriverId = user.driverProfile.id;
         } else {
-          throw new Error(`Driver not found: ${driverId}`)
+          throw new Error(`Driver not found: ${driverId}`);
         }
       } else {
-        actualDriverId = driver.id
+        actualDriverId = driver.id;
       }
     }
 
@@ -174,36 +223,43 @@ export async function POST(req: NextRequest) {
       fromCityId,
       toCityId,
       temperatureId,
-      customsBrokerId: customsBrokerId && customsBrokerId !== 'none' ? customsBrokerId : null,
+      customsBrokerId:
+        customsBrokerId && customsBrokerId !== "none" ? customsBrokerId : null,
       scheduledDate: new Date(scheduledDate),
       price,
       currency: "SAR",
-      notes,
-    }
-    
-    console.log('💾 [TRIP CREATION] Creating trip with data:', {
+      notes
+    };
+
+    console.log("💾 [TRIP CREATION] Creating trip with data:", {
       ...tripData,
       willHaveCustomsBroker: !!tripData.customsBrokerId,
-      customsBrokerProcessed: customsBrokerId && customsBrokerId !== 'none' ? customsBrokerId : 'null'
-    })
+      customsBrokerProcessed:
+        customsBrokerId && customsBrokerId !== "none" ? customsBrokerId : "null"
+    });
 
     const trip = await db.trip.create({
-      data: tripData,
+      data: tripData
     });
-    
+
     // 🎉 LOG: Trip created successfully
-    console.log('🎉 [TRIP CREATION] Trip created successfully:', {
+    console.log("🎉 [TRIP CREATION] Trip created successfully:", {
       tripId: trip.id,
       tripNumber: trip.tripNumber,
       customsBrokerIdInTrip: (trip as any).customsBrokerId,
       hasCustomsBroker: !!(trip as any).customsBrokerId,
       status: trip.status
-    })
-    
+    });
+
     if ((trip as any).customsBrokerId) {
-      console.log('✅ [TRIP CREATION] SUCCESS: Trip is linked to customs broker:', (trip as any).customsBrokerId)
+      console.log(
+        "✅ [TRIP CREATION] SUCCESS: Trip is linked to customs broker:",
+        (trip as any).customsBrokerId
+      );
     } else {
-      console.log('⚠️ [TRIP CREATION] WARNING: Trip is NOT linked to any customs broker')
+      console.log(
+        "⚠️ [TRIP CREATION] WARNING: Trip is NOT linked to any customs broker"
+      );
     }
 
     return NextResponse.json({
@@ -211,10 +267,10 @@ export async function POST(req: NextRequest) {
       trip
     });
   } catch (error) {
-    console.error("Error creating trip:", error)
+    console.error("Error creating trip:", error);
     return NextResponse.json(
       { error: "Internal server error", details: error?.toString() },
       { status: 500 }
-    )
+    );
   }
 }

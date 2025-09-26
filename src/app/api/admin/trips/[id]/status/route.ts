@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { generateInvoiceNumber } from "@/lib/invoice-number-generator";
 import { UserRole, TripStatus } from "@prisma/client";
 
@@ -23,10 +23,7 @@ export async function PATCH(
 
     // Validate status
     if (!status || !Object.values(TripStatus).includes(status)) {
-      return NextResponse.json(
-        { error: "Invalid status" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
     // Check if trip exists
@@ -53,10 +50,7 @@ export async function PATCH(
     });
 
     if (!existingTrip) {
-      return NextResponse.json(
-        { error: "Trip not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
     // Prepare update data
@@ -120,6 +114,25 @@ export async function PATCH(
       }
     });
 
+    // إعادة السائق إلى "متاح" عند انتهاء الرحلة
+    if (
+      (status === TripStatus.DELIVERED || status === TripStatus.CANCELLED) &&
+      existingTrip.driverId
+    ) {
+      await db.driver.update({
+        where: { id: existingTrip.driverId },
+        data: {
+          isAvailable: true,
+          trackingEnabled: false // إيقاف التتبع أيضاً
+        }
+      });
+      console.log(
+        `Driver ${
+          existingTrip.driverId
+        } is now available again - Trip ${status.toLowerCase()} by admin`
+      );
+    }
+
     // Auto-generate invoice if status changed to DELIVERED
     let invoiceResult: any = null;
     if (status === TripStatus.DELIVERED) {
@@ -148,8 +161,8 @@ export async function PATCH(
             taxAmount,
             subtotal,
             total,
-            currency: 'SAR', // Default currency
-            paymentStatus: 'PENDING',
+            currency: "SAR", // Default currency
+            paymentStatus: "PENDING",
             dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
             // Payment tracking fields
             amountPaid: 0,
@@ -157,34 +170,37 @@ export async function PATCH(
             installmentsPaid: 0,
             createdAt: new Date(),
             updatedAt: new Date()
-          }
-          
+          };
+
           // Add customsBrokerId from trip if available
           if ((existingTrip as any).customsBrokerId) {
-            invoiceData.customsBrokerId = (existingTrip as any).customsBrokerId
-            console.log('✅ [AUTO INVOICE] Adding customs broker to invoice:', (existingTrip as any).customsBrokerId)
+            invoiceData.customsBrokerId = (existingTrip as any).customsBrokerId;
+            console.log(
+              "✅ [AUTO INVOICE] Adding customs broker to invoice:",
+              (existingTrip as any).customsBrokerId
+            );
           } else {
-            console.log('⚠️ [AUTO INVOICE] No customs broker in trip')
+            console.log("⚠️ [AUTO INVOICE] No customs broker in trip");
           }
-          
-          console.log('💾 [AUTO INVOICE] Creating invoice with data:', {
+
+          console.log("💾 [AUTO INVOICE] Creating invoice with data:", {
             invoiceNumber,
             tripId: id,
             customsBrokerId: invoiceData.customsBrokerId || null,
             total,
             hasCustomsBroker: !!invoiceData.customsBrokerId
-          })
+          });
 
           const invoice = await db.invoice.create({
             data: invoiceData
           });
-          
-          console.log('🎉 [AUTO INVOICE] Invoice created successfully:', {
+
+          console.log("🎉 [AUTO INVOICE] Invoice created successfully:", {
             invoiceId: invoice.id,
             invoiceNumber: invoice.invoiceNumber,
             customsBrokerIdInInvoice: (invoice as any).customsBrokerId,
             isLinkedToCustomsBroker: !!(invoice as any).customsBrokerId
-          })
+          });
 
           invoiceResult = {
             invoiceGenerated: true,
@@ -194,20 +210,20 @@ export async function PATCH(
         } else {
           invoiceResult = {
             invoiceGenerated: false,
-            message: 'Invoice already exists',
+            message: "Invoice already exists",
             invoiceNumber: existingInvoice.invoiceNumber
           };
         }
       } catch (invoiceError) {
-        console.error('Error generating invoice:', invoiceError);
+        console.error("Error generating invoice:", invoiceError);
         invoiceResult = {
           invoiceGenerated: false,
-          error: 'Failed to generate invoice'
+          error: "Failed to generate invoice"
         };
       }
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       trip: updatedTrip,
       message: `Trip status updated to ${status}`,
       invoice: invoiceResult

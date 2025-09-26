@@ -1,9 +1,9 @@
-import { db } from "@/lib/db"
-import { createNotification } from "@/lib/notifications"
+import { db } from "@/lib/db";
+import { createNotification } from "@/lib/notifications";
 
 export async function autoAssignDriversToTrip(tripId: string) {
   try {
-    console.log(`🚛 Auto-assigning drivers to trip: ${tripId}`)
+    console.log(`🚛 Auto-assigning drivers to trip: ${tripId}`);
 
     // Get trip details
     const trip = await db.trip.findUnique({
@@ -18,11 +18,11 @@ export async function autoAssignDriversToTrip(tripId: string) {
           }
         }
       }
-    })
+    });
 
     if (!trip) {
-      console.log(`❌ Trip ${tripId} not found`)
-      return { success: false, error: "Trip not found" }
+      console.log(`❌ Trip ${tripId} not found`);
+      return { success: false, error: "Trip not found" };
     }
 
     // Find available drivers with matching vehicle type
@@ -43,21 +43,21 @@ export async function autoAssignDriversToTrip(tripId: string) {
           }
         }
       }
-    })
+    });
 
     if (availableDrivers.length === 0) {
-      console.log(`⚠️ No available drivers found for trip ${tripId}`)
-      return { success: false, error: "No available drivers found" }
+      console.log(`⚠️ No available drivers found for trip ${tripId}`);
+      return { success: false, error: "No available drivers found" };
     }
 
-    console.log(`👥 Found ${availableDrivers.length} available drivers`)
+    console.log(`👥 Found ${availableDrivers.length} available drivers`);
 
     // Create trip requests for all available drivers
-    const expiresAt = new Date()
-    expiresAt.setMinutes(expiresAt.getMinutes() + 15) // 15 minutes to respond
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 30); // 30 minutes to respond
 
-    const tripRequests = []
-    const notifications = []
+    const tripRequests: any[] = [];
+    const notifications: any[] = [];
 
     for (const driver of availableDrivers) {
       // Check if request already exists
@@ -68,7 +68,7 @@ export async function autoAssignDriversToTrip(tripId: string) {
             driverId: driver.id
           }
         }
-      })
+      });
 
       if (!existingRequest) {
         // Create trip request
@@ -78,14 +78,14 @@ export async function autoAssignDriversToTrip(tripId: string) {
             driverId: driver.id,
             expiresAt
           }
-        })
+        });
 
-        tripRequests.push(tripRequest)
+        tripRequests.push(tripRequest);
 
         // Create notification for driver
         const notification = await createNotification({
           userId: driver.userId,
-          type: 'TRIP_REQUEST_RECEIVED',
+          type: "TRIP_REQUEST_RECEIVED",
           title: `طلب رحلة جديدة ${trip.tripNumber}`,
           message: `من ${trip.fromCity.name} إلى ${trip.toCity.name} - ${trip.price} ${trip.currency}`,
           data: {
@@ -98,50 +98,51 @@ export async function autoAssignDriversToTrip(tripId: string) {
             price: trip.price,
             currency: trip.currency
           }
-        })
+        });
 
-        notifications.push(notification)
+        notifications.push(notification);
 
-        console.log(`✅ Sent request to driver: ${driver.user.name}`)
+        console.log(`✅ Sent request to driver: ${driver.user.name}`);
       } else {
-        console.log(`⚠️ Request already exists for driver: ${driver.user.name}`)
+        console.log(
+          `⚠️ Request already exists for driver: ${driver.user.name}`
+        );
       }
     }
 
     // Update trip status
     await db.trip.update({
       where: { id: tripId },
-      data: { status: 'DRIVER_REQUESTED' }
-    })
+      data: { status: "DRIVER_REQUESTED" }
+    });
 
-    console.log(`🎉 Successfully sent ${tripRequests.length} trip requests`)
+    console.log(`🎉 Successfully sent ${tripRequests.length} trip requests`);
 
     return {
       success: true,
       message: `Trip requests sent to ${tripRequests.length} drivers`,
       requestsSent: tripRequests.length,
-      driversNotified: availableDrivers.map(d => d.user.name)
-    }
-
+      driversNotified: availableDrivers.map((d) => d.user.name)
+    };
   } catch (error) {
-    console.error("Error auto-assigning drivers:", error)
+    console.error("Error auto-assigning drivers:", error);
     return {
       success: false,
       error: "Failed to auto-assign drivers"
-    }
+    };
   }
 }
 
 export async function expireOldTripRequests() {
   try {
-    console.log("🕐 Checking for expired trip requests...")
+    console.log("🕐 Checking for expired trip requests...");
 
-    const now = new Date()
+    const now = new Date();
 
     // Find expired requests
     const expiredRequests = await db.tripRequest.findMany({
       where: {
-        status: 'PENDING',
+        status: "PENDING",
         expiresAt: {
           lt: now
         }
@@ -152,32 +153,32 @@ export async function expireOldTripRequests() {
           include: { user: true }
         }
       }
-    })
+    });
 
     if (expiredRequests.length === 0) {
-      console.log("✅ No expired requests found")
-      return { expiredCount: 0 }
+      console.log("✅ No expired requests found");
+      return { expiredCount: 0 };
     }
 
     // Update expired requests
     await db.tripRequest.updateMany({
       where: {
-        status: 'PENDING',
+        status: "PENDING",
         expiresAt: {
           lt: now
         }
       },
       data: {
-        status: 'EXPIRED',
+        status: "EXPIRED",
         respondedAt: now
       }
-    })
+    });
 
     // Create notifications for expired requests
     for (const request of expiredRequests) {
       await createNotification({
         userId: request.driver.userId,
-        type: 'TRIP_REQUEST_EXPIRED',
+        type: "TRIP_REQUEST_EXPIRED",
         title: `انتهت صلاحية طلب الرحلة ${request.trip.tripNumber}`,
         message: `لم تتم الاستجابة للطلب في الوقت المحدد`,
         data: {
@@ -185,15 +186,96 @@ export async function expireOldTripRequests() {
           tripNumber: request.trip.tripNumber,
           requestId: request.id
         }
-      })
+      });
     }
 
-    console.log(`⏰ Expired ${expiredRequests.length} trip requests`)
+    console.log(`⏰ Expired ${expiredRequests.length} trip requests`);
 
-    return { expiredCount: expiredRequests.length }
+    // Check for trips that have all requests expired and cancel them
+    await cancelTripsWithAllExpiredRequests();
 
+    return { expiredCount: expiredRequests.length };
   } catch (error) {
-    console.error("Error expiring trip requests:", error)
-    return { expiredCount: 0, error: error.message }
+    console.error("Error expiring trip requests:", error);
+    return { expiredCount: 0, error: (error as Error).message };
+  }
+}
+
+// Cancel trips that have all requests expired
+export async function cancelTripsWithAllExpiredRequests() {
+  try {
+    console.log("🔍 Checking for trips with all expired requests...");
+
+    // Find trips that are not completed/cancelled and have trip requests
+    const tripsWithRequests = await db.trip.findMany({
+      where: {
+        status: {
+          in: ["PENDING", "DRIVER_REQUESTED"] // Include both statuses
+        }
+      },
+      include: {
+        tripRequests: true,
+        customer: true
+      }
+    });
+
+    const tripsToCancel: any[] = [];
+
+    for (const trip of tripsWithRequests) {
+      // Check if trip has any requests
+      if (trip.tripRequests.length === 0) continue;
+
+      // Check if all requests are expired or rejected
+      const allExpiredOrRejected = trip.tripRequests.every(
+        (request) =>
+          request.status === "EXPIRED" || request.status === "REJECTED"
+      );
+
+      if (allExpiredOrRejected) {
+        tripsToCancel.push(trip);
+      }
+    }
+
+    if (tripsToCancel.length === 0) {
+      console.log("✅ No trips to cancel");
+      return { canceledCount: 0 };
+    }
+
+    // Cancel the trips
+    for (const trip of tripsToCancel) {
+      await db.trip.update({
+        where: { id: trip.id },
+        data: {
+          status: "CANCELLED",
+          updatedAt: new Date()
+        }
+      });
+
+      // Send notification to customer
+      await createNotification({
+        userId: trip.customer.userId,
+        type: "TRIP_CANCELLED",
+        title: `تم إلغاء الرحلة ${trip.tripNumber}`,
+        message: `تم إلغاء رحلتك تلقائياً لعدم توفر سائقين. يمكنك إعادة المحاولة لاحقاً.`,
+        data: {
+          tripId: trip.id,
+          tripNumber: trip.tripNumber,
+          reason: "NO_DRIVERS_AVAILABLE"
+        }
+      });
+
+      console.log(
+        `❌ Cancelled trip ${trip.tripNumber} - no drivers available`
+      );
+    }
+
+    console.log(
+      `🚫 Cancelled ${tripsToCancel.length} trips due to expired requests`
+    );
+
+    return { canceledCount: tripsToCancel.length };
+  } catch (error) {
+    console.error("Error canceling trips with expired requests:", error);
+    return { canceledCount: 0, error: (error as Error).message };
   }
 }

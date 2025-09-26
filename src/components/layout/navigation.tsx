@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ThemeToggle } from "@/components/ui/theme-toggle"
 import { LanguageSelector } from "@/components/ui/language-selector"
+import { NotificationBell } from "@/components/notifications/notification-bell"
 import { useLanguage } from "@/components/providers/language-provider"
 import { useCompanyInfo } from "@/hooks/useCompanyInfo"
+import { useTripRequestsCount } from "@/hooks/use-trip-requests-count"
 import {
   Shield,
   Users,
@@ -46,6 +48,7 @@ export function Navigation({ className }: NavigationProps) {
   const { t, dir, language } = useLanguage()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { companyInfo } = useCompanyInfo()
+  const { count: tripRequestsCount } = useTripRequestsCount()
 
   const getNavItems = () => {
     if (!session?.user?.role) return []
@@ -134,8 +137,8 @@ export function Navigation({ className }: NavigationProps) {
           {
             href: `/${language}/driver/trip-requests`,
             label: "طلبات الرحلات",
-            icon: Bell  ,
-            
+            icon: Bell,
+            count: tripRequestsCount
           },
           {
             href: `/${language}/driver/trips`,
@@ -264,6 +267,11 @@ export function Navigation({ className }: NavigationProps) {
               >
                 <item.icon className="h-3 w-3 xl:h-4 xl:w-4" />
                 <span className="hidden xl:inline">{item.label}</span>
+                {(item as any).count && (item as any).count > 0 && (
+                  <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                    {(item as any).count}
+                  </span>
+                )}
               </Link>
             ))}
           </div>
@@ -275,6 +283,9 @@ export function Navigation({ className }: NavigationProps) {
               <LanguageSelector variant="compact" showLabel={false} />
               <ThemeToggle />
             </div>
+            
+            {/* Notifications - For customers */}
+            <NotificationBell />
             
             {/* Mobile Menu Button - Visible on tablet and mobile */}
             <Button
@@ -360,6 +371,11 @@ export function Navigation({ className }: NavigationProps) {
                 >
                   <item.icon className="h-4 w-4" />
                   <span>{item.label}</span>
+                  {(item as any).count && (item as any).count > 0 && (
+                    <span className="inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full ml-auto">
+                      {(item as any).count}
+                    </span>
+                  )}
                 </Link>
               ))}
               

@@ -37,6 +37,8 @@ interface EnhancedLiveTrackingMapProps {
   showRecenterButton?: boolean;
   onLocationUpdate?: (location: LocationPoint) => void;
   className?: string;
+  // إضافة prop لتحديد نوع المستخدم
+  viewerType?: 'driver' | 'customer' | 'admin';
 }
 
 export default function EnhancedLiveTrackingMap({
@@ -51,7 +53,8 @@ export default function EnhancedLiveTrackingMap({
   showPathTrail = true,
   showRecenterButton = true,
   onLocationUpdate,
-  className = ""
+  className = "",
+  viewerType = 'customer'
 }: EnhancedLiveTrackingMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [LRef, setLRef] = useState<any>(null);
@@ -127,14 +130,21 @@ export default function EnhancedLiveTrackingMap({
     };
   }, [LRef, initialZoom]);
 
-  // Update driver marker when location changes
+  // Update lastUpdate when currentLocation changes
+  useEffect(() => {
+    if (currentLocation) {
+      // استخدم timestamp من currentLocation إذا كان متوفر، وإلا استخدم الوقت الحالي
+      setLastUpdate(currentLocation.timestamp ? new Date(currentLocation.timestamp) : new Date());
+    }
+  }, [currentLocation]);
+
+  // Update driver marker when currentLocation changes
   useEffect(() => {
     if (!map || !LRef || !currentLocation) return;
 
     // Remove existing driver marker
     if (driverMarkerRef.current) {
       map.removeLayer(driverMarkerRef.current);
-      driverMarkerRef.current = null;
     }
 
     // Create custom driver icon
@@ -190,8 +200,6 @@ export default function EnhancedLiveTrackingMap({
         return newTrail.slice(-50);
       });
     }
-
-    setLastUpdate(new Date());
 
     // Call callback if provided
     if (onLocationUpdate) {
@@ -375,16 +383,16 @@ export default function EnhancedLiveTrackingMap({
         <div ref={mapRef} className="w-full h-full" />
 
         {/* Map Controls */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2">
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-[1000]">
           {showRecenterButton && currentLocation && (
             <Button
               size="sm"
               variant="secondary"
               onClick={recenterMap}
-              className="bg-white/90 hover:bg-white shadow-lg"
+              className="bg-white/90 hover:bg-white shadow-lg border border-gray-200 backdrop-blur-sm w-10 h-10 p-0 flex items-center justify-center"
               title="توسيط الخريطة على الموقع الحالي"
             >
-              <Crosshair className="h-4 w-4" />
+              <span className="text-gray-700 text-lg font-bold">⌖</span>
             </Button>
           )}
           
@@ -392,39 +400,62 @@ export default function EnhancedLiveTrackingMap({
             size="sm"
             variant="secondary"
             onClick={fitToMarkers}
-            className="bg-white/90 hover:bg-white shadow-lg"
+            className="bg-white/90 hover:bg-white shadow-lg border border-gray-200 backdrop-blur-sm w-10 h-10 p-0 flex items-center justify-center"
             title="عرض جميع النقاط"
           >
-            <Maximize2 className="h-4 w-4" />
+            <span className="text-gray-700 text-lg font-bold">⛶</span>
           </Button>
           
-          <Button
+          {/* <Button
             size="sm"
             variant="secondary"
             onClick={toggleFullscreen}
-            className="bg-white/90 hover:bg-white shadow-lg"
+            className="bg-white/90 hover:bg-white shadow-lg border border-gray-200 backdrop-blur-sm w-10 h-10 p-0 flex items-center justify-center"
             title={isFullscreen ? "تصغير الخريطة" : "تكبير الخريطة"}
           >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-          </Button>
+            <span className="text-gray-700 text-lg font-bold">
+              {isFullscreen ? "⊟" : "⊞"}
+            </span>
+          </Button> */}
         </div>
 
-        {/* Status Overlay */}
-        <div className="absolute top-4 left-4">
-          <Card className="bg-white/90 backdrop-blur-sm">
+        {/* Status Overlay - Bottom Left */}
+        <div className="absolute bottom-4 left-4 z-[1000]">
+          <Card className="bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg">
             <CardContent className="p-3">
               <div className="flex items-center gap-2 text-sm">
                 <div className="flex items-center gap-1">
-                  {currentLocation ? (
-                    <>
-                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                      <span className="text-green-700 font-medium">متصل</span>
-                    </>
+                  {viewerType === 'driver' ? (
+                    // للسائق: يعتمد على وجود currentLocation
+                    currentLocation ? (
+                      <>
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-green-700 font-medium">متصل</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-red-700 font-medium">غير متصل</span>
+                      </>
+                    )
                   ) : (
-                    <>
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <span className="text-red-700 font-medium">غير متصل</span>
-                    </>
+                    // للعميل والأدمن: يعتمد على وجود آخر تحديث وحداثته
+                    currentLocation && lastUpdate && (new Date().getTime() - lastUpdate.getTime()) < 60000 ? (
+                      <>
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span className="text-green-700 font-medium">السائق متصل</span>
+                      </>
+                    ) : currentLocation ? (
+                      <>
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                        <span className="text-yellow-700 font-medium">آخر موقع معروف</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                        <span className="text-red-700 font-medium">لا يوجد موقع</span>
+                      </>
+                    )
                   )}
                 </div>
                 

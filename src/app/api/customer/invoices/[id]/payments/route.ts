@@ -4,6 +4,14 @@ import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { calculatePaymentStatus, validatePaymentAmount, PaymentStatus } from "@/lib/payment-calculator";
 
+// Helper function to get invoice with proper type
+type InvoiceWithTrip = Awaited<ReturnType<typeof db.invoice.findFirst>> & {
+  trip?: {
+    customerId: string;
+  } | null;
+  customerId?: string | null;
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -17,13 +25,23 @@ export async function GET(
 
     const invoiceId = params.id;
 
-    // Verify the invoice belongs to the customer
+    // Verify the invoice belongs to the customer - check both trip-based and manual invoices
     const invoice = await db.invoice.findFirst({
       where: {
         id: invoiceId,
-        trip: {
-          customerId: session.user.id
-        }
+        OR: [
+          // For trip-based invoices
+          {
+            trip: {
+              customerId: session.user.id
+            }
+          },
+          // For manual invoices (without trip)
+          {
+            customerId: session.user.id,
+            tripId: null
+          }
+        ]
       }
     });
 
@@ -78,15 +96,28 @@ export async function POST(
       );
     }
 
-    // Verify the invoice belongs to the customer and get current state
+    // Verify the invoice belongs to the customer and get current state - check both trip-based and manual invoices
     const invoice = await db.invoice.findFirst({
       where: {
         id: invoiceId,
-        trip: {
-          customerId: session.user.id
-        }
+        OR: [
+          // For trip-based invoices
+          {
+            trip: {
+              customerId: session.user.id
+            }
+          },
+          // For manual invoices (without trip)
+          {
+            customerId: session.user.id,
+            tripId: null
+          }
+        ]
+      },
+      include: {
+        trip: true  // Include trip relation for payment calculations
       }
-    });
+    }) as InvoiceWithTrip;
 
     if (!invoice) {
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });

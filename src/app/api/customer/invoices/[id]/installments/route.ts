@@ -34,13 +34,23 @@ export async function POST(
       );
     }
 
-    // Verify the invoice belongs to the customer
+    // Verify the invoice belongs to the customer - check both trip-based and manual invoices
     const invoice = await db.invoice.findFirst({
       where: {
         id: invoiceId,
-        trip: {
-          customerId: session.user.id
-        }
+        OR: [
+          // For trip-based invoices
+          {
+            trip: {
+              customerId: session.user.id
+            }
+          },
+          // For manual invoices (without trip)
+          {
+            customerId: session.user.id,
+            tripId: null
+          }
+        ]
       }
     });
 

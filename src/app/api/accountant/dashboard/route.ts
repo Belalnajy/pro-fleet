@@ -113,7 +113,7 @@ export async function GET(request: NextRequest) {
     const formattedInvoices = recentInvoices.map(invoice => ({
       id: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
-      customer: invoice.trip?.customer?.name || 'Unknown Customer',
+      customer: invoice.customerName || invoice.trip?.customer?.name || 'عميل غير محدد',
       amount: invoice.total,
       status: invoice.paymentStatus.toLowerCase(),
       dueDate: invoice.dueDate.toISOString().split('T')[0],
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
       date: invoice.paidDate?.toISOString().split('T')[0] || '',
       status: 'completed',
       invoiceId: invoice.invoiceNumber,
-      customer: invoice.trip?.customer?.name || 'Unknown Customer'
+      customer: invoice.customerName || invoice.trip?.customer?.name || 'عميل غير محدد'
     }))
 
     // Dashboard statistics

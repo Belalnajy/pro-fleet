@@ -85,9 +85,9 @@ export async function GET(request: NextRequest) {
       invoiceNumber: invoice.invoiceNumber,
       tripNumber: invoice.trip?.tripNumber || 'N/A',
       customer: {
-        id: invoice.trip?.customer?.id,
-        name: invoice.trip?.customer?.name || 'Unknown Customer',
-        email: invoice.trip?.customer?.email,
+        id: invoice.trip?.customer?.id || invoice.customerId,
+        name: invoice.customerName || invoice.trip?.customer?.name || 'عميل غير محدد',
+        email: invoice.trip?.customer?.email || invoice.customerEmail,
         phone: invoice.trip?.customer?.phone
       },
       route: {
@@ -258,9 +258,14 @@ export async function POST(request: NextRequest) {
       remainingAmount: total
     }
 
-    // Add tripId if provided
+    // Add tripId if provided (trip-based invoice)
     if (tripId) {
       invoiceData.tripId = tripId
+    } else {
+      // Manual invoice - add customer info directly
+      invoiceData.customerId = customerId
+      invoiceData.customerName = customer?.name
+      invoiceData.customerEmail = customer?.email
     }
 
     // Add customsBrokerId if available

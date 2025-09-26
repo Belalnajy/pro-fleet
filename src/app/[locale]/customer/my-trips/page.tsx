@@ -194,21 +194,30 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
     switch (status) {
       case TripStatus.PENDING:
         return "bg-yellow-100 text-yellow-800"
-      case 'DRIVER_REQUESTED' as any:
-        return "bg-orange-100 text-orange-800"
       case TripStatus.ASSIGNED:
         return "bg-blue-100 text-blue-800"
       case TripStatus.IN_PROGRESS:
+        return "bg-orange-100 text-orange-800"
       case TripStatus.EN_ROUTE_PICKUP:
+        return "bg-yellow-100 text-yellow-800"
       case TripStatus.AT_PICKUP:
+        return "bg-purple-100 text-purple-800"
       case TripStatus.PICKED_UP:
+        return "bg-green-100 text-green-800"
       case TripStatus.IN_TRANSIT:
-      case TripStatus.AT_DESTINATION:
         return "bg-blue-100 text-blue-800"
+      case TripStatus.AT_DESTINATION:
+        return "bg-indigo-100 text-indigo-800"
       case TripStatus.DELIVERED:
         return "bg-green-100 text-green-800"
       case TripStatus.CANCELLED:
         return "bg-red-100 text-red-800"
+      case TripStatus.DRIVER_REQUESTED:
+        return "bg-amber-100 text-amber-800"
+      case TripStatus.DRIVER_ACCEPTED:
+        return "bg-emerald-100 text-emerald-800"
+      case TripStatus.DRIVER_REJECTED:
+        return "bg-rose-100 text-rose-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -218,21 +227,30 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
     switch (status) {
       case TripStatus.PENDING:
         return <Clock className="h-4 w-4" />
-      case 'DRIVER_REQUESTED' as any:
-        return <Bell className="h-4 w-4" />
       case TripStatus.ASSIGNED:
         return <Truck className="h-4 w-4" />
       case TripStatus.IN_PROGRESS:
-      case TripStatus.EN_ROUTE_PICKUP:
-      case TripStatus.AT_PICKUP:
-      case TripStatus.PICKED_UP:
-      case TripStatus.IN_TRANSIT:
-      case TripStatus.AT_DESTINATION:
         return <Truck className="h-4 w-4" />
+      case TripStatus.EN_ROUTE_PICKUP:
+        return <Navigation className="h-4 w-4" />
+      case TripStatus.AT_PICKUP:
+        return <MapPin className="h-4 w-4" />
+      case TripStatus.PICKED_UP:
+        return <Package className="h-4 w-4" />
+      case TripStatus.IN_TRANSIT:
+        return <Truck className="h-4 w-4" />
+      case TripStatus.AT_DESTINATION:
+        return <MapPin className="h-4 w-4" />
       case TripStatus.DELIVERED:
         return <CheckCircle className="h-4 w-4" />
       case TripStatus.CANCELLED:
         return <AlertTriangle className="h-4 w-4" />
+      case TripStatus.DRIVER_REQUESTED:
+        return <Bell className="h-4 w-4" />
+      case TripStatus.DRIVER_ACCEPTED:
+        return <CheckCircle className="h-4 w-4" />
+      case TripStatus.DRIVER_REJECTED:
+        return <X className="h-4 w-4" />
       default:
         return <Clock className="h-4 w-4" />
     }
@@ -242,26 +260,30 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
     switch (status) {
       case TripStatus.PENDING:
         return "في الانتظار"
-      case 'DRIVER_REQUESTED' as any:
-        return "تم إرسال طلب للسائق"
       case TripStatus.ASSIGNED:
-        return "تم تعيين السائق"
+        return "تم التعيين"
       case TripStatus.IN_PROGRESS:
-        return t('IN_PROGRESS')
+        return "قيد التنفيذ"
       case TripStatus.EN_ROUTE_PICKUP:
-        return t('enRoutePickup')
+        return "في الطريق للاستلام"
       case TripStatus.AT_PICKUP:
-        return t('atPickup')
+        return "في نقطة الاستلام"
       case TripStatus.PICKED_UP:
-        return t('pickedUp')
+        return "تم الاستلام"
       case TripStatus.IN_TRANSIT:
-        return t('inTransit')
+        return "في الطريق"
       case TripStatus.AT_DESTINATION:
-        return t('atDestination')
+        return "وصل للوجهة"
       case TripStatus.DELIVERED:
-        return t('DELIVERED')
+        return "تم التسليم"
       case TripStatus.CANCELLED:
-        return t('CANCELLED')
+        return "ملغية"
+      case TripStatus.DRIVER_REQUESTED:
+        return "طلب سائق"
+      case TripStatus.DRIVER_ACCEPTED:
+        return "قبل السائق"
+      case TripStatus.DRIVER_REJECTED:
+        return "رفض السائق"
       default:
         return status
     }

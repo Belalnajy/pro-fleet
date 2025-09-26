@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
-import { CustomerTrackingMap } from "@/components/maps/customer-tracking-map";
+import EnhancedLiveTrackingMap from "@/components/maps/enhanced-live-tracking-map";
 import { useLanguage } from "@/components/providers/language-provider";
 import { translations } from "@/lib/translations";
 import {
@@ -52,6 +52,19 @@ interface CustomerTrip {
       latitude?: number;
       longitude?: number;
     };
+    // إضافة المواقع المخصصة
+    originLocation?: {
+      lat: number;
+      lng: number;
+      address?: string;
+      name?: string;
+    } | null;
+    destinationLocation?: {
+      lat: number;
+      lng: number;
+      address?: string;
+      name?: string;
+    } | null;
     vehicle: {
       capacity: string;
       vehicleType: {
@@ -485,11 +498,23 @@ export default function CustomerTrackingPage({
                         <div className="text-sm text-gray-600">
                           <div className="flex items-center mb-1">
                             <MapPin className="h-3 w-3 text-green-500 ml-1" />
-                            {tripData.trip.fromCity.nameAr}
+                            {tripData.trip.originLocation ? (
+                              <span className="text-blue-600 font-medium">
+                                📍 {tripData.trip.originLocation.name || 'موقع مخصص'}
+                              </span>
+                            ) : (
+                              tripData.trip.fromCity.nameAr
+                            )}
                           </div>
                           <div className="flex items-center mb-1">
                             <MapPin className="h-3 w-3 text-red-500 ml-1" />
-                            {tripData.trip.toCity.nameAr}
+                            {tripData.trip.destinationLocation ? (
+                              <span className="text-red-600 font-medium">
+                                📍 {tripData.trip.destinationLocation.name || 'موقع مخصص'}
+                              </span>
+                            ) : (
+                              tripData.trip.toCity.nameAr
+                            )}
                           </div>
                           {tripData.trip.driver && (
                             <div className="flex items-center">
@@ -537,16 +562,51 @@ export default function CustomerTrackingPage({
                         <div className="space-y-2 text-sm">
                           <div className="flex items-center">
                             <MapPin className="h-4 w-4 text-green-500 ml-2" />
-                            <span>{translate('from')}: {selectedTrip.trip.fromCity.nameAr}</span>
+                            <span>{translate('from')}: {
+                              selectedTrip.trip.originLocation ? (
+                                <span className="text-blue-600 font-medium">
+                                  📍 {selectedTrip.trip.originLocation.name || 'موقع مخصص'}
+                                </span>
+                              ) : (
+                                selectedTrip.trip.fromCity.nameAr
+                              )
+                            }</span>
                           </div>
                           <div className="flex items-center">
                             <MapPin className="h-4 w-4 text-red-500 ml-2" />
-                            <span>{translate('to')}: {selectedTrip.trip.toCity.nameAr}</span>
+                            <span>{translate('to')}: {
+                              selectedTrip.trip.destinationLocation ? (
+                                <span className="text-red-600 font-medium">
+                                  📍 {selectedTrip.trip.destinationLocation.name || 'موقع مخصص'}
+                                </span>
+                              ) : (
+                                selectedTrip.trip.toCity.nameAr
+                              )
+                            }</span>
                           </div>
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 text-blue-500 ml-2" />
                             <span>{translate('tripDate')}: {new Date(selectedTrip.trip.scheduledDate).toLocaleDateString('ar-SA')}</span>
                           </div>
+                          
+                          {/* عرض تفاصيل إضافية للمواقع المخصصة */}
+                          {(selectedTrip.trip.originLocation || selectedTrip.trip.destinationLocation) && (
+                            <div className="mt-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                              <div className="text-xs text-blue-800 space-y-1">
+                                <div className="font-medium">📍 مواقع مخصصة من الخريطة:</div>
+                                {selectedTrip.trip.originLocation && (
+                                  <div>
+                                    <span className="font-medium text-green-700">• نقطة الاستلام:</span> {selectedTrip.trip.originLocation.address}
+                                  </div>
+                                )}
+                                {selectedTrip.trip.destinationLocation && (
+                                  <div>
+                                    <span className="font-medium text-red-700">• نقطة التسليم:</span> {selectedTrip.trip.destinationLocation.address}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                       
@@ -622,11 +682,39 @@ export default function CustomerTrackingPage({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CustomerTrackingMap
+                    <EnhancedLiveTrackingMap
+                      driverId={selectedTrip.trip.driver?.id}
                       tripId={selectedTrip.trip.id}
+                      currentLocation={selectedTrip.currentLocation ? {
+                        lat: selectedTrip.currentLocation.latitude,
+                        lng: selectedTrip.currentLocation.longitude,
+                        timestamp: new Date(selectedTrip.currentLocation.timestamp),
+                        speed: selectedTrip.currentLocation.speed,
+                        heading: selectedTrip.currentLocation.heading
+                      } : null}
+                      start={selectedTrip.trip.originLocation ? {
+                        lat: selectedTrip.trip.originLocation.lat,
+                        lng: selectedTrip.trip.originLocation.lng
+                      } : {
+                        lat: selectedTrip.trip.fromCity.latitude || 24.7136,
+                        lng: selectedTrip.trip.fromCity.longitude || 46.6753
+                      }}
+                      destination={selectedTrip.trip.destinationLocation ? {
+                        lat: selectedTrip.trip.destinationLocation.lat,
+                        lng: selectedTrip.trip.destinationLocation.lng
+                      } : {
+                        lat: selectedTrip.trip.toCity.latitude || 24.7136,
+                        lng: selectedTrip.trip.toCity.longitude || 46.6753
+                      }}
                       height="500px"
-                      autoRefresh={selectedTrip.trackingStats.isActive}
-                      refreshInterval={30000}
+                      initialZoom={12}
+                      showPathTrail={true}
+                      showRecenterButton={true}
+                      viewerType="customer"
+                      onLocationUpdate={(location) => {
+                        // يمكن إضافة معالجة إضافية هنا إذا لزم الأمر
+                        console.log('موقع محدث:', location);
+                      }}
                     />
                   </CardContent>
                 </Card>

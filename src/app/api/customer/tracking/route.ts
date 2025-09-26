@@ -1,33 +1,33 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
-import { UserRole } from "@prisma/client"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { UserRole } from "@prisma/client";
 
 // GET - Get customer's trips tracking data
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await getServerSession(authOptions);
+
     if (!session || session.user.role !== UserRole.CUSTOMER) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(req.url)
-    const activeOnly = searchParams.get("activeOnly") === "true"
-    const tripId = searchParams.get("tripId")
+    const { searchParams } = new URL(req.url);
+    const activeOnly = searchParams.get("activeOnly") === "true";
+    const tripId = searchParams.get("tripId");
 
     // Build where clause
     let whereClause: any = {
       customerId: session.user.id
-    }
+    };
 
     if (activeOnly) {
-      whereClause.status = "IN_PROGRESS"
+      whereClause.status = "IN_PROGRESS";
     }
 
     if (tripId) {
-      whereClause.id = tripId
+      whereClause.id = tripId;
     }
 
     // Get customer's trips with tracking data
@@ -62,8 +62,8 @@ export async function GET(req: NextRequest) {
             longitude: true
           }
         },
-        vehicle: { 
-          include: { 
+        vehicle: {
+          include: {
             vehicleType: {
               select: {
                 id: true,
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
                 nameAr: true
               }
             }
-          } 
+          }
         },
         temperature: {
           select: {
@@ -87,12 +87,12 @@ export async function GET(req: NextRequest) {
         }
       },
       orderBy: { scheduledDate: "desc" }
-    })
+    });
 
     // Format response with tracking data for each trip
-    const trackingData = trips.map(trip => {
-      const latestTracking = trip.trackingLogs[0]
-      
+    const trackingData = trips.map((trip) => {
+      const latestTracking = trip.trackingLogs[0];
+
       return {
         trip: {
           id: trip.id,
@@ -100,6 +100,29 @@ export async function GET(req: NextRequest) {
           status: trip.status,
           fromCity: trip.fromCity,
           toCity: trip.toCity,
+          // إضافة المواقع المخصصة من الخريطة
+          originLocation:
+            trip.originLat && trip.originLng
+              ? {
+                  lat: trip.originLat,
+                  lng: trip.originLng,
+                  address: `موقع مخصص: ${trip.originLat.toFixed(
+                    6
+                  )}, ${trip.originLng.toFixed(6)}`,
+                  name: "موقع مخصص من الخريطة"
+                }
+              : null,
+          destinationLocation:
+            trip.destinationLat && trip.destinationLng
+              ? {
+                  lat: trip.destinationLat,
+                  lng: trip.destinationLng,
+                  address: `موقع مخصص: ${trip.destinationLat.toFixed(
+                    6
+                  )}, ${trip.destinationLng.toFixed(6)}`,
+                  name: "موقع مخصص من الخريطة"
+                }
+              : null,
           vehicle: trip.vehicle,
           temperature: trip.temperature,
           scheduledDate: trip.scheduledDate,
@@ -108,21 +131,25 @@ export async function GET(req: NextRequest) {
           price: trip.price,
           notes: trip.notes,
           customer: trip.customer,
-          driver: trip.driver ? {
-            id: trip.driver.id,
-            name: trip.driver.user.name,
-            phone: trip.driver.user.phone,
-            trackingEnabled: trip.driver.trackingEnabled
-          } : null
+          driver: trip.driver
+            ? {
+                id: trip.driver.id,
+                name: trip.driver.user.name,
+                phone: trip.driver.user.phone,
+                trackingEnabled: trip.driver.trackingEnabled
+              }
+            : null
         },
-        currentLocation: latestTracking ? {
-          latitude: latestTracking.latitude,
-          longitude: latestTracking.longitude,
-          timestamp: latestTracking.timestamp,
-          speed: latestTracking.speed,
-          heading: latestTracking.heading
-        } : null,
-        trackingHistory: trip.trackingLogs.map(log => ({
+        currentLocation: latestTracking
+          ? {
+              latitude: latestTracking.latitude,
+              longitude: latestTracking.longitude,
+              timestamp: latestTracking.timestamp,
+              speed: latestTracking.speed,
+              heading: latestTracking.heading
+            }
+          : null,
+        trackingHistory: trip.trackingLogs.map((log) => ({
           id: log.id,
           latitude: log.latitude,
           longitude: log.longitude,
@@ -133,23 +160,23 @@ export async function GET(req: NextRequest) {
         trackingStats: {
           totalPoints: trip.trackingLogs.length,
           lastUpdate: latestTracking?.timestamp || null,
-          isActive: trip.status === "IN_PROGRESS" && trip.trackingLogs.length > 0,
+          isActive:
+            trip.status === "IN_PROGRESS" && trip.trackingLogs.length > 0,
           driverTrackingEnabled: trip.driver?.trackingEnabled || false
         }
-      }
-    })
+      };
+    });
 
     return NextResponse.json({
       success: true,
       data: trackingData,
       total: trackingData.length
-    })
-
+    });
   } catch (error) {
-    console.error("Error fetching customer tracking data:", error)
+    console.error("Error fetching customer tracking data:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }

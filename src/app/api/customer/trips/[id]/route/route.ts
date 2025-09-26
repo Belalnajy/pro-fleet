@@ -1,28 +1,50 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { getLocationDisplayName } from "@/lib/city-coordinates";
+import { UserRole } from "@prisma/client";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { tripId: string } }
-) {
+// GET - Get customer's trips tracking data
+export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
-    if (!session || session.user.role !== "CUSTOMER") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const session = await getServerSession(authOptions);
+
+    if (!session || session.user.role !== UserRole.CUSTOMER) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { tripId } = params
+    const { searchParams } = new URL(req.url);
+    const activeOnly = searchParams.get("activeOnly") === "true";
+    const tripId = searchParams.get("tripId");
 
-    // Get the trip and verify it belongs to the customer
-    const trip = await db.trip.findFirst({
-      where: { 
-        id: tripId,
-        customerId: session.user.id // Ensure customer can only see their own trips
-      },
+    // Build where clause
+    let whereClause: any = {
+      customerId: session.user.id
+    };
+
+    if (activeOnly) {
+      whereClause.status = "IN_PROGRESS";
+    }
+
+    if (tripId) {
+      whereClause.id = tripId;
+    }
+
+    // Get customer's trips with tracking data
+    const trips = await db.trip.findMany({
+      where: whereClause,
       include: {
+        customer: {
+          select: { id: true, name: true, email: true, phone: true }
+        },
+        driver: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, phone: true }
+            }
+          }
+        },
         fromCity: {
           select: {
             id: true,
@@ -39,25 +61,6 @@ export async function GET(
             nameAr: true,
             latitude: true,
             longitude: true
-          }
-        },
-        customer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true
-          }
-        },
-        driver: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                phone: true
-              }
-            }
           }
         },
         vehicle: {
@@ -80,199 +83,119 @@ export async function GET(
           }
         },
         trackingLogs: {
-          orderBy: { timestamp: "asc" }, // Oldest first for route display
-          take: 15 // Limit to 15 points to reduce map clutter
+          orderBy: { timestamp: "desc" },
+          take: 50 // Get last 50 tracking points
         }
-      }
-    })
-
-    if (!trip) {
-      return NextResponse.json({ error: "Trip not found" }, { status: 404 })
-    }
-
-    // City coordinates mapping (fallback if database doesn't have coordinates)
-    const cityCoordinates: { [key: string]: { lat: number; lng: number } } = {
-      'الرياض': { lat: 24.7136, lng: 46.6753 },
-      'جدة': { lat: 21.3891, lng: 39.8579 },
-      'مكة المكرمة': { lat: 21.4225, lng: 39.8262 },
-      'المدينة المنورة': { lat: 24.5247, lng: 39.5692 },
-      'الدمام': { lat: 26.4207, lng: 50.0888 },
-      'تبوك': { lat: 28.3998, lng: 36.5700 },
-      'أبها': { lat: 18.2164, lng: 42.5053 },
-      'الطائف': { lat: 21.2703, lng: 40.4178 },
-      'بريدة': { lat: 26.3260, lng: 43.9750 },
-      'خميس مشيط': { lat: 18.3000, lng: 42.7300 }
-    }
-
-    // Get start and end coordinates
-    const startCoords = trip.fromCity.latitude && trip.fromCity.longitude 
-      ? { lat: trip.fromCity.latitude, lng: trip.fromCity.longitude }
-      : cityCoordinates[trip.fromCity.nameAr || ''] || cityCoordinates[trip.fromCity.name || ''] || { lat: 24.7136, lng: 46.6753 }
-
-    const endCoords = trip.toCity.latitude && trip.toCity.longitude
-      ? { lat: trip.toCity.latitude, lng: trip.toCity.longitude }
-      : cityCoordinates[trip.toCity.nameAr || ''] || cityCoordinates[trip.toCity.name || ''] || { lat: 21.3891, lng: 39.8579 }
-
-    // Generate route points using real tracking data and simulated route
-    const routePoints = generateRoutePoints(
-      startCoords.lat,
-      startCoords.lng,
-      endCoords.lat,
-      endCoords.lng,
-      trip.status,
-      trip.trackingLogs
-    )
-
-    // Calculate distance and duration
-    const distance = calculateDistance(startCoords.lat, startCoords.lng, endCoords.lat, endCoords.lng)
-    const estimatedDuration = calculateDuration(startCoords.lat, startCoords.lng, endCoords.lat, endCoords.lng)
-
-    const response = {
-      tripId: trip.id,
-      tripNumber: trip.tripNumber,
-      status: trip.status,
-      route: {
-        start: {
-          name: trip.fromCity.name,
-          nameAr: trip.fromCity.nameAr,
-          coordinates: startCoords,
-          type: 'start' as const
-        },
-        end: {
-          name: trip.toCity.name,
-          nameAr: trip.toCity.nameAr,
-          coordinates: endCoords,
-          type: 'end' as const
-        },
-        distance: Math.round(distance),
-        estimatedDuration: Math.round(estimatedDuration * 60), // Convert to minutes
-        points: routePoints
       },
-      driver: trip.driver ? {
-        id: trip.driver.id,
-        name: trip.driver.user.name,
-        phone: trip.driver.user.phone,
-        trackingEnabled: trip.driver.trackingEnabled
-      } : null,
-      vehicle: trip.vehicle ? {
-        type: trip.vehicle.vehicleType?.nameAr || trip.vehicle.vehicleType?.name || 'غير محدد',
-        capacity: trip.vehicle.capacity
-      } : null,
-      temperature: trip.temperature ? {
-        name: trip.temperature.option,
-        value: trip.temperature.value,
-        unit: trip.temperature.unit
-      } : null,
-      dates: {
-        scheduled: trip.scheduledDate,
-        actualStart: trip.actualStartDate,
-        delivered: trip.deliveredDate
-      },
-      lastUpdate: trip.trackingLogs[trip.trackingLogs.length - 1]?.timestamp || null
-    }
+      orderBy: { scheduledDate: "desc" }
+    });
 
-    return NextResponse.json(response)
+    // Format response with tracking data for each trip
+    const trackingData = trips.map((trip) => {
+      const latestTracking = trip.trackingLogs[0];
 
+      return {
+        trip: {
+          id: trip.id,
+          tripNumber: trip.tripNumber,
+          status: trip.status,
+          fromCity: trip.fromCity,
+          toCity: trip.toCity,
+          // إضافة المواقع من الخريطة (مدن محفوظة أو مواقع مخصصة)
+          originLocation:
+            trip.originLat && trip.originLng
+              ? (() => {
+                  const locationInfo = getLocationDisplayName(
+                    trip.originLat,
+                    trip.originLng
+                  );
+                  return {
+                    lat: trip.originLat,
+                    lng: trip.originLng,
+                    address: locationInfo.isKnownCity
+                      ? locationInfo.name
+                      : `موقع مخصص: ${trip.originLat.toFixed(
+                          6
+                        )}, ${trip.originLng.toFixed(6)}`,
+                    name: locationInfo.name,
+                    isKnownCity: locationInfo.isKnownCity
+                  };
+                })()
+              : null,
+          destinationLocation:
+            trip.destinationLat && trip.destinationLng
+              ? (() => {
+                  const locationInfo = getLocationDisplayName(
+                    trip.destinationLat,
+                    trip.destinationLng
+                  );
+                  return {
+                    lat: trip.destinationLat,
+                    lng: trip.destinationLng,
+                    address: locationInfo.isKnownCity
+                      ? locationInfo.name
+                      : `موقع مخصص: ${trip.destinationLat.toFixed(
+                          6
+                        )}, ${trip.destinationLng.toFixed(6)}`,
+                    name: locationInfo.name,
+                    isKnownCity: locationInfo.isKnownCity
+                  };
+                })()
+              : null,
+          vehicle: trip.vehicle,
+          temperature: trip.temperature,
+          scheduledDate: trip.scheduledDate,
+          actualStartDate: trip.actualStartDate,
+          deliveredDate: trip.deliveredDate,
+          price: trip.price,
+          notes: trip.notes,
+          customer: trip.customer,
+          driver: trip.driver
+            ? {
+                id: trip.driver.id,
+                name: trip.driver.user.name,
+                phone: trip.driver.user.phone,
+                trackingEnabled: trip.driver.trackingEnabled
+              }
+            : null
+        },
+        currentLocation: latestTracking
+          ? {
+              latitude: latestTracking.latitude,
+              longitude: latestTracking.longitude,
+              timestamp: latestTracking.timestamp,
+              speed: latestTracking.speed,
+              heading: latestTracking.heading
+            }
+          : null,
+        trackingHistory: trip.trackingLogs.map((log) => ({
+          id: log.id,
+          latitude: log.latitude,
+          longitude: log.longitude,
+          timestamp: log.timestamp,
+          speed: log.speed,
+          heading: log.heading
+        })),
+        trackingStats: {
+          totalPoints: trip.trackingLogs.length,
+          lastUpdate: latestTracking?.timestamp || null,
+          isActive:
+            trip.status === "IN_PROGRESS" && trip.trackingLogs.length > 0,
+          driverTrackingEnabled: trip.driver?.trackingEnabled || false
+        }
+      };
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: trackingData,
+      total: trackingData.length
+    });
   } catch (error) {
-    console.error("Error fetching customer route:", error)
+    console.error("Error fetching customer tracking data:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
-}
-
-// Generate route points with real tracking data only
-function generateRoutePoints(
-  startLat: number, 
-  startLng: number, 
-  endLat: number, 
-  endLng: number,
-  status: string,
-  trackingLogs: any[]
-): Array<{
-  id: string;
-  latitude: number;
-  longitude: number;
-  timestamp: string;
-  speed?: number;
-  heading?: number;
-  type: 'start' | 'end' | 'tracking' | 'current';
-}> {
-  const points: Array<{
-    id: string;
-    latitude: number;
-    longitude: number;
-    timestamp: string;
-    speed?: number;
-    heading?: number;
-    type: 'start' | 'end' | 'tracking' | 'current';
-  }> = []
-
-  // Add start point
-  points.push({
-    id: 'start',
-    latitude: startLat,
-    longitude: startLng,
-    timestamp: new Date().toISOString(),
-    type: 'start' as const
-  })
-
-  // Add real tracking points if available
-  if (trackingLogs && trackingLogs.length > 0) {
-    // Add historical tracking points (all except the last one)
-    trackingLogs.slice(0, -1).forEach((log, index) => {
-      points.push({
-        id: `tracking-${index}`,
-        latitude: log.latitude,
-        longitude: log.longitude,
-        timestamp: log.timestamp,
-        speed: log.speed,
-        heading: log.heading,
-        type: 'tracking' as const
-      })
-    })
-
-    // Add current location (last tracking point)
-    const lastLog = trackingLogs[trackingLogs.length - 1]
-    points.push({
-      id: 'current',
-      latitude: lastLog.latitude,
-      longitude: lastLog.longitude,
-      timestamp: lastLog.timestamp,
-      speed: lastLog.speed,
-      heading: lastLog.heading,
-      type: 'current' as const
-    })
-  }
-
-  // Add end point
-  points.push({
-    id: 'end',
-    latitude: endLat,
-    longitude: endLng,
-    timestamp: new Date().toISOString(),
-    type: 'end' as const
-  })
-
-  return points
-}
-
-// Calculate distance between two points in kilometers
-function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371 // Earth's radius in kilometers
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLng = (lng2 - lng1) * Math.PI / 180
-  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng/2) * Math.sin(dLng/2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-  return R * c
-}
-
-// Calculate estimated duration in hours
-function calculateDuration(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const distance = calculateDistance(lat1, lng1, lat2, lng2)
-  const averageSpeed = 80 // km/h
-  return distance / averageSpeed
 }

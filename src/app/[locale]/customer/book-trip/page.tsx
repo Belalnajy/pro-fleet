@@ -23,7 +23,7 @@ import {
   Calendar,
   Thermometer,
   Truck,
-  DollarSign,
+  SaudiRiyal,
   ArrowRight,
   CheckCircle,
 } from "lucide-react"
@@ -52,6 +52,7 @@ interface City {
 interface VehicleType {
   id: string
   name: string
+  nameAr?: string
   capacity: string
   pricePerKm: number
 }
@@ -81,6 +82,14 @@ export default function BookTrip({ params }: BookTripProps) {
       return city.nameAr;
     }
     return city.name; // Default to English name
+  };
+
+  // Function to get vehicle type name based on current language
+  const getVehicleTypeName = (vehicleType: any): string => {
+    if (language === 'ar' && vehicleType.nameAr) {
+      return vehicleType.nameAr;
+    }
+    return vehicleType.name; // Default to English name
   };
   
   const [cities, setCities] = useState<City[]>([])
@@ -158,6 +167,7 @@ export default function BookTrip({ params }: BookTripProps) {
         const transformedData = data.map((vehicleType: any) => ({
           id: vehicleType.id,
           name: vehicleType.name,
+          nameAr: vehicleType.nameAr,
           capacity: vehicleType.capacity || "متوسط",
           pricePerKm: 0 // Default value
         }))
@@ -1009,7 +1019,7 @@ export default function BookTrip({ params }: BookTripProps) {
                         <SelectContent>
                           {vehicleTypes.map((type) => (
                             <SelectItem key={type.id} value={type.id}>
-                              {type.name} - {type.capacity}
+                              {getVehicleTypeName(type)} - {type.capacity}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1239,7 +1249,10 @@ export default function BookTrip({ params }: BookTripProps) {
                     <div>
                       <span className="text-muted-foreground">نوع المركبة:</span>
                       <p className="font-medium">
-                        {vehicleTypes.find(v => v.id === tripForm.vehicleTypeId)?.name || '-'}
+                        {tripForm.vehicleTypeId ? 
+                          getVehicleTypeName(vehicleTypes.find(v => v.id === tripForm.vehicleTypeId)) || '-' : 
+                          '-'
+                        }
                       </p>
                     </div>
                     

@@ -24,7 +24,7 @@ import {
   Search,
   Eye,
   Package,
-  DollarSign,
+  SaudiRiyal,
   Navigation,
   Thermometer,
   X,
@@ -33,6 +33,14 @@ import {
   Shield,
 } from "lucide-react"
 import { TripStatus } from "@prisma/client"
+
+interface LocationData {
+  lat: number
+  lng: number
+  address?: string
+  name?: string
+  isKnownCity?: boolean
+}
 
 interface Trip {
   id: string
@@ -56,6 +64,9 @@ interface Trip {
   price: number
   currency: string
   notes?: string
+  // إضافة بيانات المواقع المخصصة
+  originLocation?: LocationData | null
+  destinationLocation?: LocationData | null
   driver?: {
     carPlateNumber: string
     user: {
@@ -339,7 +350,7 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{t('totalSpent')}</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <SaudiRiyal className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -415,10 +426,44 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
                     <h3 className="font-semibold text-lg">{trip.tripNumber}</h3>
                     <div className="flex items-center space-x-2 text-muted-foreground">
                       <MapPin className="h-4 w-4" />
-                       <span className="text-sm">
-                         {trip.fromCity?.name || t('unknown')} → {trip.toCity?.name || t('unknown')}
-                       </span>
+                      <span className="text-sm">
+                        {/* عرض المواقع المخصصة إذا كانت متوفرة، وإلا عرض أسماء المدن */}
+                        {trip.originLocation ? (
+                          <span className={`font-medium ${trip.originLocation.isKnownCity ? 'text-green-600' : 'text-blue-600'}`}>
+                            {trip.originLocation.isKnownCity ? '🏙️' : '📍'} {trip.originLocation.name}
+                          </span>
+                        ) : (
+                          trip.fromCity?.name || t('unknown')
+                        )}
+                        {' → '}
+                        {trip.destinationLocation ? (
+                          <span className={`font-medium ${trip.destinationLocation.isKnownCity ? 'text-green-600' : 'text-red-600'}`}>
+                            {trip.destinationLocation.isKnownCity ? '🏙️' : '📍'} {trip.destinationLocation.name}
+                          </span>
+                        ) : (
+                          trip.toCity?.name || t('unknown')
+                        )}
+                      </span>
                     </div>
+                    
+                    {/* عرض تفاصيل إضافية للمواقع المخصصة */}
+                    {(trip.originLocation || trip.destinationLocation) && (
+                      <div className="mt-2 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                        <div className="text-xs text-blue-800 space-y-1">
+                          <div className="font-medium">📍 مواقع مخصصة من الخريطة:</div>
+                          {trip.originLocation && (
+                            <div>
+                              <span className="font-medium text-green-700">• نقطة الاستلام:</span> {trip.originLocation.address}
+                            </div>
+                          )}
+                          {trip.destinationLocation && (
+                            <div>
+                              <span className="font-medium text-red-700">• نقطة التسليم:</span> {trip.destinationLocation.address}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                     {/* Free Cancellation Timer - Show for all cancellable statuses */}
                     {['PENDING', 'DRIVER_REQUESTED', 'ASSIGNED'].includes(trip.status) && (
                       <div className="mt-2">
@@ -478,7 +523,7 @@ export default function MyTrips({ params }: { params: Promise<{ locale: string }
                   
                   <div>
                     <div className="flex items-center space-x-1 text-muted-foreground mb-1">
-                      <DollarSign className="h-4 w-4" />
+                      <SaudiRiyal className="h-4 w-4" />
                       <span className="text-sm">{t('price')}</span>
                     </div>
                     <p className="text-sm font-medium">

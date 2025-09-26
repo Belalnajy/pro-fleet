@@ -661,6 +661,12 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
         return "bg-green-100 text-green-800"
       case TripStatus.CANCELLED:
         return "bg-red-100 text-red-800"
+      case TripStatus.DRIVER_REQUESTED:
+        return "bg-amber-100 text-amber-800"
+      case TripStatus.DRIVER_ACCEPTED:
+        return "bg-emerald-100 text-emerald-800"
+      case TripStatus.DRIVER_REJECTED:
+        return "bg-rose-100 text-rose-800"
       default:
         return "bg-gray-100 text-gray-800"
     }
@@ -688,20 +694,65 @@ export default function TripsManagement({ params }: { params: Promise<{ locale: 
         return <CheckCircle className="h-4 w-4" />
       case TripStatus.CANCELLED:
         return <AlertTriangle className="h-4 w-4" />
+      case TripStatus.DRIVER_REQUESTED:
+        return <User className="h-4 w-4" />
+      case TripStatus.DRIVER_ACCEPTED:
+        return <CheckCircle className="h-4 w-4" />
+      case TripStatus.DRIVER_REJECTED:
+        return <XCircle className="h-4 w-4" />
       default:
         return <Clock className="h-4 w-4" />
     }
   }
 
+  const getStatusText = (status: TripStatus) => {
+    switch (status) {
+      case TripStatus.PENDING:
+        return "في الانتظار"
+      case TripStatus.ASSIGNED:
+        return "تم التعيين"
+      case TripStatus.IN_PROGRESS:
+        return "قيد التنفيذ"
+      case TripStatus.EN_ROUTE_PICKUP:
+        return "في الطريق للاستلام"
+      case TripStatus.AT_PICKUP:
+        return "في نقطة الاستلام"
+      case TripStatus.PICKED_UP:
+        return "تم الاستلام"
+      case TripStatus.IN_TRANSIT:
+        return "في الطريق"
+      case TripStatus.AT_DESTINATION:
+        return "وصل للوجهة"
+      case TripStatus.DELIVERED:
+        return "تم التسليم"
+      case TripStatus.CANCELLED:
+        return "ملغية"
+      case TripStatus.DRIVER_REQUESTED:
+        return "طلب سائق"
+      case TripStatus.DRIVER_ACCEPTED:
+        return "قبل السائق"
+      case TripStatus.DRIVER_REJECTED:
+        return "رفض السائق"
+      default:
+        return status
+    }
+  }
+
   const stats = {
     total: trips.length,
-    pending: trips.filter(t => t.status === TripStatus.PENDING).length,
+    pending: trips.filter(t => {
+      const pendingStatuses = ["PENDING", "DRIVER_REQUESTED"];
+      return pendingStatuses.includes(t.status as string);
+    }).length,
     inProgress: trips.filter(t => {
-      const activeStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+      const activeStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION", "DRIVER_ACCEPTED"];
       return activeStatuses.includes(t.status as string);
     }).length,
     delivered: trips.filter(t => t.status === TripStatus.DELIVERED).length,
-    cancelled: trips.filter(t => t.status === TripStatus.CANCELLED).length,
+    cancelled: trips.filter(t => {
+      const cancelledStatuses = ["CANCELLED", "DRIVER_REJECTED"];
+      return cancelledStatuses.includes(t.status as string);
+    }).length,
     totalRevenue: trips.reduce((sum, trip) => sum + trip.price, 0),
   }
 
@@ -803,10 +854,19 @@ return (
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t('allStatus')}</SelectItem>
-              <SelectItem value={TripStatus.PENDING}>{t('pending')}</SelectItem>
-              <SelectItem value={TripStatus.IN_PROGRESS}>{t('inProgress')}</SelectItem>
-              <SelectItem value={TripStatus.DELIVERED}>{t('delivered')}</SelectItem>
-              <SelectItem value={TripStatus.CANCELLED}>{t('cancelled')}</SelectItem>
+              <SelectItem value={TripStatus.PENDING}>{getStatusText(TripStatus.PENDING)}</SelectItem>
+              <SelectItem value={TripStatus.DRIVER_REQUESTED}>{getStatusText(TripStatus.DRIVER_REQUESTED)}</SelectItem>
+              <SelectItem value={TripStatus.DRIVER_ACCEPTED}>{getStatusText(TripStatus.DRIVER_ACCEPTED)}</SelectItem>
+              <SelectItem value={TripStatus.DRIVER_REJECTED}>{getStatusText(TripStatus.DRIVER_REJECTED)}</SelectItem>
+              <SelectItem value={TripStatus.ASSIGNED}>{getStatusText(TripStatus.ASSIGNED)}</SelectItem>
+              <SelectItem value={TripStatus.IN_PROGRESS}>{getStatusText(TripStatus.IN_PROGRESS)}</SelectItem>
+              <SelectItem value={TripStatus.EN_ROUTE_PICKUP}>{getStatusText(TripStatus.EN_ROUTE_PICKUP)}</SelectItem>
+              <SelectItem value={TripStatus.AT_PICKUP}>{getStatusText(TripStatus.AT_PICKUP)}</SelectItem>
+              <SelectItem value={TripStatus.PICKED_UP}>{getStatusText(TripStatus.PICKED_UP)}</SelectItem>
+              <SelectItem value={TripStatus.IN_TRANSIT}>{getStatusText(TripStatus.IN_TRANSIT)}</SelectItem>
+              <SelectItem value={TripStatus.AT_DESTINATION}>{getStatusText(TripStatus.AT_DESTINATION)}</SelectItem>
+              <SelectItem value={TripStatus.DELIVERED}>{getStatusText(TripStatus.DELIVERED)}</SelectItem>
+              <SelectItem value={TripStatus.CANCELLED}>{getStatusText(TripStatus.CANCELLED)}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -890,7 +950,7 @@ return (
                     <Badge className={getStatusColor(trip.status)}>
                       <div className="flex items-center space-x-1">
                         {getStatusIcon(trip.status)}
-                        <span className="capitalize">{trip.status.toLowerCase()}</span>
+                        <span>{getStatusText(trip.status)}</span>
                       </div>
                     </Badge>
                   </TableCell>

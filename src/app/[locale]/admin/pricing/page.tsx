@@ -419,7 +419,7 @@ export default function PricingManagement({ params }: { params: Promise<{ locale
                     </SelectTrigger>
                     <SelectContent>
                       {vehicles.map((vehicle) => (
-                        <SelectItem key={vehicle.id} value={vehicle.vehicleNumber || vehicle.id}>
+                        <SelectItem key={vehicle.id} value={vehicle.id}>
                           {vehicle.vehicleNumber || vehicle.id} - {getVehicleTypeName(vehicle)}
                         </SelectItem>
                       ))}

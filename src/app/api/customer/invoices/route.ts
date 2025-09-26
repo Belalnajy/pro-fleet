@@ -72,7 +72,45 @@ export async function GET(request: NextRequest) {
 
     // Transform database invoices to match frontend interface
     const formattedInvoices = invoices.map((invoice) => {
-      // Type assertion to access included relations
+      // For manual invoices (no trip), provide default values
+      if (!invoice.trip) {
+        return {
+          id: invoice.id,
+          invoiceNumber: invoice.invoiceNumber,
+          tripId: null,
+          tripNumber: null,
+          subtotal: invoice.subtotal,
+          taxAmount: invoice.taxAmount,
+          customsFees: 0,
+          totalAmount: invoice.total,
+          status: invoice.paymentStatus,
+          paymentStatus: invoice.paymentStatus,
+          dueDate: invoice.dueDate.toISOString(),
+          paidDate: invoice.paidDate?.toISOString() || null,
+          amountPaid: invoice.amountPaid || 0,
+          remainingAmount: invoice.remainingAmount || (invoice.total - (invoice.amountPaid || 0)),
+          installmentCount: invoice.installmentCount || null,
+          installmentsPaid: invoice.installmentsPaid || 0,
+          installmentAmount: invoice.installmentAmount || null,
+          nextInstallmentDate: invoice.nextInstallmentDate?.toISOString() || null,
+          payments: [],
+          createdAt: invoice.createdAt.toISOString(),
+          updatedAt: invoice.updatedAt.toISOString(),
+          currency: invoice.currency,
+          taxRate: invoice.taxRate,
+          notes: invoice.notes,
+          // Default trip details for manual invoices
+          trip: {
+            fromCity: 'غير محدد',
+            toCity: 'غير محدد',
+            deliveredDate: null,
+            scheduledDate: invoice.createdAt.toISOString()
+          },
+          customsBroker: null
+        };
+      }
+
+      // For invoices with trips
       const invoiceWithRelations = invoice as typeof invoice & {
         trip: {
           id: string;
@@ -95,23 +133,22 @@ export async function GET(request: NextRequest) {
         id: invoiceWithRelations.id,
         invoiceNumber: invoiceWithRelations.invoiceNumber,
         tripId: invoiceWithRelations.tripId,
-        tripNumber: invoiceWithRelations.trip.tripNumber,
+        tripNumber: invoiceWithRelations.trip?.tripNumber || null,
         subtotal: invoiceWithRelations.subtotal,
         taxAmount: invoiceWithRelations.taxAmount,
         customsFees: 0, // Regular invoices don't have customs fees directly
         totalAmount: invoiceWithRelations.total,
         status: invoiceWithRelations.paymentStatus,
-        paymentStatus: invoiceWithRelations.paymentStatus, // أضف paymentStatus أيضاً
+        paymentStatus: invoiceWithRelations.paymentStatus,
         dueDate: invoiceWithRelations.dueDate.toISOString(),
         paidDate: invoiceWithRelations.paidDate?.toISOString() || null,
-        // Payment tracking fields
         amountPaid: invoiceWithRelations.amountPaid || 0,
         remainingAmount: invoiceWithRelations.remainingAmount || (invoiceWithRelations.total - (invoiceWithRelations.amountPaid || 0)),
         installmentCount: invoiceWithRelations.installmentCount || null,
         installmentsPaid: invoiceWithRelations.installmentsPaid || 0,
         installmentAmount: invoiceWithRelations.installmentAmount || null,
         nextInstallmentDate: invoiceWithRelations.nextInstallmentDate?.toISOString() || null,
-        payments: [], // Will be loaded separately if needed
+        payments: [],
         createdAt: invoiceWithRelations.createdAt.toISOString(),
         updatedAt: invoiceWithRelations.updatedAt.toISOString(),
         currency: invoiceWithRelations.currency,
@@ -119,12 +156,12 @@ export async function GET(request: NextRequest) {
         notes: invoiceWithRelations.notes,
         // Trip details for display
         trip: {
-          fromCity: invoiceWithRelations.trip.fromCity.nameAr || invoiceWithRelations.trip.fromCity.name,
-          toCity: invoiceWithRelations.trip.toCity.nameAr || invoiceWithRelations.trip.toCity.name,
-          deliveredDate: invoiceWithRelations.trip.deliveredDate?.toISOString(),
-          scheduledDate: invoiceWithRelations.trip.scheduledDate.toISOString()
+          fromCity: invoiceWithRelations.trip?.fromCity?.nameAr || invoiceWithRelations.trip?.fromCity?.name || 'غير محدد',
+          toCity: invoiceWithRelations.trip?.toCity?.nameAr || invoiceWithRelations.trip?.toCity?.name || 'غير محدد',
+          deliveredDate: invoiceWithRelations.trip?.deliveredDate?.toISOString(),
+          scheduledDate: invoiceWithRelations.trip?.scheduledDate?.toISOString() || invoiceWithRelations.createdAt.toISOString()
         },
-        customsBroker: invoiceWithRelations.trip.customsBroker ? {
+        customsBroker: invoiceWithRelations.trip?.customsBroker ? {
           name: invoiceWithRelations.trip.customsBroker.user.name,
           licenseNumber: invoiceWithRelations.trip.customsBroker.licenseNumber
         } : null

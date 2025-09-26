@@ -21,6 +21,7 @@ import {
   Phone,
   Eye,
 } from "lucide-react"
+import { TripRequestMap } from "@/components/driver/trip-request-map"
 
 export default function DriverDashboard({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = React.use(params)
@@ -279,11 +280,27 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                  <span className="break-all">{t('from')} {currentTrip.fromCity?.name}</span>
+                  <span className="break-all">
+                    {t('from')} {currentTrip.originLocation ? (
+                      <span className={`font-medium ${currentTrip.originLocation.isKnownCity ? 'text-green-600' : 'text-blue-600'}`}>
+                        {currentTrip.originLocation.name}
+                      </span>
+                    ) : (
+                      currentTrip.fromCity?.name
+                    )}
+                  </span>
                 </div>
                 <span className="hidden sm:inline">→</span>
                 <span className="sm:hidden text-center w-full">↓</span>
-                <span className="break-all">{t('to')} {currentTrip.toCity?.name}</span>
+                <span className="break-all">
+                  {t('to')} {currentTrip.destinationLocation ? (
+                    <span className={`font-medium ${currentTrip.destinationLocation.isKnownCity ? 'text-green-600' : 'text-red-600'}`}>
+                      {currentTrip.destinationLocation.name}
+                    </span>
+                  ) : (
+                    currentTrip.toCity?.name
+                  )}
+                </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
@@ -414,11 +431,27 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground mb-2">
                           <div className="flex items-center gap-1">
                             <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                            <span className="break-all">{trip.fromCity?.name}</span>
+                            <span className="break-all">
+                              {trip.originLocation ? (
+                                <span className={`font-medium ${trip.originLocation.isKnownCity ? 'text-green-600' : 'text-blue-600'}`}>
+                                  {trip.originLocation.name}
+                                </span>
+                              ) : (
+                                trip.fromCity?.name
+                              )}
+                            </span>
                           </div>
                           <span className="hidden sm:inline">→</span>
                           <span className="sm:hidden">↓</span>
-                          <span className="break-all">{trip.toCity?.name}</span>
+                          <span className="break-all">
+                            {trip.destinationLocation ? (
+                              <span className={`font-medium ${trip.destinationLocation.isKnownCity ? 'text-green-600' : 'text-red-600'}`}>
+                                {trip.destinationLocation.name}
+                              </span>
+                            ) : (
+                              trip.toCity?.name
+                            )}
+                          </span>
                         </div>
                         
                         {/* Details Grid */}
@@ -442,6 +475,17 @@ export default function DriverDashboard({ params }: { params: Promise<{ locale: 
                           {t('price')}: {t('sar')} {trip.price?.toLocaleString()}
                         </div>
                       </div>
+                    </div>
+
+                    {/* خريطة الرحلة */}
+                    <div className="lg:col-span-2 mt-4">
+                      <TripRequestMap
+                        originLocation={trip.originLocation}
+                        destinationLocation={trip.destinationLocation}
+                        fromCity={trip.fromCity}
+                        toCity={trip.toCity}
+                        tripNumber={trip.tripNumber}
+                      />
                     </div>
                     
                     {/* Status and Actions */}

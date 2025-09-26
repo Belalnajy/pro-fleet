@@ -22,7 +22,7 @@ import {
   Search,
   Eye,
   Package,
-  DollarSign,
+  SaudiRiyal,
   Navigation,
   Thermometer,
   User,
@@ -32,6 +32,14 @@ import {
   RotateCcw,
 } from "lucide-react"
 import { TripStatus } from "@prisma/client"
+
+interface LocationData {
+  lat: number
+  lng: number
+  address?: string
+  name?: string
+  isKnownCity?: boolean
+}
 
 interface Trip {
   id: string
@@ -44,6 +52,8 @@ interface Trip {
   toCity: {
     name: string
   }
+  originLocation?: LocationData | null
+  destinationLocation?: LocationData | null
   customer: {
     name: string
     email: string
@@ -262,7 +272,8 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
           <Button 
             className="w-full sm:w-auto relative"
             onClick={() => {
-              const activeTrip = trips.find(trip => trip.status === TripStatus.IN_PROGRESS);
+              const trackingStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+              const activeTrip = trips.find(trip => trackingStatuses.includes(trip.status as string));
               const url = activeTrip 
                 ? `/${locale}/driver/live-tracking?tripId=${activeTrip.id}`
                 : `/${locale}/driver/live-tracking`;
@@ -270,7 +281,10 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
             }}>
             <Navigation className="h-4 w-4 mr-2" />
             {t('startTracking')}
-            {trips.some(trip => trip.status === TripStatus.IN_PROGRESS) && (
+            {(() => {
+              const trackingStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+              return trips.some(trip => trackingStatuses.includes(trip.status as string));
+            })() && (
               <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse" title="التتبع التلقائي مفعل" />
             )}
           </Button>
@@ -278,7 +292,10 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
       }
     >
       {/* Auto-tracking Notice */}
-      {trips.some(trip => trip.status === TripStatus.IN_PROGRESS) && (
+      {(() => {
+        const trackingStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+        return trips.some(trip => trackingStatuses.includes(trip.status as string));
+      })() && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center gap-2 text-green-800">
             <Navigation className="h-4 w-4" />
@@ -400,7 +417,22 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
                     <div className="flex items-center space-x-2 text-muted-foreground">
                       <MapPin className="h-4 w-4" />
                       <span className="text-sm">
-                        {trip.fromCity?.name || t('unknown')} → {trip.toCity?.name || t('unknown')}
+                        {/* عرض المواقع المخصصة إذا كانت متوفرة، وإلا عرض أسماء المدن */}
+                        {trip.originLocation ? (
+                          <span className={`font-medium ${trip.originLocation.isKnownCity ? 'text-green-600' : 'text-blue-600'}`}>
+                            {trip.originLocation.isKnownCity ? '🏙️' : '📍'} {trip.originLocation.name}
+                          </span>
+                        ) : (
+                          trip.fromCity?.name || t('unknown')
+                        )}
+                        {' → '}
+                        {trip.destinationLocation ? (
+                          <span className={`font-medium ${trip.destinationLocation.isKnownCity ? 'text-green-600' : 'text-red-600'}`}>
+                            {trip.destinationLocation.isKnownCity ? '🏙️' : '📍'} {trip.destinationLocation.name}
+                          </span>
+                        ) : (
+                          trip.toCity?.name || t('unknown')
+                        )}
                       </span>
                     </div>
                   </div>
@@ -446,7 +478,7 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
                   
                   <div>
                     <div className="flex items-center space-x-1 text-muted-foreground mb-1">
-                      <DollarSign className="h-4 w-4" />
+                      <SaudiRiyal className="h-4 w-4" />
                       <span className="text-sm">{t('price')}</span>
                     </div>
                     <p className="text-sm font-medium">
@@ -487,7 +519,10 @@ export default function DriverTrips({ params }: { params: Promise<{ locale: stri
                       </Button>
                     )}
                     
-                    {trip.status === TripStatus.IN_PROGRESS && (
+                    {(() => {
+                      const trackingStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+                      return trackingStatuses.includes(trip.status as string);
+                    })() && (
                       <Button 
                         onClick={() => router.push(`/${locale}/driver/live-tracking?tripId=${trip.id}`)}
                         variant="outline" 

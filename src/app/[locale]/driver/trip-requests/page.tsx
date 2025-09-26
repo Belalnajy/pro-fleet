@@ -232,10 +232,10 @@ export default function DriverTripRequests({ params }: { params: Promise<{ local
             </CardContent>
           </Card>
         ) : (
-          requests.map((request) => (
+          requests.filter(r => !isExpired(r.expiresAt)).map((request) => (
             <Card 
               key={request.id} 
-              className={`${isExpired(request.expiresAt) ? 'opacity-60 bg-gray-50' : 'border-blue-200'}`}
+              className="border-blue-200"
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
@@ -258,7 +258,7 @@ export default function DriverTripRequests({ params }: { params: Promise<{ local
                     <div className="text-2xl font-bold text-green-600">
                       {request.trip.price.toLocaleString()} {request.trip.currency}
                     </div>
-                    <Badge variant={isExpired(request.expiresAt) ? "destructive" : "secondary"}>
+                    <Badge variant="secondary">
                       {getTimeRemaining(request.expiresAt)}
                     </Badge>
                   </div>

@@ -46,10 +46,21 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Validate status transition
+    // Validate status transition - السماح بالانتقال لـ DELIVERED من أي حالة نشطة
     const validTransitions: Record<TripStatus, TripStatus[]> = {
       PENDING: [TripStatus.ASSIGNED, TripStatus.CANCELLED],
-      ASSIGNED: [TripStatus.EN_ROUTE_PICKUP, TripStatus.CANCELLED],
+      DRIVER_REQUESTED: [
+        TripStatus.DRIVER_ACCEPTED,
+        TripStatus.DRIVER_REJECTED
+      ],
+      DRIVER_ACCEPTED: [TripStatus.ASSIGNED],
+      DRIVER_REJECTED: [TripStatus.PENDING],
+      ASSIGNED: [
+        TripStatus.EN_ROUTE_PICKUP,
+        TripStatus.IN_PROGRESS,
+        TripStatus.DELIVERED,
+        TripStatus.CANCELLED
+      ],
       IN_PROGRESS: [
         TripStatus.EN_ROUTE_PICKUP,
         TripStatus.PICKED_UP,
@@ -57,10 +68,26 @@ export async function PUT(req: NextRequest) {
         TripStatus.DELIVERED,
         TripStatus.CANCELLED
       ],
-      EN_ROUTE_PICKUP: [TripStatus.AT_PICKUP, TripStatus.CANCELLED],
-      AT_PICKUP: [TripStatus.PICKED_UP, TripStatus.CANCELLED],
-      PICKED_UP: [TripStatus.IN_TRANSIT, TripStatus.CANCELLED],
-      IN_TRANSIT: [TripStatus.AT_DESTINATION, TripStatus.CANCELLED],
+      EN_ROUTE_PICKUP: [
+        TripStatus.AT_PICKUP,
+        TripStatus.DELIVERED,
+        TripStatus.CANCELLED
+      ],
+      AT_PICKUP: [
+        TripStatus.PICKED_UP,
+        TripStatus.DELIVERED,
+        TripStatus.CANCELLED
+      ],
+      PICKED_UP: [
+        TripStatus.IN_TRANSIT,
+        TripStatus.DELIVERED,
+        TripStatus.CANCELLED
+      ],
+      IN_TRANSIT: [
+        TripStatus.AT_DESTINATION,
+        TripStatus.DELIVERED,
+        TripStatus.CANCELLED
+      ],
       AT_DESTINATION: [TripStatus.DELIVERED, TripStatus.CANCELLED],
       DELIVERED: [], // Final state
       CANCELLED: [] // Final state
@@ -126,6 +153,22 @@ export async function PUT(req: NextRequest) {
       }
     });
 
+    // إعادة السائق إلى "متاح" عند انتهاء الرحلة
+    if (status === TripStatus.DELIVERED || status === TripStatus.CANCELLED) {
+      await db.driver.update({
+        where: { id: trip.driverId! },
+        data: {
+          isAvailable: true,
+          trackingEnabled: false // إيقاف التتبع أيضاً
+        }
+      });
+      console.log(
+        `Driver ${
+          trip.driverId
+        } is now available again - Trip ${status.toLowerCase()}`
+      );
+    }
+
     // Log the status change
     if (location) {
       await db.trackingLog.create({
@@ -145,6 +188,9 @@ export async function PUT(req: NextRequest) {
     // Get status display names
     const statusNames: Record<TripStatus, string> = {
       PENDING: "في انتظار البدء",
+      DRIVER_REQUESTED: "طلب من السائق",
+      DRIVER_ACCEPTED: "السائق وافق",
+      DRIVER_REJECTED: "السائق رفض",
       ASSIGNED: "تم التعيين",
       IN_PROGRESS: "جاري التنفيذ",
       EN_ROUTE_PICKUP: "في الطريق للاستلام",
@@ -217,6 +263,9 @@ export async function GET(req: NextRequest) {
           icon: "🚛"
         }
       ],
+      DRIVER_REQUESTED: [],
+      DRIVER_ACCEPTED: [],
+      DRIVER_REJECTED: [],
       ASSIGNED: [
         {
           status: TripStatus.EN_ROUTE_PICKUP,

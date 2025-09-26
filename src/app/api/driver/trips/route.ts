@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { getLocationDisplayName } from "@/lib/city-coordinates";
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await getServerSession(authOptions);
+
     if (!session || session.user.role !== "DRIVER") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get driver profile
@@ -16,10 +17,13 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id
       }
-    })
+    });
 
     if (!driverProfile) {
-      return NextResponse.json({ error: "Driver profile not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Driver profile not found" },
+        { status: 404 }
+      );
     }
 
     // Get trips assigned to this driver or available for assignment
@@ -86,35 +90,85 @@ export async function GET(request: NextRequest) {
         { status: "asc" }, // PENDING first
         { scheduledDate: "asc" }
       ]
-    })
+    });
 
-    return NextResponse.json(trips)
+    // إضافة معلومات المواقع المخصصة
+    const tripsWithLocations = trips.map((trip) => ({
+      ...trip,
+      // إضافة المواقع المخصصة من الخريطة (مدن محفوظة أو مواقع مخصصة)
+      originLocation:
+        trip.originLat && trip.originLng
+          ? (() => {
+              const locationInfo = getLocationDisplayName(
+                trip.originLat,
+                trip.originLng
+              );
+              return {
+                lat: trip.originLat,
+                lng: trip.originLng,
+                address: locationInfo.isKnownCity
+                  ? locationInfo.name
+                  : `موقع مخصص: ${trip.originLat.toFixed(
+                      6
+                    )}, ${trip.originLng.toFixed(6)}`,
+                name: locationInfo.isKnownCity
+                  ? locationInfo.name
+                  : "موقع مخصص",
+                isKnownCity: locationInfo.isKnownCity
+              };
+            })()
+          : null,
+      destinationLocation:
+        trip.destinationLat && trip.destinationLng
+          ? (() => {
+              const locationInfo = getLocationDisplayName(
+                trip.destinationLat,
+                trip.destinationLng
+              );
+              return {
+                lat: trip.destinationLat,
+                lng: trip.destinationLng,
+                address: locationInfo.isKnownCity
+                  ? locationInfo.name
+                  : `موقع مخصص: ${trip.destinationLat.toFixed(
+                      6
+                    )}, ${trip.destinationLng.toFixed(6)}`,
+                name: locationInfo.isKnownCity
+                  ? locationInfo.name
+                  : "موقع مخصص",
+                isKnownCity: locationInfo.isKnownCity
+              };
+            })()
+          : null
+    }));
+
+    return NextResponse.json(tripsWithLocations);
   } catch (error) {
-    console.error("Error fetching driver trips:", error)
+    console.error("Error fetching driver trips:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }
 
 // Accept or decline a trip
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    
+    const session = await getServerSession(authOptions);
+
     if (!session || session.user.role !== "DRIVER") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json()
-    const { tripId, action } = body // action: "accept" or "decline"
+    const body = await request.json();
+    const { tripId, action } = body; // action: "accept" or "decline"
 
     if (!tripId || !action) {
       return NextResponse.json(
         { error: "Missing tripId or action" },
         { status: 400 }
-      )
+      );
     }
 
     // Get driver profile
@@ -122,19 +176,22 @@ export async function PATCH(request: NextRequest) {
       where: {
         userId: session.user.id
       }
-    })
+    });
 
     if (!driverProfile) {
-      return NextResponse.json({ error: "Driver profile not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: "Driver profile not found" },
+        { status: 404 }
+      );
     }
 
     // Get the trip
     const trip = await db.trip.findUnique({
       where: { id: tripId }
-    })
+    });
 
     if (!trip) {
-      return NextResponse.json({ error: "Trip not found" }, { status: 404 })
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 });
     }
 
     // Check if trip is available for assignment
@@ -142,7 +199,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json(
         { error: "Trip is not available for assignment" },
         { status: 400 }
-      )
+      );
     }
 
     if (action === "accept") {
@@ -176,7 +233,7 @@ export async function PATCH(request: NextRequest) {
             }
           }
         }
-      })
+      });
 
       // تفعيل التتبع للسائق تلقائياً عند قبول الرحلة
       await db.driver.update({
@@ -185,35 +242,35 @@ export async function PATCH(request: NextRequest) {
           trackingEnabled: true,
           isAvailable: false // السائق غير متاح للرحلات الأخرى
         }
-      })
+      });
 
-      console.log(`Trip ${tripId} accepted by driver ${driverProfile.id} - Tracking enabled`)
-      return NextResponse.json({ 
+      console.log(
+        `Trip ${tripId} accepted by driver ${driverProfile.id} - Tracking enabled`
+      );
+      return NextResponse.json({
         message: "Trip accepted successfully - GPS tracking enabled",
         trip: updatedTrip,
         trackingEnabled: true
-      })
-
+      });
     } else if (action === "decline") {
       // For now, we'll just log the decline
       // In a real system, you might want to track declined trips
-      console.log(`Trip ${tripId} declined by driver ${driverProfile.id}`)
-      
-      return NextResponse.json({ 
+      console.log(`Trip ${tripId} declined by driver ${driverProfile.id}`);
+
+      return NextResponse.json({
         message: "Trip declined"
-      })
+      });
     } else {
       return NextResponse.json(
         { error: "Invalid action. Use 'accept' or 'decline'" },
         { status: 400 }
-      )
+      );
     }
-
   } catch (error) {
-    console.error("Error updating trip:", error)
+    console.error("Error updating trip:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
-    )
+    );
   }
 }

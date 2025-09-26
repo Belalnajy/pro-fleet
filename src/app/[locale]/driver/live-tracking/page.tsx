@@ -27,6 +27,14 @@ import {
 import { getCityCoordinates } from "@/lib/city-coordinates";
 import { TripStatusControls } from "@/components/driver/trip-status-controls";
 
+interface CustomLocationData {
+  lat: number
+  lng: number
+  address?: string
+  name?: string
+  isKnownCity?: boolean
+}
+
 interface DriverTrip {
   id: string;
   tripNumber: string;
@@ -41,6 +49,8 @@ interface DriverTrip {
     latitude?: number;
     longitude?: number;
   };
+  originLocation?: CustomLocationData | null;
+  destinationLocation?: CustomLocationData | null;
   customer: {
     name: string;
     phone?: string;
@@ -87,7 +97,10 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
 
   // Auto-start tracking when component mounts and trip is loaded
   useEffect(() => {
-    if (currentTrip && currentTrip.status === "IN_PROGRESS" && !isTracking && !locationError) {
+    const trackingStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+    
+    if (currentTrip && trackingStatuses.includes(currentTrip.status) && !isTracking && !locationError) {
+      console.log("Auto-starting tracking for trip:", currentTrip.id, "status:", currentTrip.status);
       setTimeout(() => {
         startTracking();
       }, 2000);
@@ -258,20 +271,32 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
   };
 
   const sendLocationUpdate = async (locationData: LocationData) => {
-    if (!currentTrip) return;
+    if (!currentTrip) {
+      console.error("No current trip available for location update");
+      return;
+    }
+
+    console.log("Sending location update for trip:", currentTrip.id, "status:", currentTrip.status);
+    console.log("Location data:", locationData);
 
     try {
+      const payload = {
+        tripId: currentTrip.id,
+        latitude: locationData.latitude,
+        longitude: locationData.longitude,
+        speed: locationData.speed || 0,
+        heading: locationData.heading || 0,
+      };
+      
+      console.log("Sending payload:", payload);
+
       const response = await fetch("/api/driver/tracking", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tripId: currentTrip.id,
-          latitude: locationData.latitude,
-          longitude: locationData.longitude,
-          speed: locationData.speed || 0,
-          heading: locationData.heading || 0,
-        }),
+        body: JSON.stringify(payload),
       });
+
+      console.log("Response status:", response.status);
 
       if (response.ok) {
         const result = await response.json();
@@ -280,7 +305,8 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
         setTotalPointsSent(prev => prev + 1);
         setConnectionStatus('connected');
       } else {
-        console.error("Failed to send GPS location:", response.status);
+        const errorText = await response.text();
+        console.error("Failed to send GPS location:", response.status, errorText);
         setConnectionStatus('disconnected');
       }
     } catch (err) {
@@ -293,7 +319,9 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
     if (!currentTrip) return;
 
     try {
-      const response = await fetch("/api/driver/trips", {
+      console.log(`Updating trip ${currentTrip.id} status to ${newStatus}`);
+      
+      const response = await fetch("/api/driver/trips/status", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -303,6 +331,9 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log("Trip status updated successfully:", result);
+        
         setCurrentTrip(prev => prev ? { ...prev, status: newStatus } : null);
         
         if (newStatus === "DELIVERED") {
@@ -311,17 +342,56 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
             title: "✅ تم تسليم الرحلة",
             description: "تم تحديث حالة الرحلة إلى مُسلمة وإيقاف التتبع"
           });
+        } else {
+          toast({
+            title: "✅ تم تحديث حالة الرحلة",
+            description: `تم تحديث الحالة إلى ${newStatus}`
+          });
         }
+        
+        // تحديث البيانات من السيرفر
+        fetchCurrentTrip();
+      } else {
+        const errorData = await response.text();
+        console.error("Failed to update trip status:", response.status, errorData);
+        toast({
+          title: "❌ خطأ في تحديث الحالة",
+          description: `فشل في تحديث حالة الرحلة: ${response.status}`,
+          variant: "destructive"
+        });
       }
     } catch (err) {
       console.error("Error updating trip status:", err);
+      toast({
+        title: "❌ خطأ في الاتصال",
+        description: "حدث خطأ أثناء تحديث حالة الرحلة",
+        variant: "destructive"
+      });
     }
   };
 
   const handleStatusUpdate = (newStatus: string) => {
     if (currentTrip) {
+      // تحديث الـ state فوراً
       setCurrentTrip(prev => prev ? { ...prev, status: newStatus } : null);
-      fetchCurrentTrip(); // Refresh data
+      
+      // إذا كان الـ status الجديد يدعم التتبع ومش شغال، ابدأه
+      const trackingStatuses = ["ASSIGNED", "IN_PROGRESS", "EN_ROUTE_PICKUP", "AT_PICKUP", "PICKED_UP", "IN_TRANSIT", "AT_DESTINATION"];
+      if (trackingStatuses.includes(newStatus) && !isTracking && !locationError) {
+        console.log("Starting tracking due to status change:", newStatus);
+        setTimeout(() => {
+          startTracking();
+        }, 1000);
+      }
+      
+      // إذا كانت الرحلة اتسلمت، أوقف التتبع
+      if (newStatus === "DELIVERED" && isTracking) {
+        console.log("Stopping tracking due to delivery");
+        stopTracking();
+      }
+      
+      // تحديث البيانات من السيرفر
+      fetchCurrentTrip();
     }
   };
 
@@ -587,10 +657,27 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                     <label className="text-sm font-medium text-muted-foreground">المسار</label>
                     <div className="flex items-center gap-2 mt-1">
                       <MapPin className="h-4 w-4 text-green-600" />
-                      <span className="text-sm">{currentTrip.fromCity.name}</span>
+                      <span className="text-sm">
+                        {/* عرض الموقع المخصص أو اسم المدينة */}
+                        {currentTrip.originLocation ? (
+                          <span className={`font-medium ${currentTrip.originLocation.isKnownCity ? 'text-green-600' : 'text-blue-600'}`}>
+                            {currentTrip.originLocation.isKnownCity ? '🏙️' : '📍'} {currentTrip.originLocation.name}
+                          </span>
+                        ) : (
+                          currentTrip.fromCity.name
+                        )}
+                      </span>
                       <Navigation className="h-4 w-4 text-muted-foreground" />
                       <MapPin className="h-4 w-4 text-red-600" />
-                      <span className="text-sm">{currentTrip.toCity.name}</span>
+                      <span className="text-sm">
+                        {currentTrip.destinationLocation ? (
+                          <span className={`font-medium ${currentTrip.destinationLocation.isKnownCity ? 'text-green-600' : 'text-red-600'}`}>
+                            {currentTrip.destinationLocation.isKnownCity ? '🏙️' : '📍'} {currentTrip.destinationLocation.name}
+                          </span>
+                        ) : (
+                          currentTrip.toCity.name
+                        )}
+                      </span>
                     </div>
                   </div>
                   
@@ -622,55 +709,46 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                   <CardTitle>التحكم في التتبع</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex flex-col gap-3">
-                    {/* {!isTracking ? (
-                      <Button 
-                        onClick={startTracking}
-                        className="w-full bg-green-600 hover:bg-green-700"
-                        disabled={["DELIVERED", "CANCELLED"].includes(currentTrip.status)}
-                      >
-                        <Play className="h-4 w-4 mr-2" />
-                        بدء التتبع المباشر
-                      </Button>
-                    ) : (
-                      <Button 
-                        onClick={stopTracking}
-                        variant="destructive"
+                    <div className="flex flex-col gap-3">
+                      {/* التتبع يبدأ أوتوماتيكياً - يمكن إيقافه يدوياً إذا لزم الأمر */}
+                      {/* {isTracking && (
+                        <Button 
+                          onClick={stopTracking}
+                          variant="destructive"
+                          className="w-full"
+                        >
+                          <Pause className="h-4 w-4 mr-2" />
+                          إيقاف التتبع
+                        </Button>
+                      )} */}
+                      {!["DELIVERED", "CANCELLED"].includes(currentTrip.status) && (
+                        <Button
+                          onClick={() => updateTripStatus("DELIVERED")}
+                          className="w-full bg-blue-600 hover:bg-blue-700"
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          تحديد كمُسلمة
+                        </Button>
+                      )}
+                      
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          // Auto-fit to show start, destination and current location
+                          const mapComponent = document.querySelector('.enhanced-live-tracking-map');
+                          if (mapComponent) {
+                            const fitButton = mapComponent.querySelector('[title="عرض جميع النقاط"]');
+                            if (fitButton) {
+                              (fitButton as HTMLButtonElement).click();
+                            }
+                          }
+                        }}
                         className="w-full"
                       >
-                        <Pause className="h-4 w-4 mr-2" />
-                        إيقاف التتبع
+                        <MapPin className="h-4 w-4 mr-2" />
+                        عرض المسار الكامل
                       </Button>
-                    )}
-                     */}
-                    {!["DELIVERED", "CANCELLED"].includes(currentTrip.status) && (
-                      <Button
-                        onClick={() => updateTripStatus("DELIVERED")}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
-                      >
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        تحديد كمُسلمة
-                      </Button>
-                    )}
-                    
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        // Auto-fit to show start, destination and current location
-                        const mapComponent = document.querySelector('.enhanced-live-tracking-map');
-                        if (mapComponent) {
-                          const fitButton = mapComponent.querySelector('[title="عرض جميع النقاط"]');
-                          if (fitButton) {
-                            (fitButton as HTMLButtonElement).click();
-                          }
-                        }
-                      }}
-                      className="w-full"
-                    >
-                      <MapPin className="h-4 w-4 mr-2" />
-                      🗺️ عرض المسار الكامل
-                    </Button>
-                  </div>
+                    </div>
                   
                   {lastUpdateTime && (
                     <div className="text-sm text-muted-foreground text-center">
@@ -753,20 +831,9 @@ export default function DriverLiveTrackingPage({ params }: { params: Promise<{ l
                     initialZoom={12}
                     showPathTrail={true}
                     showRecenterButton={true}
+                    viewerType="driver"
                     className="w-full enhanced-live-tracking-map"
                   />
-                  
-                  {!currentLocation && (
-                    <div className="absolute inset-0 bg-muted/50 rounded-lg flex items-center justify-center">
-                      <div className="text-center">
-                        <MapPin className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                        <p className="text-lg font-medium mb-2">لا يوجد موقع حالي</p>
-                        <p className="text-muted-foreground">
-                          ابدأ التتبع لعرض موقعك على الخريطة
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </div>

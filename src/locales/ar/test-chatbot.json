@@ -1,0 +1,36 @@
+{
+  "pageTitle": "اختبار مساعد PRO FLEET الذكي",
+  "pageSubtitle": "جرب الـ chatbot واختبر قدراته الذكية",
+  "connectedStatus": "متصل ونشط",
+  "backToHome": "العودة للرئيسية",
+  "chatbotTitle": "مساعد PRO FLEET الذكي",
+  "chatbotDescription": "جرب المحادثة مع المساعد الذكي واختبر قدراته في فهم الأسئلة والإجابة عليها",
+  "featuresTitle": "مميزات المساعد الذكي",
+  "features": {
+    "tracking": {
+      "title": "تتبع الشحنات",
+      "description": "أدخل رقم الرحلة للحصول على معلومات مفصلة"
+    },
+    "smartUnderstanding": {
+      "title": "فهم ذكي للأسئلة",
+      "description": "يفهم الأسئلة المعقدة ويقدم إجابات مفصلة"
+    },
+    "comprehensiveInfo": {
+      "title": "معلومات شاملة",
+      "description": "معلومات عن الخدمات والأسعار والشركة"
+    },
+    "available247": {
+      "title": "متاح 24/7",
+      "description": "خدمة مستمرة على مدار الساعة"
+    }
+  },
+  "testExamplesTitle": "أمثلة للاختبار",
+  "testExamplesDescription": "جرب هذه الأسئلة لاختبار قدرات المساعد الذكي",
+  "howToUseTitle": "كيفية الاستخدام",
+  "instructions": {
+    "step1": "اكتب سؤالك أو طلبك في مربع النص",
+    "step2": "اضغط إرسال أو Enter للحصول على الإجابة",
+    "step3": "استخدم الأزرار السريعة للأسئلة الشائعة",
+    "step4": "لتتبع الشحنات، أدخل رقم الرحلة مباشرة"
+  }
+}

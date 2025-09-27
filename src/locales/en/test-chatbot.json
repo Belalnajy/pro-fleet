@@ -1,0 +1,36 @@
+{
+  "pageTitle": "Test PRO FLEET Smart Assistant",
+  "pageSubtitle": "Try the chatbot and test its smart capabilities",
+  "connectedStatus": "Online and Active",
+  "backToHome": "Back to Home",
+  "chatbotTitle": "PRO FLEET Smart Assistant",
+  "chatbotDescription": "Try chatting with the smart assistant and test its ability to understand questions and provide answers",
+  "featuresTitle": "Smart Assistant Features",
+  "features": {
+    "tracking": {
+      "title": "Shipment Tracking",
+      "description": "Enter trip number to get detailed information"
+    },
+    "smartUnderstanding": {
+      "title": "Smart Question Understanding",
+      "description": "Understands complex questions and provides detailed answers"
+    },
+    "comprehensiveInfo": {
+      "title": "Comprehensive Information",
+      "description": "Information about services, pricing, and company"
+    },
+    "available247": {
+      "title": "Available 24/7",
+      "description": "Continuous service around the clock"
+    }
+  },
+  "testExamplesTitle": "Test Examples",
+  "testExamplesDescription": "Try these questions to test the smart assistant's capabilities",
+  "howToUseTitle": "How to Use",
+  "instructions": {
+    "step1": "Type your question or request in the text box",
+    "step2": "Press Send or Enter to get the answer",
+    "step3": "Use quick buttons for common questions",
+    "step4": "For shipment tracking, enter the trip number directly"
+  }
+}

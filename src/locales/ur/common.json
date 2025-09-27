@@ -136,5 +136,7 @@
   "autoAssignVehicleTypes": "گاڑی کی اقسام خودکار تفویض",
   "driverManagement": "ڈرائیور مینجمنٹ",
   "manageDriverVehicleAssignments": "ڈرائیورز کے لیے گاڑی کی اقسام کی تفویض",
-  "systemStatus": "سسٹم کی صورتحال"
+  "systemStatus": "سسٹم کی صورتحال",
+  "PaymentMethodIsRequired": "ادائیگی کا طریقہ منتخب کرنا ضروری ہے",
+  "updateRateDescription": "اپ ڈیٹس کے درمیان سیکنڈز"
 }

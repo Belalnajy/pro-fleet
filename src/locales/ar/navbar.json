@@ -16,5 +16,11 @@
   "notifications": "الإشعارات",
   "language": "اللغة",
   "selectLanguage": "اختر اللغة",
-  "clearances": "التخليصات الجمركية"
+  "clearances": "التخليصات الجمركية",
+  "calculator": "حاسبة الرسوم",
+  "documentsManagement": "إدارة المستندات",
+  "liveTracking": "التتبع المباشر",
+  "trips": "الرحلات",
+  "users": "المستخدمون",
+  "vehicles": "المركبات"
 }

@@ -16,5 +16,11 @@
   "notifications": "Notifications",
   "language": "Language",
   "selectLanguage": "Select Language",
-  "clearances": "Customs Clearances"
+  "clearances": "Customs Clearances",
+  "calculator": "Fee Calculator",
+  "documentsManagement": "Documents Management",
+  "liveTracking": "Live Tracking",
+  "trips": "Trips",
+  "users": "Users",
+  "vehicles": "Vehicles"
 }

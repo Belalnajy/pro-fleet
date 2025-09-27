@@ -21,6 +21,8 @@ import enAccInvoices from '@/locales/en/acc-invoices.json'
 import enVehicleTypes from '@/locales/en/vehicle-types.json'
 import enCustomsBroker from '@/locales/en/customs-broker.json'
 import enFeeCalculator from '@/locales/en/fee-calculator.json'
+import enChatbot from '@/locales/en/chatbot.json'
+import enTestChatbot from '@/locales/en/test-chatbot.json'
 
 // Import Arabic translations
 import arCommon from '@/locales/ar/common.json'
@@ -45,6 +47,8 @@ import arAccInvoices from '@/locales/ar/acc-invoices.json'
 import arVehicleTypes from '@/locales/ar/vehicle-types.json'
 import arCustomsBroker from '@/locales/ar/customs-broker.json'
 import arFeeCalculator from '@/locales/ar/fee-calculator.json'
+import arChatbot from '@/locales/ar/chatbot.json'
+import arTestChatbot from '@/locales/ar/test-chatbot.json'
 
 // Import Urdu translations
 import urCommon from '@/locales/ur/common.json'
@@ -69,6 +73,8 @@ import urAccInvoices from '@/locales/ur/acc-invoices.json'
 import urVehicleTypes from '@/locales/ur/vehicle-types.json'
 import urCustomsBroker from '@/locales/ur/customs-broker.json'
 import urFeeCalculator from '@/locales/ur/fee-calculator.json'
+import urChatbot from '@/locales/ur/chatbot.json'
+import urTestChatbot from '@/locales/ur/test-chatbot.json'
 
 export const languages = {
   en: {
@@ -115,6 +121,8 @@ export const translations = {
     ...enVehicleTypes,
     ...enCustomsBroker,
     ...enFeeCalculator,
+    chatbot: enChatbot,
+    testChatbot: enTestChatbot,
   },
   ar: {
     ...arCommon,
@@ -139,6 +147,8 @@ export const translations = {
     ...arVehicleTypes,
     ...arCustomsBroker,
     ...arFeeCalculator,
+    chatbot: arChatbot,
+    testChatbot: arTestChatbot,
   },
   ur: {
     ...urCommon,
@@ -163,6 +173,8 @@ export const translations = {
     ...urVehicleTypes,
     ...urCustomsBroker,
     ...urFeeCalculator,
+    chatbot: urChatbot,
+    testChatbot: urTestChatbot,
   },
 } as const
 

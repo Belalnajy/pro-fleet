@@ -70,73 +70,29 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || session.user.role !== "CUSTOMER") {
+    if (!session || session.user.role !== "CUSTOMS_BROKER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const invoiceId = params.id;
-
-    // Get company info from system settings
-    const companyInfo = await getCompanyInfo();
-
-    // Verify the clearance invoice belongs to the customer and get full details
-    const clearanceInvoice = await db.customsClearanceInvoice.findFirst({
-      where: {
-        id: invoiceId,
-        clearance: {
-          invoice: {
-            trip: {
-              customerId: session.user.id
-            }
-          }
-        }
-      },
+    const clearanceInvoice = await db.customsClearanceInvoice.findUnique({
+      where: { id: params.id },
       include: {
         clearance: {
           include: {
             customsBroker: {
-              select: {
-                name: true,
-                email: true,
-                phone: true
+              include: {
+                user: true
               }
             },
             invoice: {
               include: {
                 trip: {
                   include: {
-                    customer: {
-                      select: {
-                        name: true,
-                        email: true,
-                        phone: true
-                      }
-                    },
-                    fromCity: {
-                      select: {
-                        name: true,
-                        nameAr: true
-                      }
-                    },
-                    toCity: {
-                      select: {
-                        name: true,
-                        nameAr: true
-                      }
-                    }
+                    fromCity: true,
+                    toCity: true,
+                    customer: true
                   }
                 }
-              }
-            }
-          }
-        },
-        customsBroker: {
-          include: {
-            user: {
-              select: {
-                name: true,
-                email: true,
-                phone: true
               }
             }
           }
@@ -145,13 +101,17 @@ export async function GET(
     });
 
     if (!clearanceInvoice) {
-      return NextResponse.json(
-        { error: "Clearance invoice not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
-    // Generate Arabic HTML content for PDF
+    // Check if this customs broker owns this invoice
+    if (clearanceInvoice.clearance.customsBroker.user.id !== session.user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get company info from system settings
+    const companyInfo = await getCompanyInfo();
+
     const htmlContent = `
     <!DOCTYPE html>
     <html lang="ar" dir="rtl">
@@ -226,76 +186,41 @@ export async function GET(
                 padding: 15px;
                 border-radius: 5px;
             }
-            .total-row { 
-                margin: 8px 0; 
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            .final-total { 
+            .section-title { 
                 font-weight: bold; 
-                font-size: 18px; 
-                border-top: 2px solid #000; 
-                padding-top: 15px; 
-                margin-top: 15px;
-                background: #4caf50;
-                color: white;
-                padding: 15px;
-                border-radius: 5px;
-            }
-            table { 
-                width: 100%; 
-                border-collapse: collapse; 
-                margin: 20px 0; 
-                direction: rtl;
-            }
-            th, td { 
-                border: 1px solid #ddd; 
-                padding: 12px; 
-                text-align: center; 
-            }
-            th { 
-                background: #f5f5f5; 
-                font-weight: bold; 
-            }
-            .section-title {
-                font-size: 16px;
-                font-weight: bold;
+                font-size: 16px; 
+                margin-bottom: 10px; 
                 color: #333;
-                margin-bottom: 10px;
                 border-bottom: 1px solid #ddd;
                 padding-bottom: 5px;
             }
-            .info-row {
-                display: flex;
-                justify-content: space-between;
-                margin: 8px 0;
+            .info-row { 
+                display: flex; 
+                justify-content: space-between; 
+                margin: 8px 0; 
                 padding: 5px 0;
             }
-            .label {
-                font-weight: bold;
+            .label { 
+                font-weight: bold; 
                 color: #555;
             }
-            .value {
-                color: #333;
+            .value { 
+                color: #000;
             }
-            .status {
-                padding: 5px 10px;
-                border-radius: 15px;
-                font-size: 12px;
+            .total-row {
+                display: flex;
+                justify-content: space-between;
+                margin: 10px 0;
+                padding: 8px 0;
+                border-bottom: 1px solid #eee;
+            }
+            .total-row.final {
+                border-top: 2px solid #333;
+                border-bottom: none;
                 font-weight: bold;
-            }
-            .status-paid {
-                background: #4caf50;
-                color: white;
-            }
-            .status-pending {
-                background: #ff9800;
-                color: white;
-            }
-            .status-overdue {
-                background: #f44336;
-                color: white;
+                font-size: 16px;
+                margin-top: 15px;
+                padding-top: 15px;
             }
         </style>
     </head>
@@ -342,40 +267,25 @@ export async function GET(
             </div>
             <div class="info-row">
                 <span class="label">حالة الدفع:</span>
-                <span class="value">
-                    <span class="status ${
-                      clearanceInvoice.paymentStatus === "PAID"
-                        ? "status-paid"
-                        : clearanceInvoice.paymentStatus === "OVERDUE"
-                        ? "status-overdue"
-                        : "status-pending"
-                    }">
-                        ${
-                          clearanceInvoice.paymentStatus === "PAID"
-                            ? "مدفوعة"
-                            : clearanceInvoice.paymentStatus === "OVERDUE"
-                            ? "متأخرة"
-                            : clearanceInvoice.paymentStatus === "SENT"
-                            ? "مرسلة"
-                            : "في الانتظار"
-                        }
-                    </span>
-                </span>
+                <span class="value">${
+                  clearanceInvoice.paymentStatus === "PENDING"
+                    ? "معلقة"
+                    : clearanceInvoice.paymentStatus === "PAID"
+                    ? "مدفوعة"
+                    : clearanceInvoice.paymentStatus === "PARTIAL"
+                    ? "دفع جزئي"
+                    : clearanceInvoice.paymentStatus === "INSTALLMENT"
+                    ? "أقساط"
+                    : clearanceInvoice.paymentStatus === "OVERDUE"
+                    ? "متأخرة"
+                    : "ملغية"
+                }</span>
             </div>
-            ${
-              clearanceInvoice.paidDate
-                ? `
-            <div class="info-row">
-                <span class="label">تاريخ الدفع:</span>
-                <span class="value">${new Date(
-                  clearanceInvoice.paidDate
-                ).toLocaleDateString("ar-SA")}</span>
-            </div>
-            `
-                : ""
-            }
         </div>
 
+        ${
+          clearanceInvoice.clearance.invoice?.trip?.customer
+            ? `
         <div class="customer-info">
             <div class="section-title">معلومات العميل</div>
             <div class="info-row">
@@ -401,52 +311,47 @@ export async function GET(
                 : ""
             }
         </div>
+        `
+            : ""
+        }
 
         <div class="clearance-info">
-            <div class="section-title">معلومات المخلص الجمركي</div>
+            <div class="section-title">تفاصيل التخليص الجمركي</div>
             <div class="info-row">
-                <span class="label">اسم المخلص:</span>
-                <span class="value">${
-                  clearanceInvoice.customsBroker.user.name
-                }</span>
+                <span class="label">نوع البضاعة:</span>
+                <span class="value">${clearanceInvoice.clearance.goodsType}</span>
             </div>
-            ${
-              clearanceInvoice.customsBroker.licenseNumber
-                ? `
             <div class="info-row">
-                <span class="label">رقم الترخيص:</span>
-                <span class="value">${clearanceInvoice.customsBroker.licenseNumber}</span>
+                <span class="label">القيمة المعلنة:</span>
+                <span class="value">${clearanceInvoice.clearance.declaredValue.toLocaleString(
+                  "ar-SA"
+                )} ريال</span>
             </div>
-            `
-                : ""
-            }
             <div class="info-row">
-                <span class="label">البريد الإلكتروني:</span>
-                <span class="value">${
-                  clearanceInvoice.customsBroker.user.email
-                }</span>
+                <span class="label">الوزن:</span>
+                <span class="value">${clearanceInvoice.clearance.weight} كيلو</span>
             </div>
-            ${
-              clearanceInvoice.customsBroker.user.phone
-                ? `
-            <div class="info-row">
-                <span class="label">رقم الهاتف:</span>
-                <span class="value">${clearanceInvoice.customsBroker.user.phone}</span>
-            </div>
-            `
-                : ""
-            }
             <div class="info-row">
                 <span class="label">حالة التخليص:</span>
-                <span class="value">${clearanceInvoice.clearance.status}</span>
+                <span class="value">${
+                  clearanceInvoice.clearance.status === "PENDING"
+                    ? "في الانتظار"
+                    : clearanceInvoice.clearance.status === "IN_PROGRESS"
+                    ? "قيد التنفيذ"
+                    : clearanceInvoice.clearance.status === "COMPLETED"
+                    ? "مكتمل"
+                    : clearanceInvoice.clearance.status === "CANCELLED"
+                    ? "ملغي"
+                    : "غير محدد"
+                }</span>
             </div>
             ${
-              clearanceInvoice.clearance.actualCompletionDate
+              clearanceInvoice.clearance.estimatedCompletionDate
                 ? `
             <div class="info-row">
-                <span class="label">تاريخ التخليص:</span>
+                <span class="label">تاريخ الإنجاز المتوقع:</span>
                 <span class="value">${new Date(
-                  clearanceInvoice.clearance.actualCompletionDate
+                  clearanceInvoice.clearance.estimatedCompletionDate
                 ).toLocaleDateString("ar-SA")}</span>
             </div>
             `
@@ -454,6 +359,9 @@ export async function GET(
             }
         </div>
 
+        ${
+          clearanceInvoice.clearance.invoice?.trip
+            ? `
         <div class="trip-info">
             <div class="section-title">معلومات الرحلة</div>
             <div class="info-row">
@@ -464,95 +372,102 @@ export async function GET(
             </div>
             <div class="info-row">
                 <span class="label">المسار:</span>
-                <span class="value">
-                    ${
-                      clearanceInvoice.clearance.invoice.trip.fromCity.nameAr ||
-                      clearanceInvoice.clearance.invoice.trip.fromCity.name
-                    } 
-                    ← 
-                    ${
-                      clearanceInvoice.clearance.invoice.trip.toCity.nameAr ||
-                      clearanceInvoice.clearance.invoice.trip.toCity.name
-                    }
-                </span>
+                <span class="value">${
+                  clearanceInvoice.clearance.invoice.trip.fromCity?.name
+                } ← ${
+              clearanceInvoice.clearance.invoice.trip.toCity?.name
+            }</span>
             </div>
             <div class="info-row">
-                <span class="label">تاريخ الجدولة:</span>
+                <span class="label">تاريخ الرحلة:</span>
                 <span class="value">${new Date(
                   clearanceInvoice.clearance.invoice.trip.scheduledDate
                 ).toLocaleDateString("ar-SA")}</span>
             </div>
+        </div>
+        `
+            : ""
+        }
+
+        <div class="totals">
+            <div class="section-title">تفاصيل المبالغ</div>
+            <div class="total-row">
+                <span>المجموع الفرعي:</span>
+                <span>${clearanceInvoice.subtotal.toLocaleString(
+                  "ar-SA"
+                )} ريال</span>
+            </div>
+            <div class="total-row">
+                <span>ضريبة القيمة المضافة (${(
+                  clearanceInvoice.taxRate * 100
+                ).toFixed(0)}%):</span>
+                <span>${clearanceInvoice.taxAmount.toLocaleString(
+                  "ar-SA"
+                )} ريال</span>
+            </div>
+            <div class="total-row final">
+                <span>المبلغ الإجمالي:</span>
+                <span>${clearanceInvoice.total.toLocaleString(
+                  "ar-SA"
+                )} ريال</span>
+            </div>
+            
+            <div class="total-row">
+                <span>المبلغ المدفوع:</span>
+                <span>${(clearanceInvoice.amountPaid || 0).toLocaleString(
+                  "ar-SA"
+                )} ريال</span>
+            </div>
+            <div class="total-row">
+                <span>المبلغ المتبقي:</span>
+                <span>${(
+                  clearanceInvoice.remainingAmount || clearanceInvoice.total
+                ).toLocaleString("ar-SA")} ريال</span>
+            </div>
+
             ${
-              clearanceInvoice.clearance.invoice.trip.deliveredDate
+              clearanceInvoice.paymentStatus === "INSTALLMENT" &&
+              clearanceInvoice.installmentCount
                 ? `
-            <div class="info-row">
-                <span class="label">تاريخ التسليم:</span>
-                <span class="value">${new Date(
-                  clearanceInvoice.clearance.invoice.trip.deliveredDate
+            <div class="total-row">
+                <span>عدد الأقساط:</span>
+                <span>${clearanceInvoice.installmentCount} قسط</span>
+            </div>
+            <div class="total-row">
+                <span>الأقساط المدفوعة:</span>
+                <span>${
+                  clearanceInvoice.installmentsPaid || 0
+                } من ${clearanceInvoice.installmentCount}</span>
+            </div>
+            <div class="total-row">
+                <span>قيمة القسط:</span>
+                <span>${(
+                  clearanceInvoice.installmentAmount || 0
+                ).toLocaleString("ar-SA")} ريال</span>
+            </div>
+            ${
+              clearanceInvoice.nextInstallmentDate
+                ? `
+            <div class="total-row">
+                <span>تاريخ القسط التالي:</span>
+                <span>${new Date(
+                  clearanceInvoice.nextInstallmentDate
                 ).toLocaleDateString("ar-SA")}</span>
             </div>
             `
                 : ""
             }
-        </div>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>البيان</th>
-                    <th>المبلغ</th>
-                    <th>العملة</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>رسوم التخليص الجمركي</td>
-                    <td>${clearanceInvoice.customsFee.toFixed(2)}</td>
-                    <td>${clearanceInvoice.currency}</td>
-                </tr>
-                ${
-                  clearanceInvoice.additionalFees > 0
-                    ? `
-                <tr>
-                    <td>رسوم إضافية</td>
-                    <td>${clearanceInvoice.additionalFees.toFixed(2)}</td>
-                    <td>${clearanceInvoice.currency}</td>
-                </tr>
-                `
-                    : ""
-                }
-                <tr>
-                    <td>المجموع الفرعي</td>
-                    <td>${clearanceInvoice.subtotal.toFixed(2)}</td>
-                    <td>${clearanceInvoice.currency}</td>
-                </tr>
-                <tr>
-                    <td>ضريبة القيمة المضافة (${(
-                      clearanceInvoice.taxRate * 100
-                    ).toFixed(0)}%)</td>
-                    <td>${clearanceInvoice.taxAmount.toFixed(2)}</td>
-                    <td>${clearanceInvoice.currency}</td>
-                </tr>
-            </tbody>
-        </table>
-
-        <div class="totals">
-            <div class="final-total">
-                <div class="total-row">
-                    <span>المجموع الكلي:</span>
-                    <span>${clearanceInvoice.total.toFixed(2)} ${
-      clearanceInvoice.currency
-    }</span>
-                </div>
-            </div>
+            `
+                : ""
+            }
         </div>
 
         ${
           clearanceInvoice.notes
             ? `
-        <div style="margin-top: 30px; padding: 15px; background: #f5f5f5; border-radius: 5px;">
-            <div class="section-title">ملاحظات</div>
-            <p style="line-height: 1.6; margin: 10px 0;">${clearanceInvoice.notes}</p>
+        <div style="margin: 20px 0; background: #fffbeb; padding: 15px; border-radius: 5px; border: 1px solid #f59e0b;">
+            <div class="section-title" style="color: #92400e;">ملاحظات:</div>
+            <div>${clearanceInvoice.notes}</div>
         </div>
         `
             : ""
@@ -617,7 +532,7 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error("Error generating clearance invoice PDF:", error);
+    console.error("Error generating PDF:", error);
 
     // Log more details about the error
     if (error instanceof Error) {

@@ -1,12 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { db } from "@/lib/db"
-import puppeteer from "puppeteer"
-import chromium from "@sparticuz/chromium"
-import fs from "fs"
-import path from "path"
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
+import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import fs from "fs";
+import path from "path";
 import { getCompanyInfo } from "@/lib/system-settings";
+import JsBarcode from "jsbarcode";
+import { createCanvas } from "canvas";
 
 // Helper function to get logo as base64
 function getLogoBase64(): string {
@@ -35,6 +37,32 @@ function getLogoBase64(): string {
   );
 }
 
+// Helper function to generate barcode as base64
+function generateBarcodeBase64(text: string): string {
+  try {
+    const canvas = createCanvas(200, 50);
+    JsBarcode(canvas, text, {
+      format: "CODE128",
+      width: 2,
+      height: 50,
+      displayValue: true,
+      fontSize: 12,
+      textMargin: 2,
+      margin: 10
+    });
+    return canvas.toDataURL();
+  } catch (error) {
+    console.error("Error generating barcode:", error);
+    // Fallback: return a simple text representation
+    return `data:image/svg+xml;base64,${Buffer.from(`
+      <svg width="200" height="50" xmlns="http://www.w3.org/2000/svg">
+        <rect width="200" height="50" fill="white" stroke="#000" stroke-width="1"/>
+        <text x="100" y="30" font-family="Arial" font-size="12" text-anchor="middle" fill="black">${text}</text>
+      </svg>
+    `).toString("base64")}`;
+  }
+}
+
 // GET /api/admin/invoices/[id]/pdf - Generate PDF for invoice
 export async function GET(
   request: NextRequest,
@@ -43,7 +71,7 @@ export async function GET(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions);
-    
+
     // Get company info from system settings
     const companyInfo = await getCompanyInfo();
 
@@ -159,6 +187,26 @@ export async function GET(
                 margin-bottom: 15px;
             }
             
+            .invoice-title-container {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+            
+            .barcode-container {
+                text-align: center;
+            }
+            
+            .barcode-image {
+                max-width: 200px;
+                height: auto;
+                border: 1px solid #e2e8f0;
+                border-radius: 4px;
+                padding: 5px;
+                background: white;
+            }
+            
             .invoice-meta {
                 display: grid;
                 grid-template-columns: 1fr 1fr;
@@ -267,7 +315,7 @@ export async function GET(
             }
             
             .services-table th {
-                background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+                background: linear-gradient(135deg, oklch(0.46 0.08 182) 0%, oklch(0.922 0 0 )100%);
                 color: white;
                 padding: 15px;
                 text-align: center;
@@ -354,15 +402,22 @@ export async function GET(
         <div class="container">
             <div class="header">
                 <img src="${getLogoBase64()}" alt="شعار الشركة" class="logo">
-                <div class="company-name">برو فليت للنقل</div>
+                <div class="company-name">منصة Pro fleet</div>
                 <div class="company-tagline">خدمات النقل واللوجستيات</div>
-                <div class="company-contact">المملكة العربية السعودية | هاتف: ${companyInfo.phone} | البريد: ${companyInfo.email}</div>
+                <div class="company-contact">المملكة العربية السعودية | هاتف: ${
+                  companyInfo.phone
+                } | البريد: ${companyInfo.email}</div>
             </div>
             
             <div class="invoice-header">
-                <div class="invoice-title">فاتورة رقم ${
-                  invoice.invoiceNumber
-                }</div>
+                <div class="invoice-title-container">
+                    <div class="invoice-title">فاتورة رقم ${
+                      invoice.invoiceNumber
+                    }</div>
+                    <div class="barcode-container">
+                        <img src="${generateBarcodeBase64(invoice.invoiceNumber)}" alt="باركود الفاتورة" class="barcode-image">
+                    </div>
+                </div>
                 <div class="invoice-meta">
                     <div class="meta-item">
                         <span class="meta-label">تاريخ الإصدار:</span>

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار الأرقام العربية</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .test-section h3 {
+            color: #2563eb;
+            margin-top: 0;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .result {
+            background: #e7f3ff;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            border-left: 4px solid #2563eb;
+        }
+        .success {
+            background: #d4edda;
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 اختبار تحويل الأرقام العربية</h1>
+        
+        <div class="test-section">
+            <h3>اختبار تحويل الأرقام العربية إلى إنجليزية</h3>
+            <p>أدخل أرقام عربية (٠١٢٣٤٥٦٧٨٩) أو مختلطة:</p>
+            <input type="text" id="arabicInput" placeholder="مثال: ١٢٣.٤٥ أو ٥٠٠٠">
+            <button onclick="testArabicToEnglish()">تحويل</button>
+            <div id="arabicResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>اختبار تحويل الأرقام الإنجليزية إلى عربية</h3>
+            <p>أدخل أرقام إنجليزية (0123456789):</p>
+            <input type="text" id="englishInput" placeholder="مثال: 123.45 أو 5000">
+            <button onclick="testEnglishToArabic()">تحويل</button>
+            <div id="englishResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>اختبار تطبيع الأرقام</h3>
+            <p>أدخل أرقام مختلطة أو مع رموز إضافية:</p>
+            <input type="text" id="normalizeInput" placeholder="مثال: ١٢٣abc٤٥.٦٧xyz">
+            <button onclick="testNormalize()">تطبيع</button>
+            <div id="normalizeResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>اختبار محاكاة حقل الوزن</h3>
+            <p>محاكاة حقل وزن البضاعة (يقبل الأرقام العربية والإنجليزية):</p>
+            <input type="text" id="weightInput" placeholder="أدخل الوزن بالكيلوجرام" oninput="simulateWeightField(this)">
+            <div id="weightResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>اختبار محاكاة حقل السعر</h3>
+            <p>محاكاة حقل سعر الرحلة (يقبل الأرقام العربية والإنجليزية مع عشرية):</p>
+            <input type="text" id="priceInput" placeholder="أدخل السعر بالريال" oninput="simulatePriceField(this)">
+            <div id="priceResult" class="result"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>اختبارات سريعة</h3>
+            <button onclick="runQuickTests()">تشغيل جميع الاختبارات</button>
+            <div id="quickTestsResult"></div>
+        </div>
+    </div>
+
+    <script>
+        // نسخة مبسطة من دوال تحويل الأرقام العربية
+        function convertArabicToEnglishNumbers(input) {
+            if (!input) return input;
+            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            const englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            let result = input;
+            for (let i = 0; i < arabicNumbers.length; i++) {
+                const arabicRegex = new RegExp(arabicNumbers[i], 'g');
+                result = result.replace(arabicRegex, englishNumbers[i]);
+            }
+            return result;
+        }
+
+        function convertEnglishToArabicNumbers(input) {
+            if (!input) return input;
+            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            const englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            let result = input;
+            for (let i = 0; i < englishNumbers.length; i++) {
+                const englishRegex = new RegExp(englishNumbers[i], 'g');
+                result = result.replace(englishRegex, arabicNumbers[i]);
+            }
+            return result;
+        }
+
+        function normalizeNumberInput(input) {
+            if (!input) return '';
+            let normalized = convertArabicToEnglishNumbers(input);
+            normalized = normalized.replace(/[^\d.-]/g, '');
+            const parts = normalized.split('.');
+            if (parts.length > 2) {
+                normalized = parts[0] + '.' + parts.slice(1).join('');
+            }
+            if (normalized.includes('-')) {
+                const isNegative = normalized.charAt(0) === '-';
+                normalized = normalized.replace(/-/g, '');
+                if (isNegative) {
+                    normalized = '-' + normalized;
+                }
+            }
+            return normalized;
+        }
+
+        function parseArabicNumber(input) {
+            if (!input) return NaN;
+            const normalized = normalizeNumberInput(input);
+            return parseFloat(normalized);
+        }
+
+        function testArabicToEnglish() {
+            const input = document.getElementById('arabicInput').value;
+            const result = convertArabicToEnglishNumbers(input);
+            const resultDiv = document.getElementById('arabicResult');
+            
+            resultDiv.innerHTML = `
+                <strong>المدخل:</strong> ${input}<br>
+                <strong>النتيجة:</strong> ${result}<br>
+                <strong>كرقم:</strong> ${parseFloat(result) || 'غير صالح'}
+            `;
+            
+            if (!isNaN(parseFloat(result))) {
+                resultDiv.className = 'result success';
+            } else {
+                resultDiv.className = 'result error';
+            }
+        }
+
+        function testEnglishToArabic() {
+            const input = document.getElementById('englishInput').value;
+            const result = convertEnglishToArabicNumbers(input);
+            const resultDiv = document.getElementById('englishResult');
+            
+            resultDiv.innerHTML = `
+                <strong>المدخل:</strong> ${input}<br>
+                <strong>النتيجة:</strong> ${result}
+            `;
+            resultDiv.className = 'result success';
+        }
+
+        function testNormalize() {
+            const input = document.getElementById('normalizeInput').value;
+            const result = normalizeNumberInput(input);
+            const parsed = parseArabicNumber(input);
+            const resultDiv = document.getElementById('normalizeResult');
+            
+            resultDiv.innerHTML = `
+                <strong>المدخل:</strong> ${input}<br>
+                <strong>بعد التطبيع:</strong> ${result}<br>
+                <strong>كرقم:</strong> ${parsed || 'غير صالح'}
+            `;
+            
+            if (!isNaN(parsed)) {
+                resultDiv.className = 'result success';
+            } else {
+                resultDiv.className = 'result error';
+            }
+        }
+
+        function simulateWeightField(input) {
+            const value = input.value;
+            const normalized = normalizeNumberInput(value);
+            const parsed = parseArabicNumber(value);
+            const resultDiv = document.getElementById('weightResult');
+            
+            // محاكاة التحقق من صحة الوزن
+            let validation = '';
+            if (parsed && parsed > 0) {
+                validation = `✅ وزن صالح: ${parsed} كجم`;
+                resultDiv.className = 'result success';
+            } else if (value && isNaN(parsed)) {
+                validation = `❌ وزن غير صالح`;
+                resultDiv.className = 'result error';
+            } else {
+                validation = `⏳ أدخل الوزن...`;
+                resultDiv.className = 'result';
+            }
+            
+            resultDiv.innerHTML = `
+                <strong>القيمة المدخلة:</strong> ${value}<br>
+                <strong>بعد التحويل:</strong> ${normalized}<br>
+                <strong>التحقق:</strong> ${validation}
+            `;
+        }
+
+        function simulatePriceField(input) {
+            const value = input.value;
+            const normalized = normalizeNumberInput(value);
+            const parsed = parseArabicNumber(value);
+            const resultDiv = document.getElementById('priceResult');
+            
+            // محاكاة التحقق من صحة السعر
+            let validation = '';
+            if (parsed && parsed > 0) {
+                validation = `✅ سعر صالح: ${parsed.toFixed(2)} ريال`;
+                resultDiv.className = 'result success';
+            } else if (value && isNaN(parsed)) {
+                validation = `❌ سعر غير صالح`;
+                resultDiv.className = 'result error';
+            } else {
+                validation = `⏳ أدخل السعر...`;
+                resultDiv.className = 'result';
+            }
+            
+            resultDiv.innerHTML = `
+                <strong>القيمة المدخلة:</strong> ${value}<br>
+                <strong>بعد التحويل:</strong> ${normalized}<br>
+                <strong>التحقق:</strong> ${validation}
+            `;
+        }
+
+        function runQuickTests() {
+            const tests = [
+                { input: '١٢٣', expected: '123', desc: 'أرقام عربية بسيطة' },
+                { input: '١٢٣.٤٥', expected: '123.45', desc: 'أرقام عربية مع عشرية' },
+                { input: '٥٠٠٠', expected: '5000', desc: 'رقم كبير عربي' },
+                { input: '123abc456', expected: '123456', desc: 'أرقام مع أحرف' },
+                { input: '١٢٣abc٤٥٦', expected: '123456', desc: 'أرقام عربية مع أحرف' },
+                { input: '١٢.٣٤.٥٦', expected: '12.3456', desc: 'عدة نقاط عشرية' },
+                { input: '', expected: '', desc: 'نص فارغ' },
+                { input: 'abc', expected: '', desc: 'أحرف فقط' }
+            ];
+            
+            let results = '<h4>نتائج الاختبارات السريعة:</h4>';
+            let allPassed = true;
+            
+            tests.forEach((test, index) => {
+                const result = normalizeNumberInput(test.input);
+                const passed = result === test.expected;
+                allPassed = allPassed && passed;
+                
+                results += `
+                    <div style="margin: 10px 0; padding: 10px; border-radius: 5px; ${passed ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}">
+                        <strong>${index + 1}. ${test.desc}</strong><br>
+                        المدخل: "${test.input}" → النتيجة: "${result}" (متوقع: "${test.expected}")
+                        ${passed ? ' ✅' : ' ❌'}
+                    </div>
+                `;
+            });
+            
+            results += `<div style="margin-top: 20px; padding: 15px; border-radius: 5px; font-weight: bold; ${allPassed ? 'background: #d4edda; color: #155724;' : 'background: #f8d7da; color: #721c24;'}">
+                ${allPassed ? '🎉 جميع الاختبارات نجحت!' : '⚠️ بعض الاختبارات فشلت'}
+            </div>`;
+            
+            document.getElementById('quickTestsResult').innerHTML = results;
+        }
+
+        // تشغيل اختبار سريع عند تحميل الصفحة
+        window.onload = function() {
+            document.getElementById('arabicInput').value = '١٢٣.٤٥';
+            document.getElementById('englishInput').value = '123.45';
+            document.getElementById('normalizeInput').value = '١٢٣abc٤٥.٦٧';
+            
+            console.log('🔢 صفحة اختبار الأرقام العربية جاهزة!');
+        };
+    </script>
+</body>
+</html>

@@ -17,6 +17,8 @@ import { LocationSelector } from "@/components/ui/location-selector"
 import { useToast } from "@/hooks/use-toast"
 import { SavedAddressesModal } from "@/components/SavedAddressesModal"
 import { SavedAddress } from "@/hooks/useSavedAddresses"
+import { ArabicNumberInput } from "@/components/ui/arabic-number-input"
+import { convertArabicToEnglishNumbers, parseArabicNumber } from "@/lib/arabic-numbers"
 import {
   MapPin,
   Package,
@@ -267,6 +269,13 @@ export default function BookTrip({ params }: BookTripProps) {
     }
   }
 
+  // Helper function to safely parse numeric values that may contain Arabic digits
+  const parseNumericValue = (value: string): number | null => {
+    if (!value) return null
+    const parsed = parseArabicNumber(value)
+    return isNaN(parsed) ? null : parsed
+  }
+
   // Function to calculate distance between two coordinates
   const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
     const R = 6371 // Radius of the Earth in kilometers
@@ -333,7 +342,8 @@ export default function BookTrip({ params }: BookTripProps) {
 
   const calculateEstimatedPrice = () => {
     const basePrice = 500 // Base price in SAR
-    const weightMultiplier = tripForm.cargoWeight ? (parseFloat(tripForm.cargoWeight) / 1000) * 50 : 50
+    const weight = parseNumericValue(tripForm.cargoWeight)
+    const weightMultiplier = weight ? (weight / 1000) * 50 : 50
     const temperatureMultiplier = tripForm.temperatureRequirement === "ambient" ? 0 : 100
     const estimated = basePrice + weightMultiplier + temperatureMultiplier
     setEstimatedPrice(estimated)
@@ -482,11 +492,11 @@ export default function BookTrip({ params }: BookTripProps) {
         vehicleId: tripForm.vehicleId || null, // إضافة معرف المركبة المحددة
         driverId: tripForm.driverId,
         customsBrokerId: tripForm.customsBrokerId && tripForm.customsBrokerId !== 'none' ? tripForm.customsBrokerId : null,
-        price: tripForm.price ? parseFloat(tripForm.price) : estimatedPrice || 500,
+        price: parseNumericValue(tripForm.price) || estimatedPrice || 500,
         currency: tripForm.currency || 'SAR',
         cargoType: tripForm.cargoType,
-        cargoWeight: tripForm.cargoWeight ? parseFloat(tripForm.cargoWeight) : null,
-        cargoValue: tripForm.cargoValue ? parseFloat(tripForm.cargoValue) : null,
+        cargoWeight: parseNumericValue(tripForm.cargoWeight),
+        cargoValue: parseNumericValue(tripForm.cargoValue),
         specialInstructions: tripForm.specialInstructions,
         notes: tripForm.notes || '',
         // إضافة معلومات المواقع المخصصة
@@ -936,26 +946,28 @@ export default function BookTrip({ params }: BookTripProps) {
                     </div>
                     <div>
                       <Label htmlFor="cargoWeight">{translate("cargoWeight")} (kg) *</Label>
-                      <Input
+                      <ArabicNumberInput
                         id="cargoWeight"
-                        type="number"
-                        min="0"
-                        step="0.1"
+                        min={0}
+                        step={0.1}
+                        allowDecimals={true}
+                        maxDecimals={1}
                         value={tripForm.cargoWeight}
-                        onChange={(e) => setTripForm({...tripForm, cargoWeight: e.target.value})}
+                        onValueChange={(value) => setTripForm({...tripForm, cargoWeight: value})}
                         placeholder={translate("enterCargoWeight")}
                         required
                       />
                     </div>
                     <div>
                       <Label htmlFor="cargoValue">{translate("cargoValue")} ({translate("currency")})</Label>
-                      <Input
+                      <ArabicNumberInput
                         id="cargoValue"
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        min={0}
+                        step={0.01}
+                        allowDecimals={true}
+                        maxDecimals={2}
                         value={tripForm.cargoValue}
-                        onChange={(e) => setTripForm({...tripForm, cargoValue: e.target.value})}
+                        onValueChange={(value) => setTripForm({...tripForm, cargoValue: value})}
                         placeholder={translate("enterCargoValue")}
                       />
                     </div>
@@ -1058,13 +1070,14 @@ export default function BookTrip({ params }: BookTripProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="price">السعر المقترح ({translate("currency")})</Label>
-                      <Input
+                      <ArabicNumberInput
                         id="price"
-                        type="number"
-                        min="0"
-                        step="0.01"
+                        min={0}
+                        step={0.01}
+                        allowDecimals={true}
+                        maxDecimals={2}
                         value={tripForm.price}
-                        onChange={(e) => setTripForm({...tripForm, price: e.target.value})}
+                        onValueChange={(value) => setTripForm({...tripForm, price: value})}
                         placeholder="سيتم حساب السعر تلقائياً"
                       />
                       <p className="text-xs text-muted-foreground mt-1">

@@ -4,38 +4,39 @@ import React, { use } from 'react'
 import Link from 'next/link'
 import { useTranslation } from '@/hooks/useTranslation'
 import { useCompanyInfo } from '@/hooks/useCompanyInfo'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { 
   Truck, 
-  MapPin, 
-  Clock, 
   Shield, 
+  Clock, 
+  Users, 
   Phone, 
   Mail, 
-  Globe, 
-  Twitter, 
-  Instagram,
-  Zap,
-  TrendingUp,
-  Users,
-  Award,
+  MapPinned, 
+  MapPin, 
+  Hash, 
+  CreditCard,
   CheckCircle,
+  Thermometer,
+  Award,
   ArrowRight,
   Star,
-  Thermometer,
-  FileCheck,
+  Zap,
+  TrendingUp,
   Headphones,
+  FileCheck,
   Building2,
-  CreditCard,
-  Hash,
-  MapPinned,
-  User
+  User,
+  Globe,
+  Twitter,
+  Instagram
 } from 'lucide-react'
 import { LanguageSelector } from '@/components/ui/language-selector'
 import { ThemeToggle } from '@/components/ui/theme-toggle'
+import { Chatbot } from '@/components/ui/chatbot'
 
 interface LocalePageProps {
   params: Promise<{
@@ -276,6 +277,208 @@ export default function HomePage({ params }: LocalePageProps) {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Key Features Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-accent/5 dark:from-primary/10 dark:via-background dark:to-accent/10 relative overflow-hidden">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-grid-pattern opacity-5 dark:opacity-10"></div>
+        
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center mb-16">
+            <Badge variant="outline" className="mb-4 bg-primary/10 text-primary border-primary/20">
+              المميزات الرئيسية
+            </Badge>
+            <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-4">
+              لماذا تختار برو فليت؟
+            </h2>
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              نقدم حلول متطورة لإدارة الأسطول والنقل مع تقنيات حديثة تضمن أفضل خدمة لعملائنا
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+            {/* Real-time Tracking */}
+            <Card className="group relative overflow-hidden border-0 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <CardHeader className="pb-4 relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/50 dark:to-cyan-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <MapPin className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <CardTitle className="text-xl font-bold text-center">تتبع فوري ودقيق</CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <CardDescription className="text-sm leading-relaxed text-center mb-6">
+                  تتبع مباشر لجميع الشحنات والمركبات مع تحديثات لحظية للموقع والحالة
+                </CardDescription>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">تحديثات الموقع المباشرة</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">تنبيهات فورية للتسليم</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Temperature Control */}
+            <Card className="group relative overflow-hidden border-0 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-green-500/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <CardHeader className="pb-4 relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/50 dark:to-emerald-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Thermometer className="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+                <CardTitle className="text-xl font-bold text-center">مراقبة درجة الحرارة</CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <CardDescription className="text-sm leading-relaxed text-center mb-6">
+                  نظام متطور لمراقبة درجة الحرارة للحفاظ على جودة البضائع الحساسة
+                </CardDescription>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">مراقبة مستمرة للحرارة</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">تنبيهات عند تجاوز الحدود</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Digital Documentation */}
+            <Card className="group relative overflow-hidden border-0 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-purple-500/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-violet-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <CardHeader className="pb-4 relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-violet-100 dark:from-purple-900/50 dark:to-violet-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <FileCheck className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+                </div>
+                <CardTitle className="text-xl font-bold text-center">وثائق رقمية</CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <CardDescription className="text-sm leading-relaxed text-center mb-6">
+                  إدارة شاملة للفواتير والوثائق الرقمية مع توقيعات إلكترونية آمنة
+                </CardDescription>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">فواتير إلكترونية</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">توقيعات رقمية آمنة</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Smart Analytics */}
+            <Card className="group relative overflow-hidden border-0 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-orange-500/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <CardHeader className="pb-4 relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-orange-100 to-amber-100 dark:from-orange-900/50 dark:to-amber-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <TrendingUp className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+                </div>
+                <CardTitle className="text-xl font-bold text-center">تحليلات ذكية</CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <CardDescription className="text-sm leading-relaxed text-center mb-6">
+                  تقارير مفصلة وتحليلات ذكية لتحسين الأداء وخفض التكاليف
+                </CardDescription>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">تقارير شاملة</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">تحليل الأداء</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* 24/7 Support */}
+            <Card className="group relative overflow-hidden border-0 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-red-500/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <CardHeader className="pb-4 relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/50 dark:to-rose-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Headphones className="h-8 w-8 text-red-600 dark:text-red-400" />
+                </div>
+                <CardTitle className="text-xl font-bold text-center">دعم فني 24/7</CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <CardDescription className="text-sm leading-relaxed text-center mb-6">
+                  فريق دعم فني متخصص متاح على مدار الساعة لضمان استمرارية العمل
+                </CardDescription>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">دعم مستمر 24/7</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">استجابة سريعة</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Security & Compliance */}
+            <Card className="group relative overflow-hidden border-0 bg-card/50 backdrop-blur-sm hover:bg-card/80 transition-all duration-500 hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/10">
+              <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <CardHeader className="pb-4 relative">
+                <div className="w-16 h-16 bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/50 dark:to-blue-900/50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <Shield className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <CardTitle className="text-xl font-bold text-center">أمان والتزام</CardTitle>
+              </CardHeader>
+              <CardContent className="relative">
+                <CardDescription className="text-sm leading-relaxed text-center mb-6">
+                  أعلى معايير الأمان والامتثال للوائح المحلية والدولية
+                </CardDescription>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">تشفير متقدم</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm">
+                    <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle className="h-3 w-3 text-green-600 dark:text-green-400" />
+                    </div>
+                    <span className="text-muted-foreground">امتثال كامل للوائح</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -648,11 +851,14 @@ export default function HomePage({ params }: LocalePageProps) {
               <span>|</span>
               <span>{t('username')}: profleetapp</span>
               <span>|</span>
-              <span>{t('copyright')} © 2024</span>
+              <span>{t('copyright')} © 2025</span>
             </div>
           </div>
         </div>
       </footer>
+
+      {/* Floating Chatbot */}
+      <Chatbot position="fixed" />
     </div>
   )
 }

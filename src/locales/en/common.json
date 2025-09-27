@@ -48,6 +48,9 @@
   "thisWeek": "This Week",
   "thisMonth": "This Month",
   "thisYear": "This Year",
+  "bySigningUp": "By signing up, you agree to our",
+  "termsOfService": "Terms of Service",
+  "privacyPolicy": "Privacy Policy",
   "date": "Date",
   "time": "Time",
   "status": "Status",
@@ -138,5 +141,31 @@
   "manageDriverVehicleAssignments": "Manage driver vehicle type assignments",
   "systemStatus": "System Status",
   "installmentStatus": "Installment",
-  "updateRateDescription": "Seconds between updates"
+  "updateRateDescription": "Seconds between updates",
+  
+  "chatbot": {
+    "title": "PRO FLEET Assistant",
+    "subtitle": "PRO FLEET Smart Assistant",
+    "connected": "Online",
+    "offline": "Offline",
+    "typing": "Typing...",
+    "placeholder": "Type your message here...",
+    "send": "Send",
+    "clearChat": "Clear Chat",
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "close": "Close",
+    "quickActions": {
+      "trackShipment": "Track Shipment",
+      "pricing": "Pricing",
+      "services": "Services",
+      "companyInfo": "Company Info",
+      "support": "Support"
+    },
+    "welcome": "Hello! I'm PRO FLEET Smart Assistant 🤖\n\nI can help you with:\n• Shipment tracking (enter trip number)\n• Pricing inquiries\n• Company information and services\n• Support and assistance\n\nHow can I help you today?",
+    "connectionError": "Connection Error",
+    "connectionErrorDesc": "We couldn't send your message. Please try again.",
+    "errorMessage": "❌ Sorry, there was a connection error.\nPlease try again or contact support: +966 53 997 7837",
+    "emptyState": "Ask anything about transportation and shipping services"
+  }
 }

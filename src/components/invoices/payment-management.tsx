@@ -58,6 +58,7 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(false)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+  const [forceUpdate, setForceUpdate] = useState(0)
   const [installmentDialogOpen, setInstallmentDialogOpen] = useState(false)
 
   // Payment form state
@@ -68,16 +69,22 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
     notes: ''
   })
 
-  // Installment form state
   const [installmentForm, setInstallmentForm] = useState({
     installmentCount: '',
     firstInstallmentDate: ''
   })
 
-  // Sync currentInvoice with prop changes
+  useEffect(() => {
+    fetchPayments()
+  }, [])
+
   useEffect(() => {
     setCurrentInvoice(invoice)
   }, [invoice])
+
+  useEffect(() => {
+    setForceUpdate(prev => prev + 1)
+  }, [currentInvoice.installmentCount, currentInvoice.paymentStatus])
 
   useEffect(() => {
     console.log('PaymentManagement received invoice:', invoice)
@@ -171,17 +178,20 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
             const invoiceData = await invoiceResponse.json()
             const updatedInvoice = invoiceData.invoice || invoiceData
             setCurrentInvoice(updatedInvoice)
+            setForceUpdate(prev => prev + 1)
             // Also notify parent component with updated data
             onPaymentAdded(updatedInvoice)
           } else {
             // Fallback to the payment response data if invoice fetch fails
             setCurrentInvoice(data.invoice)
+            setForceUpdate(prev => prev + 1)
             onPaymentAdded(data.invoice)
           }
         } catch (error) {
           console.error('Error fetching updated invoice:', error)
           // Fallback to the payment response data
           setCurrentInvoice(data.invoice)
+          setForceUpdate(prev => prev + 1)
           onPaymentAdded(data.invoice)
         }
         
@@ -190,6 +200,12 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
         
         setPaymentForm({ amount: '', paymentMethod: '', reference: '', notes: '' })
         setPaymentDialogOpen(false)
+        
+        // Force another update after a short delay to ensure UI is refreshed
+        setTimeout(() => {
+          setForceUpdate(prev => prev + 1)
+        }, 100)
+        
         const isInstallment = currentInvoice.installmentCount && currentInvoice.installmentCount > 0
         toast.success(isInstallment ? 'تم دفع القسط بنجاح' : 'تم إضافة الدفعة بنجاح')
       } else {
@@ -230,6 +246,19 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
 
       if (response.ok) {
         const data = await response.json()
+        console.log('Installment creation response:', data)
+        
+        // Update current invoice immediately with installment data
+        const immediateUpdate = {
+          ...currentInvoice,
+          paymentStatus: 'INSTALLMENT',
+          installmentCount: count,
+          installmentsPaid: 0,
+          installmentAmount: Math.ceil((currentInvoice.remainingAmount || currentInvoice.total) / count)
+        }
+        console.log('Immediate update:', immediateUpdate)
+        setCurrentInvoice(immediateUpdate)
+        setForceUpdate(prev => prev + 1)
         
         // Fetch updated invoice data from the main invoice API to get correct payment calculations
         try {
@@ -237,19 +266,36 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
           if (invoiceResponse.ok) {
             const invoiceData = await invoiceResponse.json()
             const updatedInvoice = invoiceData.invoice || invoiceData
+            console.log('Updated invoice after installment creation:', updatedInvoice)
             setCurrentInvoice(updatedInvoice)
+            // Force update to ensure UI reflects changes
+            setForceUpdate(prev => prev + 1)
             // Also notify parent component with updated data
             onPaymentAdded(updatedInvoice)
           } else {
             // Fallback to the installment response data if invoice fetch fails
-            setCurrentInvoice(data.invoice)
-            onPaymentAdded(data.invoice)
+            console.log('Fallback to installment response data:', data.invoice)
+            if (data.invoice) {
+              setCurrentInvoice(data.invoice)
+              setForceUpdate(prev => prev + 1)
+              onPaymentAdded(data.invoice)
+            } else {
+              // Use immediate update if no invoice data in response
+              onPaymentAdded(immediateUpdate)
+            }
           }
         } catch (error) {
           console.error('Error fetching updated invoice:', error)
           // Fallback to the installment response data
-          setCurrentInvoice(data.invoice)
-          onPaymentAdded(data.invoice)
+          console.log('Error fallback to installment response data:', data.invoice)
+          if (data.invoice) {
+            setCurrentInvoice(data.invoice)
+            setForceUpdate(prev => prev + 1)
+            onPaymentAdded(data.invoice)
+          } else {
+            // Use immediate update if no invoice data in response
+            onPaymentAdded(immediateUpdate)
+          }
         }
         
         // Refresh payments list in case installment setup affects payment display
@@ -257,6 +303,13 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
         
         setInstallmentForm({ installmentCount: '', firstInstallmentDate: '' })
         setInstallmentDialogOpen(false)
+        
+        // Force another update after a short delay to ensure UI is refreshed
+        setTimeout(() => {
+          setForceUpdate(prev => prev + 1)
+          console.log('Force update after timeout')
+        }, 100)
+        
         toast.success('تم إعداد خطة الأقساط بنجاح')
       } else {
         const error = await response.json()
@@ -422,6 +475,15 @@ export function PaymentManagement({ invoice, onPaymentAdded, apiEndpoint }: Paym
       </Card>
 
       {/* Action Buttons - Only show if invoice is not fully paid */}
+      {(() => {
+        console.log('Button render check:', {
+          installmentCount: currentInvoice.installmentCount,
+          paymentStatus: currentInvoice.paymentStatus,
+          remainingAmount: currentInvoice.remainingAmount,
+          forceUpdate
+        })
+        return null
+      })()}
       {currentInvoice.remainingAmount > 0 && currentInvoice.paymentStatus !== 'PAID' && (
         <div className="flex gap-2">
           {/* Payment Button - Show different text based on payment status */}

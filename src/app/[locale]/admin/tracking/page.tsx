@@ -124,7 +124,7 @@ export default function AdminTrackingPage({ params }: { params: Promise<{ locale
       const activeTripsData = Array.isArray(data) 
         ? data.filter((trip: AdminTrip) => 
             !["DELIVERED", "CANCELLED"].includes(trip.status) && trip.driver
-          )
+          ) 
         : [];
       
       setActiveTrips(activeTripsData);

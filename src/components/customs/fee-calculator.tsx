@@ -91,15 +91,15 @@ export function FeeCalculator({ onCalculationComplete }: FeeCalculatorProps) {
   
   // Categories for filtering
   const categories = [
-    { value: 'all', label: t('all') },
-    { value: 'automotive', label: t('automotive') },
-    { value: 'electronics', label: t('electronics') },
-    { value: 'textiles', label: t('textiles') },
-    { value: 'food', label: t('food') },
-    { value: 'machinery', label: t('machinery') },
-    { value: 'chemicals', label: t('chemicals') },
-    { value: 'metals', label: t('metals') },
-    { value: 'other', label: t('other') }
+    { value: 'all', label: 'جميع الفئات' },
+    { value: 'automotive', label: 'السيارات والمركبات' },
+    { value: 'electronics', label: 'الإلكترونيات' },
+    { value: 'textiles', label: 'المنسوجات' },
+    { value: 'food', label: 'المواد الغذائية' },
+    { value: 'machinery', label: 'الآلات والمعدات' },
+    { value: 'chemicals', label: 'المواد الكيميائية' },
+    { value: 'metals', label: 'المعادن' },
+    { value: 'other', label: 'أخرى' }
   ]
 
   useEffect(() => {
@@ -456,7 +456,7 @@ export function FeeCalculator({ onCalculationComplete }: FeeCalculatorProps) {
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <GitCompare className="h-5 w-5" />
-                    {t('title')} ({selectedForComparison.length})
+                    مقارنة التعريفات ({selectedForComparison.length})
                   </div>
                   <Button
                     variant="ghost"
@@ -669,9 +669,9 @@ export function FeeCalculator({ onCalculationComplete }: FeeCalculatorProps) {
           ) : (
             <div className="text-center py-12">
               <Package className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-4">{t('title')}</h3>
+              <h3 className="text-lg font-semibold mb-4">لا توجد تعريفات</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm || (filters.category && filters.category !== 'all') ? t('noMatchingTariffs') : t('noTariffsLoaded')}
+                {searchTerm || (filters.category && filters.category !== 'all') ? 'لا توجد تعريفات تطابق معايير البحث' : 'لم يتم تحميل أي تعريفات جمركية'}
               </p>
               {(searchTerm || (filters.category && filters.category !== 'all')) && (
                 <Button variant="outline" onClick={clearFilters}>
@@ -688,41 +688,41 @@ export function FeeCalculator({ onCalculationComplete }: FeeCalculatorProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            {t('title')}
+            حاسبة الرسوم الجمركية
           </CardTitle>
           <CardDescription>
-            {t('description')}
+            احسب الرسوم الجمركية المطلوبة للبضائع
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div>
-              <Label htmlFor="hsCode">{t('hsCode')}</Label>
+              <Label htmlFor="hsCode">رمز النظام المنسق</Label>
               <Input
                 id="hsCode"
                 value={calculationForm.hsCode}
                 onChange={(e) => setCalculationForm({ ...calculationForm, hsCode: e.target.value })}
-                placeholder={t('hsCodePlaceholder')}
+                placeholder="أدخل رمز النظام المنسق (HS Code)"
               />
             </div>
             <div>
-              <Label htmlFor="invoiceValue">{t('invoiceValue')}</Label>
+              <Label htmlFor="invoiceValue">قيمة الفاتورة (ريال)</Label>
               <Input
                 id="invoiceValue"
                 type="number"
                 value={calculationForm.invoiceValue}
                 onChange={(e) => setCalculationForm({ ...calculationForm, invoiceValue: e.target.value })}
-                placeholder={t('invoiceValuePlaceholder')}
+                placeholder="أدخل قيمة الفاتورة"
               />
             </div>
             <div>
-              <Label htmlFor="weight">{t('weight')}</Label>
+              <Label htmlFor="weight">الوزن (كيلو) - اختياري</Label>
               <Input
                 id="weight"
                 type="number"
                 value={calculationForm.weight}
                 onChange={(e) => setCalculationForm({ ...calculationForm, weight: e.target.value })}
-                placeholder={t('weightPlaceholder')}
+                placeholder="أدخل الوزن بالكيلوغرام"
               />
             </div>
           </div>
@@ -731,12 +731,12 @@ export function FeeCalculator({ onCalculationComplete }: FeeCalculatorProps) {
             {calculating ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                {t('calculating')}
+                جارٍ الحساب...
               </>
             ) : (
               <>
                 <Calculator className="h-4 w-4 mr-2" />
-                {t('calculate')}
+                احسب الرسوم الجمركية
               </>
             )}
           </Button>
@@ -746,51 +746,51 @@ export function FeeCalculator({ onCalculationComplete }: FeeCalculatorProps) {
             <div className="mt-6 p-4 bg-muted rounded-lg">
               <h4 className="font-semibold mb-4 flex items-center gap-2">
                 <FileText className="h-4 w-4" />
-                {t('title')}
+                نتائج الحساب
               </h4>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>{t('hsCode')}</span>
+                    <span>رمز النظام المنسق:</span>
                     <span className="font-medium">{calculation.hsCode}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{t('invoiceValue')}</span>
+                    <span>قيمة الفاتورة:</span>
                     <span className="font-medium">{calculation.invoiceValue.toLocaleString()} {t('currency')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{t('dutyRate')}</span>
+                    <span>معدل الرسوم:</span>
                     <span className="font-medium">{calculation.dutyRate}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{t('vatRate')}</span>
+                    <span>معدل الضريبة:</span>
                     <span className="font-medium">{calculation.vatRate}%</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>{t('dutyAmount')}</span>
+                    <span>رسوم الجمارك:</span>
                     <span className="font-medium">{calculation.dutyAmount.toLocaleString()} {t('currency')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{t('vatAmount')}</span>
+                    <span>ضريبة القيمة المضافة:</span>
                     <span className="font-medium">{calculation.vatAmount.toLocaleString()} {t('currency')}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{t('additionalFees')}</span>
+                    <span>رسوم إضافية:</span>
                     <span className="font-medium">{calculation.additionalFees.toLocaleString()} {t('currency')}</span>
                   </div>
                   <div className="flex justify-between border-t pt-2 font-bold">
-                    <span>{t('totalFees')}</span>
+                    <span>إجمالي الرسوم:</span>
                     <span className="text-primary">{calculation.totalFees.toLocaleString()} {t('currency')}</span>
                   </div>
                 </div>
               </div>
 
               <div className="mt-4 p-3 bg-background rounded border">
-                <p className="font-medium mb-2">{t('goodsDescription')}</p>
+                <p className="font-medium mb-2">وصف البضاعة:</p>
                 <p className="text-sm text-muted-foreground">{calculation.descriptionAr}</p>
                 <p className="text-xs text-muted-foreground">{calculation.description}</p>
               </div>

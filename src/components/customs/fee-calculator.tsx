@@ -748,24 +748,23 @@ export function FeeCalculator({ onCalculationComplete }: FeeCalculatorProps) {
                 <FileText className="h-4 w-4" />
                 نتائج الحساب
               </h4>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span>رمز النظام المنسق:</span>
-                    <span className="font-medium">{calculation.hsCode}</span>
+                    <span className="font-medium">{calculation?.hsCode}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>قيمة الفاتورة:</span>
-                    <span className="font-medium">{calculation.invoiceValue.toLocaleString()} {t('currency')}</span>
+                    <span className="font-medium">{calculation?.invoiceValue?.toLocaleString()} {t('currency')}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>معدل الرسوم:</span>
-                    <span className="font-medium">{calculation.dutyRate}%</span>
+                    <span className="font-medium">{calculation?.dutyRate?.toFixed(2)}%</span>
                   </div>
                   <div className="flex justify-between">
                     <span>معدل الضريبة:</span>
-                    <span className="font-medium">{calculation.vatRate}%</span>
+                    <span className="font-medium">{calculation?.vatRate?.toFixed(2)}%</span>
                   </div>
                 </div>
 

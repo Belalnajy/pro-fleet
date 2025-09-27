@@ -138,5 +138,15 @@
   "manageDriverVehicleAssignments": "ڈرائیورز کے لیے گاڑی کی اقسام کی تفویض",
   "systemStatus": "سسٹم کی صورتحال",
   "PaymentMethodIsRequired": "ادائیگی کا طریقہ منتخب کرنا ضروری ہے",
-  "updateRateDescription": "اپ ڈیٹس کے درمیان سیکنڈز"
+  "updateRateDescription": "اپ ڈیٹس کے درمیان سیکنڈز",
+  "fetchError": "ڈیٹا لانے میں خرابی",
+  "exportSuccess": "ایکسپورٹ کامیاب",
+  "category": "قسم",
+  "minDutyRate": "کم سے کم ڈیوٹی ریٹ",
+  "maxDutyRate": "زیادہ سے زیادہ ڈیوٹی ریٹ",
+  "minVatRate": "کم سے کم ویٹ ریٹ",
+  "dutyFees": "ڈیوٹی فیس",
+  "vatTax": "ویٹ ٹیکس",
+  "selectUpTo3": "آپ موازنے کے لیے 3 آئٹمز تک منتخب کر سکتے ہیں",
+  "invoiceValue": "انوائس ویلیو"
 }

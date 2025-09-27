@@ -155,5 +155,15 @@
   "errorMessage": "Sorry, an error occurred. Please try again.",
   "connectionError": "Connection Error",
   "connectionErrorDesc": "Unable to connect to server. Please check your internet connection.",
-  "emptyState": "Start a new conversation by typing a message or selecting one of the quick buttons"
+  "emptyState": "Start a new conversation by typing a message or selecting one of the quick buttons",
+  "fetchError": "Error fetching data",
+  "exportSuccess": "Export successful",
+  "category": "Category",
+  "minDutyRate": "Minimum Duty Rate",
+  "maxDutyRate": "Maximum Duty Rate",
+  "minVatRate": "Minimum VAT Rate",
+  "dutyFees": "Duty Fees",
+  "vatTax": "VAT Tax",
+  "selectUpTo3": "You can select up to 3 items for comparison",
+  "invoiceValue": "Invoice Value"
 }

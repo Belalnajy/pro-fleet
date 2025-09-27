@@ -79,11 +79,7 @@ export async function GET(
       include: {
         clearance: {
           include: {
-            customsBroker: {
-              include: {
-                user: true
-              }
-            },
+            customsBroker: true,
             invoice: {
               include: {
                 trip: {
@@ -104,8 +100,17 @@ export async function GET(
       return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
     }
 
+    // Get the customs broker profile for this user
+    const customsBroker = await db.customsBroker.findUnique({
+      where: { userId: session.user.id }
+    });
+
+    if (!customsBroker) {
+      return NextResponse.json({ error: "Customs broker profile not found" }, { status: 404 });
+    }
+
     // Check if this customs broker owns this invoice
-    if (clearanceInvoice.clearance.customsBroker.user.id !== session.user.id) {
+    if (clearanceInvoice.customsBrokerId !== customsBroker.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -318,30 +323,36 @@ export async function GET(
         <div class="clearance-info">
             <div class="section-title">تفاصيل التخليص الجمركي</div>
             <div class="info-row">
-                <span class="label">نوع البضاعة:</span>
-                <span class="value">${clearanceInvoice.clearance.goodsType}</span>
-            </div>
-            <div class="info-row">
-                <span class="label">القيمة المعلنة:</span>
-                <span class="value">${clearanceInvoice.clearance.declaredValue.toLocaleString(
+                <span class="label">الرسوم الجمركية:</span>
+                <span class="value">${clearanceInvoice.clearance.customsFee.toLocaleString(
                   "ar-SA"
                 )} ريال</span>
             </div>
             <div class="info-row">
-                <span class="label">الوزن:</span>
-                <span class="value">${clearanceInvoice.clearance.weight} كيلو</span>
+                <span class="label">الرسوم الإضافية:</span>
+                <span class="value">${clearanceInvoice.clearance.additionalFees.toLocaleString(
+                  "ar-SA"
+                )} ريال</span>
+            </div>
+            <div class="info-row">
+                <span class="label">إجمالي الرسوم:</span>
+                <span class="value">${clearanceInvoice.clearance.totalFees.toLocaleString(
+                  "ar-SA"
+                )} ريال</span>
             </div>
             <div class="info-row">
                 <span class="label">حالة التخليص:</span>
                 <span class="value">${
                   clearanceInvoice.clearance.status === "PENDING"
                     ? "في الانتظار"
-                    : clearanceInvoice.clearance.status === "IN_PROGRESS"
-                    ? "قيد التنفيذ"
+                    : clearanceInvoice.clearance.status === "IN_REVIEW"
+                    ? "قيد المراجعة"
+                    : clearanceInvoice.clearance.status === "APPROVED"
+                    ? "موافق عليه"
+                    : clearanceInvoice.clearance.status === "REJECTED"
+                    ? "مرفوض"
                     : clearanceInvoice.clearance.status === "COMPLETED"
                     ? "مكتمل"
-                    : clearanceInvoice.clearance.status === "CANCELLED"
-                    ? "ملغي"
                     : "غير محدد"
                 }</span>
             </div>

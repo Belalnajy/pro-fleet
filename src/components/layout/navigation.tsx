@@ -183,6 +183,16 @@ export function Navigation({ className }: NavigationProps) {
             label: t("invoices"),
             icon: FileText,
           },
+          {
+            href: `/${language}/customs-broker/documents`,
+            label: t("documentsManagement"),
+            icon: Calculator,
+          },
+          {
+            href: `/${language}/customs-broker/calculator`,
+            label: t("calculator"),
+            icon: Calculator,
+          }
         ]
       default:
         return baseItems

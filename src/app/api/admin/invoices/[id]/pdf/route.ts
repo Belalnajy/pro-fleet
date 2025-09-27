@@ -54,12 +54,14 @@ function generateBarcodeBase64(text: string): string {
   } catch (error) {
     console.error("Error generating barcode:", error);
     // Fallback: return a simple text representation
-    return `data:image/svg+xml;base64,${Buffer.from(`
+    return `data:image/svg+xml;base64,${Buffer.from(
+      `
       <svg width="200" height="50" xmlns="http://www.w3.org/2000/svg">
         <rect width="200" height="50" fill="white" stroke="#000" stroke-width="1"/>
         <text x="100" y="30" font-family="Arial" font-size="12" text-anchor="middle" fill="black">${text}</text>
       </svg>
-    `).toString("base64")}`;
+    `
+    ).toString("base64")}`;
   }
 }
 
@@ -358,7 +360,7 @@ export async function GET(
                 padding-top: 15px;
                 font-size: 20px;
                 font-weight: 700;
-                color: #1e40af;
+                color: oklch(0.46 0.08 182) ;
             }
             
             .notes-section {
@@ -415,7 +417,9 @@ export async function GET(
                       invoice.invoiceNumber
                     }</div>
                     <div class="barcode-container">
-                        <img src="${generateBarcodeBase64(invoice.invoiceNumber)}" alt="باركود الفاتورة" class="barcode-image">
+                        <img src="${generateBarcodeBase64(
+                          invoice.invoiceNumber
+                        )}" alt="باركود الفاتورة" class="barcode-image">
                     </div>
                 </div>
                 <div class="invoice-meta">

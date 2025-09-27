@@ -268,10 +268,9 @@ export async function POST(request: NextRequest) {
       invoiceData.customerEmail = customer?.email
     }
 
-    // Add customsBrokerId if available
-    if (customsBrokerId) {
-      invoiceData.customsBrokerId = customsBrokerId
-    }
+    // Note: customsBrokerId is not stored directly in Invoice model
+    // It's linked through the Trip relation (trip.customsBrokerId)
+    // The customs broker relationship is managed through CustomsClearance model
     
     // 💾 DETAILED LOG: Invoice creation data (Accountant)
     console.log('💾 [ACCOUNTANT INVOICE] Creating invoice with data:', {
@@ -312,16 +311,15 @@ export async function POST(request: NextRequest) {
     console.log('🎉 [ACCOUNTANT INVOICE] Invoice created successfully:', {
       invoiceId: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
-      customsBrokerIdInInvoice: invoice.customsBrokerId,
       tripId: invoice.tripId,
       total: invoice.total,
-      isLinkedToCustomsBroker: !!invoice.customsBrokerId
+      hasCustomsBrokerInTrip: !!customsBrokerId
     })
     
-    if (invoice.customsBrokerId) {
-      console.log('✅ [ACCOUNTANT INVOICE] SUCCESS: Invoice is linked to customs broker:', invoice.customsBrokerId)
+    if (customsBrokerId) {
+      console.log('✅ [ACCOUNTANT INVOICE] SUCCESS: Trip has customs broker:', customsBrokerId)
     } else {
-      console.log('❌ [ACCOUNTANT INVOICE] WARNING: Invoice is NOT linked to any customs broker')
+      console.log('❌ [ACCOUNTANT INVOICE] WARNING: Trip does not have customs broker')
     }
 
     return NextResponse.json({

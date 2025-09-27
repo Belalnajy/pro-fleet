@@ -55,7 +55,7 @@ export function Navigation({ className }: NavigationProps) {
 
     const baseItems = [
       {
-        href: `/${language}/${session.user.role.toLowerCase()}`,
+        href: `/${language}/${session.user.role.toLowerCase() === "customs_broker" ? "customs-broker" : session.user.role.toLowerCase()}`,
         label: t("dashboard"),
         icon: LayoutDashboard,
       },
@@ -125,11 +125,11 @@ export function Navigation({ className }: NavigationProps) {
             label: t("invoices"),
             icon: FileText,
           },
-          {
-            href: `/${language}/customer/payments`,
-            label: t("payments"),
-            icon: CreditCard,
-          },
+          // {
+          //   href: `/${language}/customer/payments`,
+          //   label: t("payments"),
+          //   icon: CreditCard,
+          // },
         ]
       case "DRIVER":
         return [
@@ -202,12 +202,12 @@ export function Navigation({ className }: NavigationProps) {
   const navItems = getNavItems()
 
   const isActive = (href: string) => {
-    // Get the current user's dashboard path
-    const dashboardPath = `/${language}/${session?.user?.role?.toLowerCase()}`
-    
     // Normalize paths by removing trailing slashes
     const normalizedPathname = pathname.replace(/\/$/, '') || '/';
     const normalizedHref = href.replace(/\/$/, '') || '/';
+    
+    // Get the current user's dashboard path
+    const dashboardPath = `/${language}/${session?.user?.role?.toLowerCase() === "customs_broker" ? "customs-broker" : session?.user?.role?.toLowerCase()}`
     
     // If this is the dashboard link
     if (normalizedHref === dashboardPath) {
@@ -215,17 +215,8 @@ export function Navigation({ className }: NavigationProps) {
       return normalizedPathname === dashboardPath || normalizedPathname === `/${language}` || normalizedPathname === '/'
     }
     
-    // For other routes, check exact match first, then prefix match
-    if (normalizedPathname === normalizedHref) {
-      return true
-    }
-    
-    // Check if current path starts with the href (for sub-routes)
-    if (normalizedPathname.startsWith(normalizedHref + '/')) {
-      return true
-    }
-    
-    return false
+    // For other routes, check exact match only (no prefix matching to avoid multiple active states)
+    return normalizedPathname === normalizedHref
   }
 
   if (!session) {

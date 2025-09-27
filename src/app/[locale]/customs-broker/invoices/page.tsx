@@ -383,14 +383,14 @@ export default function CustomsBrokerInvoicesPage({ params }: { params: Promise<
                               <Eye className="h-4 w-4" />
                             </Button>
                             
-                            <Button 
+                            {/* <Button 
                               variant="outline" 
                               size="sm"
                               onClick={() => handleManagePayments(invoice)}
                               title="إدارة المدفوعات"
                             >
                               <SaudiRiyal className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </TableCell>
                       </TableRow>

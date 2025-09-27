@@ -32,9 +32,9 @@ export default function FeeCalculatorPage({ params }: { params: Promise<{ locale
     <DashboardLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("feeCalculator")}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("calculator")}</h1>
           <p className="text-muted-foreground">
-            {t("calculateCustomsFees")}
+            احسب الرسوم الجمركية المطلوبة للبضائع
           </p>
         </div>
         

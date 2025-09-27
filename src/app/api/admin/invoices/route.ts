@@ -349,10 +349,9 @@ export async function POST(request: NextRequest) {
       invoiceData.customerEmail = customer?.email;
     }
 
-    // Add customsBrokerId if available
-    if (customsBrokerId) {
-      invoiceData.customsBrokerId = customsBrokerId;
-    }
+    // Note: customsBrokerId is not stored directly in Invoice model
+    // It's linked through the Trip relation (trip.customsBrokerId)
+    // The customs broker relationship is managed through CustomsClearance model
 
     // 💾 DETAILED LOG: Invoice creation data
     console.log("💾 [INVOICE CREATION] Creating invoice with data:", {
@@ -397,16 +396,15 @@ export async function POST(request: NextRequest) {
     console.log("🎉 [INVOICE CREATION] Invoice created successfully:", {
       invoiceId: invoice.id,
       invoiceNumber: invoice.invoiceNumber,
-      customsBrokerIdInInvoice: invoice.customsBrokerId,
       tripId: invoice.tripId,
       total: invoice.total,
-      isLinkedToCustomsBroker: !!invoice.customsBrokerId
+      hasCustomsBrokerInTrip: !!customsBrokerId
     });
 
-    if (invoice.customsBrokerId) {
+    if (customsBrokerId) {
       console.log(
-        "✅ [INVOICE CREATION] SUCCESS: Invoice is linked to customs broker:",
-        invoice.customsBrokerId
+        "✅ [INVOICE CREATION] SUCCESS: Trip has customs broker, will create clearance:",
+        customsBrokerId
       );
 
       // Auto-create customs clearance if customs broker is assigned

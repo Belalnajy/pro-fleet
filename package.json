@@ -20,11 +20,19 @@
     "db:full-reset": "npm run db:reset && npm run db:comprehensive-seed",
     "db:fix-clearance-invoices": "node scripts/fix-missing-clearance-invoices.js",
     "db:setup-business-info": "node scripts/setup-business-info.js",
+    "db:seed-customs-tariffs": "node scripts/seed-customs-tariffs.js",
     "test:cloudinary": "node scripts/test-cloudinary-config.js",
     "test:percentage-calculations": "node scripts/test-percentage-calculations.js",
     "sync-payments": "node scripts/run-payment-sync.js",
     "sync-payments:regular": "node scripts/run-payment-sync.js --type=regular",
-    "sync-payments:clearance": "node scripts/run-payment-sync.js --type=clearance"
+    "sync-payments:clearance": "node scripts/run-payment-sync.js --type=clearance",
+    "db:analyze": "node scripts/cleanup-database.js --analyze",
+    "db:cleanup": "node scripts/cleanup-database.js --clean",
+    "db:emergency-cleanup": "node scripts/emergency-cleanup.js",
+    "files:analyze": "node scripts/cleanup-files.js --analyze",
+    "files:cleanup": "node scripts/cleanup-files.js --clean",
+    "optimize:production": "node scripts/optimize-for-production.js",
+    "test:chatbot": "node scripts/test-chatbot.js"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

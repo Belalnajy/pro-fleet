@@ -578,13 +578,13 @@ export default function CustomerInvoices({ params }: CustomerInvoicesProps) {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button
+                        {/* <Button
                           variant="outline"
                           size="sm"
                           onClick={() => handleDownloadPDF(invoice.id)}
                         >
                           <Download className="h-4 w-4" />
-                        </Button>
+                        </Button> */}
                         {/* {(invoice.status === 'SENT' || invoice.status === 'OVERDUE') && (
                           <Button
                             size="sm"

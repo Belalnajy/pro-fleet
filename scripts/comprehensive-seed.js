@@ -474,7 +474,12 @@ async function main() {
   const paymentStatuses = ['PENDING', 'PAID', 'PARTIAL', 'INSTALLMENT', 'SENT']
   
   for (let i = 0; i < trips.length; i++) {
-    const trip = trips[i]
+    const trip = await prisma.trip.findUnique({
+      where: { id: trips[i].id },
+      include: {
+        customer: true
+      }
+    })
     const subtotal = trip.price
     const taxAmount = subtotal * 0.15
     const total = subtotal + taxAmount
@@ -526,6 +531,9 @@ async function main() {
         paymentStatus: paymentStatus,
         notes: `فاتورة الرحلة من ${trip.pickupAddress} إلى ${trip.deliveryAddress}`,
         paidDate: paidDate,
+        customerEmail: trip.customer.email,
+        customerId: trip.customer.id,
+        customerName: trip.customer.name,
         trip: {
           connect: { id: trip.id }
         }
